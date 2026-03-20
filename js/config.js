@@ -10,7 +10,7 @@ export const CONFIG = {
 
   recombee: {
     enabled: true,
-    database: 'cvachond-land-free-pbook',
+    database: 'cvachond-land-free-pbook-kids',
     scenarios: {
       nextInSpine: 'pbook:next-in-spine',
       goDeeper: 'pbook:go-deeper',

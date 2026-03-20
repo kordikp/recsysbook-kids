@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-const DB = process.env.RECOMBEE_DB || 'cvachond-land-free-pbook';
+const DB = process.env.RECOMBEE_DB || 'cvachond-land-free-pbook-kids';
 const TOKEN = process.env.RECOMBEE_TOKEN || '';
 const REGION = process.env.RECOMBEE_REGION || 'rapi-eu-west';
 
