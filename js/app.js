@@ -219,7 +219,8 @@ class PBook {
 
     el.innerHTML = html || '<div class="search-empty">Loading content...</div>';
     // Hide arrows on shelves that don't overflow
-    requestAnimationFrame(() => this._updateShelfArrows());
+    // Delay to ensure cards have rendered and have width
+    setTimeout(() => this._updateShelfArrows(), 100);
   }
 
   shelf(title, cardHtmls) {
@@ -238,6 +239,11 @@ class PBook {
     const el = document.getElementById(id);
     if (!el) return;
     el.scrollBy({ left: dir * 300, behavior: 'smooth' });
+    // Update arrows after scroll animation
+    setTimeout(() => {
+      const wrap = el.closest('.shelf-wrap');
+      if (wrap) this._updateArrowVisibility(wrap, el);
+    }, 350);
   }
 
   // Show/hide shelf arrows based on scroll position
@@ -247,7 +253,7 @@ class PBook {
       if (!scroll) return;
       const overflows = scroll.scrollWidth > scroll.clientWidth + 10;
       wrap.classList.toggle('no-scroll', !overflows);
-      if (overflows) this._updateArrowVisibility(wrap, scroll);
+      this._updateArrowVisibility(wrap, scroll);
     });
     // Listen for scroll to update arrows dynamically
     document.querySelectorAll('.shelf-scroll').forEach(scroll => {
@@ -266,8 +272,8 @@ class PBook {
     if (!left || !right) return;
     const atStart = scroll.scrollLeft < 10;
     const atEnd = scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - 10;
-    left.style.visibility = atStart ? 'hidden' : 'visible';
-    right.style.visibility = atEnd ? 'hidden' : 'visible';
+    left.classList.toggle('arrow-hidden', atStart);
+    right.classList.toggle('arrow-hidden', atEnd);
   }
 
   cardHtml(block, hero = false) {
@@ -459,7 +465,7 @@ class PBook {
         if (e.isIntersecting) {
           // Start dwell timer
           const block = ch.blocks.find(b => b.id === id);
-          const readTimeMs = Math.min(((block?.readingTime || 3) * 60 * 1000) * 0.25, 30000); // 25% of estimated, max 30s
+          const readTimeMs = Math.min(((block?.readingTime || 2) * 60 * 1000) * 0.15, 12000); // 15% of reading time, max 12s — kids read fast!
           const startTime = Date.now();
 
           this._dwellTimers[id] = setInterval(() => {
