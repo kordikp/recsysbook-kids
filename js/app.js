@@ -758,9 +758,30 @@ class PBook {
   }
 
   renderQuestion(block) {
-    if (!block.options || !Array.isArray(block.options)) return '';
-    const opts = block.options.map(o => `<button class="q-opt" onclick="app.answerQ(this,'${o.voice || 'universal'}','${block.id}')"><span class="q-letter">${o.letter}</span><span>${o.text}</span></button>`).join('');
-    return `<div class="q-block fade-up"><h4>${block.title}</h4><div class="q-desc">${block.description || ''}</div><div class="q-opts">${opts}</div></div>`;
+    // Structured options in frontmatter
+    if (block.options && Array.isArray(block.options)) {
+      const opts = block.options.map(o => `<button class="q-opt" onclick="app.answerQ(this,'${o.voice || 'universal'}','${block.id}')"><span class="q-letter">${o.letter}</span><span>${o.text}</span></button>`).join('');
+      return `<div class="q-block fade-up"><h4>${block.title}</h4><div class="q-desc">${block.description || ''}</div><div class="q-opts">${opts}</div></div>`;
+    }
+    // Body-based question: parse A/B/C/D options from markdown body
+    if (block.body) {
+      const bodyHtml = renderMarkdown(block.body);
+      // Extract lettered options and create clickable buttons
+      const optRegex = /\*\*([A-D])\)?\*?\*?[:\s]*"?([^"*\n]+)"?\*?\*/g;
+      const voiceMap = { A: 'explorer', B: 'creator', C: 'thinker', D: 'universal' };
+      const opts = [];
+      let m;
+      while ((m = optRegex.exec(block.body)) !== null) {
+        opts.push({ letter: m[1], text: m[2].trim().substring(0, 80), voice: voiceMap[m[1]] || 'universal' });
+      }
+      if (opts.length >= 2) {
+        const optsHtml = opts.map(o => `<button class="q-opt" onclick="app.answerQ(this,'${o.voice}','${block.id}')"><span class="q-letter">${o.letter}</span><span>${o.text}</span></button>`).join('');
+        return `<div class="q-block fade-up" id="b-${block.id}"><div class="block-header"><h4>${block.title}</h4></div><div class="spine-body">${bodyHtml}</div><div class="q-opts">${optsHtml}</div></div>`;
+      }
+      // No parseable options — just render as article
+      return `<article class="block-article fade-up" id="b-${block.id}"><div class="block-header"><h3>${block.title}</h3></div><div class="spine-body">${bodyHtml}</div></article>`;
+    }
+    return '';
   }
 
   // Inline "read next" below each article — shown after block is read
