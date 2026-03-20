@@ -1,189 +1,73 @@
 ---
 id: ch5-ws-design
 type: spine
-title: "Worksheet: Design Your Dream Recommender!"
-readingTime: 15
+title: "Design Challenge: Your Dream Recommender"
+readingTime: 5
 standalone: true
-teaser: "Imagine, design, and pitch your very own recommendation system!"
+teaser: "Forget movies and music — imagine a recommender system nobody has ever built before!"
 voice: universal
 parent: null
 diagram: null
 ---
 
-# Worksheet: Design Your Dream Recommender!
+# Design Challenge: Your Dream Recommender
 
-You've learned how recommendations work, how they collect data, how they find patterns, and how they can go wrong. Now it's YOUR turn to design one from scratch!
+You've learned how recommendation systems work, how they collect data, how they find patterns, and how they can go wrong. Now here's your challenge: dream up one that doesn't exist yet.
 
-There are no limits here. Your recommender can be for anything — serious, silly, or somewhere in between. The goal is to think through all the pieces like a real recommendation engineer.
-
----
-
-## Part 1: The Big Idea
-
-| Question | Your answer |
-|----------|-------------|
-| **Name of your recommendation system** | _______________ |
-| **What does it recommend?** | _______________ |
-| **Who would use it?** (your target users) | _______________ |
-| **What problem does it solve?** | _______________ |
-
-**Need inspiration?** Here are some ideas to spark your imagination:
-
-- A system that recommends **Minecraft servers** based on your play style
-- A system that suggests **books** you'd actually want to read for fun
-- A system that recommends **after-school activities** based on your interests and schedule
-- A system that picks **lunch menu items** your school cafeteria should serve
-- A system that helps you find **new friends** with similar hobbies
-- A system that recommends **travel destinations** for your family's next vacation
-- A system that suggests **study playlists** based on your mood and subject
-- A system that recommends **birthday gifts** for your friends and family
-
-Or come up with something totally original!
+Close your eyes for 10 seconds. Seriously — close them. And imagine: what would YOU build a recommendation system for? Not movies. Not music. Not stuff that already exists. Something brand new that nobody has thought of.
 
 ---
 
-## Part 2: Data Collection
+## Need a Spark?
 
-How would your system learn about its users? Check all that apply and explain your choices:
+Here are some wild ideas to get your brain going:
 
-| Method | Use it? | Why or why not? |
-|--------|:-------:|-----------------|
-| Ask users to rate things (1-5 stars) | Yes / No | ___ |
-| Track what they click on | Yes / No | ___ |
-| Track how long they spend on each thing | Yes / No | ___ |
-| Ask users to pick favorite categories | Yes / No | ___ |
-| Look at what their friends like | Yes / No | ___ |
-| Use their location | Yes / No | ___ |
-| Use their age or grade level | Yes / No | ___ |
-| Other: _______________ | Yes / No | ___ |
+- A system that recommends the **perfect Minecraft world** for your play style — peaceful builder? Hardcore survival? Redstone engineer?
+- A **homework helper** that figures out exactly which practice problems you need based on what you keep getting wrong
+- A **lunch recommender** for your school cafeteria that learns what you actually eat vs. what you throw away
+- A **friend-finder for summer camp** that matches you with people who have similar interests but different enough backgrounds that you'll actually learn from each other
+- A **dream playlist generator** that picks sounds to help you fall asleep based on how restless you were last night
+- A **pet recommender** that matches families with the right animal based on their home, schedule, and energy level
 
-**What's the FIRST thing your system would ask a brand-new user?**
-
-> _______________________________________________________________
+Or go completely off the wall with your own idea. The weirder, the better.
 
 ---
 
-## Part 3: The Algorithm
+## Three Questions to Answer in Your Head
 
-Which recommendation method(s) would your system use? Check all that apply:
+Whatever you picked, think through these three things. You don't need to write anything down — just work through them like a real engineer would.
 
-| Method | Use it? | How you'd use it |
-|--------|:-------:|-----------------|
-| **Collaborative filtering** (find taste twins — "people like you also liked...") | Yes / No | ___ |
-| **Content-based** (match by features and tags — "because this is similar to what you liked...") | Yes / No | ___ |
-| **Popularity** (show trending or most-popular items) | Yes / No | ___ |
-| **Knowledge-based** (use rules and expert knowledge) | Yes / No | ___ |
-| **Hybrid** (combine multiple methods) | Yes / No | ___ |
+**1. What DATA would your system need?**
 
-**Why did you choose this combination?**
+What would it track about users? What would it need to know about the things it's recommending? Think about both the obvious data (like ratings or clicks) and the sneaky data (like how long someone hesitates before choosing, or what time of day they use the app).
 
-> _______________________________________________________________
+**2. Would it use collaborative filtering, content-based filtering, or both?**
 
----
+Collaborative filtering means: "people similar to you liked THIS, so you probably will too." Content-based means: "you liked things with THESE features, so here's something with similar features." Most good systems use a mix — but which one matters MORE for your idea?
 
-## Part 4: Fairness Check
+**3. How would you make sure it's FAIR and doesn't create bubbles?**
 
-Real recommendation engineers have to think about fairness, privacy, and unintended consequences. Answer these questions honestly:
-
-| Challenge | Your solution |
-|-----------|--------------|
-| **Cold start:** A brand-new user signs up with zero history. How would your system handle this? | ___ |
-| **New items:** A new item is added that nobody has tried yet. How does it get discovered? | ___ |
-| **Filter bubbles:** How would you make sure users don't get stuck seeing the same type of thing? | ___ |
-| **Privacy:** What data would you NEVER collect, even if it would improve recommendations? | ___ |
-| **Fairness:** How would you make sure small or new creators/items get a fair chance? | ___ |
+This is the hardest question and the most important one. If your homework helper only gives easy problems, you'll never improve. If your friend-finder only matches you with people exactly like you, you'll never grow. How would you build in surprise, challenge, and diversity?
 
 ---
 
-## Part 5: Pitch It!
+## The Verdict
 
-Imagine you're presenting your idea to a room full of investors (or your class!). Write a short pitch.
+If you came up with solid answers to all three questions, congratulations — you're thinking like a real recommendation engineer. You understand data, algorithms, AND ethics. That's the whole package.
 
-**The elevator pitch** (2-3 sentences to hook someone's interest):
+And here's the thing: every system that exists today started as someone's wild idea. Spotify's Discover Weekly, Netflix's "Because you watched...", TikTok's For You page — someone imagined each of those before they were real.
 
-> _______________________________________________________________
->
-> _______________________________________________________________
->
-> _______________________________________________________________
-
-**Three reasons why people would love your system:**
-
-| # | Reason |
-|---|--------|
-| 1 | ___ |
-| 2 | ___ |
-| 3 | ___ |
-
-**One thing that makes your system DIFFERENT from anything that exists today:**
-
-> _______________________________________________________________
+Some day, you might actually build yours.
 
 ---
 
-## Part 6: Sketch It!
+**type: question**
 
-Draw your app or system below. Think about: What does the main screen look like? Where do recommendations appear? How does a user interact with it?
+Which part of designing a recommender system do you think is the HARDEST?
 
-*Use the space below for your sketch (or grab a blank piece of paper!):*
+- Figuring out what data to collect
+- Choosing the right algorithm
+- Making sure it's fair and doesn't create bubbles
+- Getting people to actually use it
 
-```
-+------------------------------------------------------------------+
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                      YOUR DESIGN HERE                            |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-|                                                                  |
-+------------------------------------------------------------------+
-```
-
----
-
-## Part 7: Peer Review
-
-Swap worksheets with a classmate or friend. Review each other's designs!
-
-**Reviewer name:** _______________
-
-| Question | Rating (1-5) | Comments |
-|----------|:------------:|----------|
-| Is the idea clear and easy to understand? | ___ | ___ |
-| Would you actually use this system? | ___ | ___ |
-| Did they think about fairness and privacy? | ___ | ___ |
-| Is their data collection plan reasonable? | ___ | ___ |
-| Is their algorithm choice a good fit? | ___ | ___ |
-| **Overall score** | ___/25 | ___ |
-
-**One thing I love about this design:**
-
-> _______________________________________________________________
-
-**One suggestion to make it even better:**
-
-> _______________________________________________________________
-
----
-
-## Bonus: Make It Real
-
-Want to take your design to the next level? Here are some ways to keep going:
-
-- **Paper prototype:** Draw 5 screens showing how a user would move through your app
-- **User research:** Ask 5 people if they would use your system and what they'd change
-- **Build it:** Use Scratch, App Inventor, or a simple website to create a working demo
-- **Present it:** Give a 3-minute pitch to your class, family, or friends
-
----
-
-*Every great product started as an idea on paper. Who knows — maybe your dream recommender will be the next big thing!*
+Think about it: most engineers say fairness is the hardest part. The math is solvable — but deciding what's "right" for people? That takes wisdom, not just code.

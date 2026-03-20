@@ -239,14 +239,34 @@ class PBook {
     el.scrollBy({ left: dir * 300, behavior: 'smooth' });
   }
 
-  // Hide shelf arrows when content doesn't overflow
+  // Show/hide shelf arrows based on scroll position
   _updateShelfArrows() {
     document.querySelectorAll('.shelf-wrap').forEach(wrap => {
       const scroll = wrap.querySelector('.shelf-scroll');
       if (!scroll) return;
       const overflows = scroll.scrollWidth > scroll.clientWidth + 10;
       wrap.classList.toggle('no-scroll', !overflows);
+      if (overflows) this._updateArrowVisibility(wrap, scroll);
     });
+    // Listen for scroll to update arrows dynamically
+    document.querySelectorAll('.shelf-scroll').forEach(scroll => {
+      if (scroll.dataset.arrowBound) return;
+      scroll.dataset.arrowBound = '1';
+      scroll.addEventListener('scroll', () => {
+        const wrap = scroll.closest('.shelf-wrap');
+        if (wrap) this._updateArrowVisibility(wrap, scroll);
+      }, { passive: true });
+    });
+  }
+
+  _updateArrowVisibility(wrap, scroll) {
+    const left = wrap.querySelector('.shelf-btn-left');
+    const right = wrap.querySelector('.shelf-btn-right');
+    if (!left || !right) return;
+    const atStart = scroll.scrollLeft < 10;
+    const atEnd = scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - 10;
+    left.style.visibility = atStart ? 'hidden' : 'visible';
+    right.style.visibility = atEnd ? 'hidden' : 'visible';
   }
 
   cardHtml(block, hero = false) {

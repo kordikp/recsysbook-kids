@@ -1,155 +1,70 @@
 ---
 id: ch4-ws-bubble
 type: spine
-title: "Worksheet: Audit Your Filter Bubble!"
-readingTime: 10
+title: "Is YOUR Feed in a Bubble?"
+readingTime: 5
 standalone: true
-teaser: "Find out if you're stuck in a filter bubble — and learn how to pop it!"
+teaser: "A 2-minute check to find out if your algorithm has trapped you — plus how to break free!"
 voice: universal
 parent: null
 diagram: null
 ---
 
-# Worksheet: Audit Your Filter Bubble!
+# Is YOUR Feed in a Bubble?
 
-A **filter bubble** is what happens when a recommendation algorithm shows you the same type of content over and over. It thinks it's being helpful, but it might be shrinking your world without you noticing. Let's find out if YOU're in one!
-
-**What you need:** Your phone or computer with YouTube or TikTok open. This worksheet. About 10 minutes.
+A **filter bubble** is what happens when the algorithm shows you the same kind of content over and over until that's ALL you see. It thinks it's being helpful, but it might be shrinking your world. Let's find out if it's happening to you. Takes about 2 minutes.
 
 ---
 
-## Part 1: Count and Categorize
+## The Quick Check
 
-Open your YouTube home page or TikTok "For You" page. Look at the **first 20 recommendations** (scroll slowly!) and sort each one into a category using tally marks.
+Open your YouTube homepage or TikTok For You page right now. Look at the first 10 recommendations. Don't watch anything — just scan the titles and thumbnails.
 
-### Category Tracker
-
-| Category | Tally marks | Count |
-|----------|:-----------:|:-----:|
-| Gaming | | ___ |
-| Music / Music videos | | ___ |
-| Comedy / Memes / Funny clips | | ___ |
-| Science / Education / How-to | | ___ |
-| Sports / Fitness | | ___ |
-| Art / Crafts / DIY | | ___ |
-| Cooking / Food | | ___ |
-| News / Current events | | ___ |
-| Animals / Nature | | ___ |
-| Beauty / Fashion | | ___ |
-| Tech / Gadgets | | ___ |
-| Other: _____________ | | ___ |
-| Other: _____________ | | ___ |
-| **TOTAL** | | **20** |
+Now mentally sort them into topics. Gaming, music, comedy, science, sports, cooking, animals, fashion, news, whatever categories fit. Count how many DIFFERENT topics you see across those 10 videos.
 
 ---
 
-## Part 2: Analyze Your Results
+## Your Bubble Score
 
-Fill in the analysis below:
+How many different topics showed up in your 10 recommendations?
 
-| Question | Your answer |
-|----------|-------------|
-| Total recommendations counted | ___ (should be 20) |
-| How many DIFFERENT categories did you use? | ___ |
-| What is your #1 category? | ___ |
-| How many recommendations in your #1 category? | ___ out of 20 |
-| What percentage is that? (count / 20 x 100) | ___% |
-| What is your #2 category? | ___ |
-| Are there any categories with ZERO recommendations? | ___ |
-| Which categories got zero? | ___ |
+**1-2 topics:** You're in a DEEP bubble. The algorithm thinks you only care about one or two things, and it's feeding you an endless loop of the same stuff. Your feed is basically a hall of mirrors.
+
+**3-4 topics:** Mild bubble. There's some variety, but the algorithm still has strong opinions about who you are. It's playing it safe.
+
+**5 or more topics:** Nice variety! Your recommendations cover a decent range. Either you have wide-ranging interests, or you've been naturally breaking out of patterns. Either way — well done.
 
 ---
 
-## Part 3: Your Bubble Score
+## Want to Pop Your Bubble?
 
-Use your results to find your bubble score:
+Here's the trick, and it actually works: watch 2-3 videos about something COMPLETELY different from your usual stuff. If your feed is all gaming, watch a cooking tutorial. If it's all music, try a science explainer. If it's all comedy, check out a nature documentary.
 
-| Bubble score | What it means | You? |
-|:------------:|---------------|:----:|
-| 1-2 categories have more than 75% of your content | **Deep bubble!** The algorithm has a very narrow picture of you. You're mostly seeing the same kind of stuff over and over. | ___ |
-| 3-4 categories | **Mild bubble.** There's some variety, but the algorithm still has strong opinions about what you like. | ___ |
-| 5 or more categories | **Good diversity!** Your recommendations cover a wide range of topics. Nice! | ___ |
+Then come back tomorrow and look at your first 10 recommendations again. Your feed WILL be different — guaranteed. The algorithm picks up new signals fast (remember the origami experiment from Chapter 2?).
 
-**My bubble score:** _______________
+You can also use the "Not interested" button to push back on recommendations you're tired of. Every time you tap it, you're telling the algorithm to branch out.
 
 ---
 
-## Part 4: Pop the Bubble Challenge!
+## So Whose Fault Is It?
 
-Now let's see if YOU can change your recommendations. This is a two-day experiment!
+Here's the big question: is it the algorithm's fault you're in a bubble, or is it YOUR fault for watching the same stuff over and over?
 
-### Day 1: Break the pattern
+Trick answer: it's BOTH.
 
-Pick 3 categories that got ZERO (or very few) recommendations. Watch 2-3 videos in EACH of those categories. Yes, even if it feels weird!
+You watch gaming videos because you like gaming. The algorithm sees you watching gaming videos, so it shows you more gaming. You watch those too (because they're right there!), so it shows you even MORE gaming. It's a feedback loop — you and the algorithm are reinforcing each other.
 
-| # | Category I explored | Videos I watched (titles or topics) |
-|---|--------------------|------------------------------------|
-| 1 | _______________ | ___ |
-| 2 | _______________ | ___ |
-| 3 | _______________ | ___ |
-
-### Day 2: Redo the audit
-
-Come back tomorrow and count your first 20 recommendations again:
-
-| Category | Day 1 count | Day 2 count | Change |
-|----------|:-----------:|:-----------:|:------:|
-| Gaming | ___ | ___ | ___ |
-| Music | ___ | ___ | ___ |
-| Comedy / Memes | ___ | ___ | ___ |
-| Science / Education | ___ | ___ | ___ |
-| Sports | ___ | ___ | ___ |
-| Art / Crafts | ___ | ___ | ___ |
-| Cooking / Food | ___ | ___ | ___ |
-| News | ___ | ___ | ___ |
-| Animals | ___ | ___ | ___ |
-| Beauty / Fashion | ___ | ___ | ___ |
-| Tech / Gadgets | ___ | ___ | ___ |
-| Other: _______ | ___ | ___ | ___ |
-| Other: _______ | ___ | ___ | ___ |
-
-### Results
-
-| Question | Your answer |
-|----------|-------------|
-| Number of categories BEFORE the experiment | ___ |
-| Number of categories AFTER the experiment | ___ |
-| Did your bubble score improve? | Yes / No / A little |
-| Did the new categories from Day 1 show up in Day 2 recommendations? | Yes / Some / No |
-| How many new-category recommendations appeared? | ___ |
+But now you know how it works. And that means you can break the cycle any time you want. Watch something new on purpose. Use the "Not interested" button. Explore a random topic once a week. The algorithm works for you — but only if you give it instructions.
 
 ---
 
-## Part 5: Reflect
+**type: question**
 
-**What did you learn about how much control YOU have over your recommendations?**
+After checking your feed, how would you rate your bubble?
 
-> _______________________________________________________________
->
-> _______________________________________________________________
+- Deep bubble — almost everything was the same topic
+- Mild bubble — a few topics, but one dominated
+- Pretty diverse — lots of different stuff
+- I don't have a bubble at all!
 
-**Do you think filter bubbles are always bad? Can you think of a time when getting similar recommendations was actually helpful?**
-
-> _______________________________________________________________
->
-> _______________________________________________________________
-
-**What's one thing you'll do differently now that you know about filter bubbles?**
-
-> _______________________________________________________________
-
----
-
-## Quick Tips: Staying in Control
-
-Here are things you can do ANY time to keep your recommendations diverse:
-
-- **Use "Not interested" buttons** — they actually work! Train the algorithm to stop showing you stuff you don't want.
-- **Search for new topics on purpose** — once a week, explore something completely new.
-- **Check your watch history** — delete videos that were one-time curiosity clicks so they don't warp your recommendations.
-- **Use incognito/private mode** — when you want to explore without affecting your profile.
-- **Follow diverse creators** — mix up who you subscribe to across different topics.
-
----
-
-*Remember: The algorithm works for you, not the other way around. You have more power than you think!*
+No matter what you picked, try the experiment: watch something different today, check your feed tomorrow. See what changes.

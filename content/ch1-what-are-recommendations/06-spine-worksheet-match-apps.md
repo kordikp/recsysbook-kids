@@ -1,93 +1,55 @@
 ---
 id: ch1-ws-match
 type: spine
-title: "Worksheet: Match the App to Its Method!"
+title: "Which Model Powers Your Favorite App?"
 readingTime: 5
 standalone: true
-teaser: "Can you match each app to how it recommends content?"
+teaser: "Open your favorite apps and discover which recommendation model is secretly running the show!"
 voice: universal
 parent: null
 diagram: null
 ---
 
-# Worksheet: Match the App to Its Method!
+# Which Model Powers Your Favorite App?
 
-Every app you use has a secret recipe for deciding what to show you next. Some apps ask your friends. Some apps let you choose. And some apps use artificial intelligence to figure it out on their own!
+Every app you use has a secret recipe for deciding what to show you. Let's figure out which recipe each app is using — by actually opening them up and looking!
 
-**Your mission:** Read about the five recommendation models below, then match each app to its model. Write the correct letter in the last column — or grab a pencil and draw lines!
+First, meet the five models:
 
----
+- **A) Friend-based** — Shows you stuff your friends like and share. Your feed = your social circle's greatest hits.
+- **B) Follow-based** — You pick who to follow. You're the boss — but you only see what you chose.
+- **C) Interest-based** — You join communities around topics you care about. The community decides what's hot, not a robot.
+- **D) Algorithm-based** — You don't choose anything. The AI watches what you watch, what you skip, and how long you stay — then it picks what's next. It knows you better than you think.
+- **E) Group-based** — You join groups and chat servers. Content lives inside those rooms, and you only see it if you walk in.
 
-## The Five Models
+Now let's investigate your apps one by one.
 
-| Model | How it works |
-|-------|-------------|
-| **A) Friend-based** | Shows you what your friends like and share. The more friends you have, the more content you see. Your feed is basically a mirror of your social circle. |
-| **B) Follow-based** | You pick who to follow. Big creators get millions of viewers, but small creators have a hard time being discovered. You're in control — but only if you know who to look for! |
-| **C) Interest-based** | You pick topics you care about and join communities built around those topics. You see what the community posts, not what an algorithm picks for you. |
-| **D) Algorithm-based** | You don't need to follow anyone! The AI watches what you watch, what you skip, and how long you stay — then it figures out what to show you next. It knows you better than you think. |
-| **E) Group-based** | People create groups and chat servers. Content lives inside those groups, and you only see it if you join. It's like walking into different rooms at a party. |
+**Open TikTok.** Look at your For You page. Did you hand-pick these creators? Nope — the ALGORITHM picked them for you. That's **model D**.
 
----
+**Open Reddit** (or think about how it works). You joined subreddits like r/Minecraft or r/memes because YOU chose those topics. That's **model C** — interest-based.
 
-## Match the Apps!
+**Open Discord.** You're in servers — little rooms you joined. You only see what's posted in YOUR servers. That's **model E** — group-based.
 
-Read what each app does, then write the letter (A, B, C, D, or E) in the last column.
+**Open Facebook** (or ask a parent to show you theirs). The feed is packed with posts from friends and family. That's **model A** — friend-based.
 
-| # | App | What it does | Model (A-E) |
-|---|-----|-------------|-------------|
-| 1 | **TikTok** | The "For You" page shows videos the AI thinks you'll like — even from creators you've never heard of | ___ |
-| 2 | **Facebook** | Your News Feed is full of posts from friends and family, plus things they liked or shared | ___ |
-| 3 | **YouTube** | You can subscribe to channels, but the home page also suggests videos the algorithm picked for you | ___ |
-| 4 | **Reddit** | You join subreddits about topics you're interested in (like r/Minecraft or r/science) | ___ |
-| 5 | **Discord** | You join servers (groups) to chat, share memes, and talk about shared interests | ___ |
-| 6 | **Instagram** | You follow accounts you like, but the Reels tab works a lot like TikTok's algorithm | ___ |
-| 7 | **X (Twitter)** | You follow people for their tweets, but the "For You" tab is powered by an algorithm | ___ |
+**Now open YouTube.** You subscribe to channels (that's follow-based, model B). But look at your homepage — half those videos are from channels you've NEVER subscribed to. The algorithm snuck them in. YouTube uses **both B and D**.
+
+**Same with Instagram.** Your main feed shows people you follow (B), but tap the Reels tab and suddenly it's TikTok-style algorithm picks (D). **Both B and D again.**
+
+**And X (Twitter).** You follow people for their posts, but the "For You" tab is pure algorithm. **B and D once more.**
+
+Notice the pattern? YouTube, Instagram, and X all use BOTH following AND algorithms. The algorithm is taking over everywhere!
 
 ---
 
-## How did you do?
+**type: question**
 
-Scroll down for answers when you're ready!
+Which model do you think gives YOU the most control over what you see?
 
-&nbsp;
+- A) Friend-based
+- B) Follow-based
+- C) Interest-based
+- D) Algorithm-based
+- E) Group-based
 
-&nbsp;
-
-&nbsp;
-
-&nbsp;
-
-&nbsp;
-
-&nbsp;
-
-### Answer Key
-
-| # | App | Answer |
-|---|-----|--------|
-| 1 | TikTok | **D** (Algorithm-based) |
-| 2 | Facebook | **A** (Friend-based) |
-| 3 | YouTube | **B + D** (Follow-based AND Algorithm-based) |
-| 4 | Reddit | **C** (Interest-based) |
-| 5 | Discord | **E** (Group-based) |
-| 6 | Instagram | **B + D** (Follow-based AND Algorithm-based) |
-| 7 | X (Twitter) | **B + D** (Follow-based AND Algorithm-based) |
-
-**Did you notice?** Three out of seven apps use BOTH follow-based AND algorithm-based models! That's because algorithms have gotten SO good at keeping people engaged that almost every platform is adding them. The trend is clear: AI-powered recommendations are taking over.
-
----
-
-## Discussion Questions
-
-Talk about these with a classmate, teacher, or family member:
-
-1. **Which model gives YOU the most control** over what you see? Why do you think so?
-
-2. **Which model is best at showing you things you didn't know you'd like?** Can you think of a time that happened to you?
-
-3. **If you could design a brand-new social network, which model would you choose?** Would you mix models together? What would your app look like?
-
----
-
-*Tip: There are no wrong answers in the discussion! The point is to think about how recommendations shape what you see every day.*
+Think about it: with follow-based and interest-based, YOU decide. With algorithm-based, the AI decides. Which one do you actually prefer — and is it the same one you spend the most time on?

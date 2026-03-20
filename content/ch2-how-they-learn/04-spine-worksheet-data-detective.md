@@ -1,121 +1,59 @@
 ---
 id: ch2-ws-detective
 type: spine
-title: "Worksheet: Be a Data Detective!"
+title: "Be a Data Detective — Right Now!"
 readingTime: 10
 standalone: true
-teaser: "Investigate your own recommendations like a detective!"
+teaser: "Grab your phone and investigate your algorithm in real time — you'll catch it learning!"
 voice: universal
 parent: null
 diagram: null
 ---
 
-# Worksheet: Be a Data Detective!
+# Be a Data Detective — Right Now!
 
-Every recommendation you see is a clue. The algorithm left it there because it thinks it knows something about you. Time to put on your detective hat and investigate!
-
-**What you need:** Your phone or computer with YouTube, TikTok, or Spotify open. A pencil. About 10 minutes of detective time.
+Grab your phone. Open YouTube. We're going to investigate YOUR algorithm in real time. This whole thing takes about 10 minutes, and by the end you'll have proof of how fast the algorithm learns.
 
 ---
 
-## Your Detective Badge
+## Step 1: Survey the Scene
 
-| Field | Fill in |
-|-------|---------|
-| Detective name | _______________ |
-| Date of investigation | _______________ |
-| App investigated | _______________ |
-| Time of investigation | _______________ |
+Look at your YouTube homepage. Don't scroll yet — just check out the first 10 recommendations sitting right there.
+
+How many of those 10 are about topics you've searched for or watched before? Probably most of them. The algorithm is showing you a mirror of your past behavior. Count them up in your head. Seven out of ten? Eight? That number tells you how confident the algorithm is about your taste.
 
 ---
 
-## Part 1: The Scene of the Crime
+## Step 2: Spot the Odd One Out
 
-Open your home page / "For You" page. Don't scroll yet — just look at what's right in front of you. Fill in the detective report below.
+Now look for one recommendation that seems random — something you'd never search for. Found one?
 
-### Detective Report
-
-| Clue # | Question | Your answer |
-|--------|----------|-------------|
-| 1 | How many recommendations can you see on screen right now? | ___ |
-| 2 | How many of them seem like good guesses for YOU? | ___ out of ___ |
-| 3 | Can you find one that's totally wrong for you? What is it? | ___ |
-| 4 | Why do you think the algorithm recommended that wrong one? | ___ |
-| 5 | Can you find a "Not interested" or "Don't recommend" button? | Yes / No |
-| 6 | Click "Not interested" on one item. What happened? | ___ |
-| 7 | What was the LAST video or song you watched/listened to? Can you see recommendations related to it? | ___ |
-| 8 | How many recommendations are from channels you already follow vs. new discoveries? | Follow: ___ / New: ___ |
+Think about why it's there. Did someone else use your phone or TV recently? Did you accidentally watch something weird last week? Or is the algorithm testing you — throwing in something new to see if you'll bite? (Spoiler: that last one happens more than you think. It's called **exploration**.)
 
 ---
 
-## Part 2: The Evidence Locker
+## Step 3: Talk Back to the Algorithm
 
-Time to dig deeper! Open your Watch History or Listening History.
+Pick a video you definitely DON'T want to watch. Tap the three dots next to it (or long-press on TikTok). Tap **"Not interested."**
 
-- **YouTube:** Library -> History
-- **TikTok:** Profile -> Menu -> Watch history (if enabled)
-- **Spotify:** Recently played
-
-Look through your history and answer:
-
-**What patterns can YOU see?** Write 3 things the algorithm probably "knows" about you based on your history:
-
-| # | What the algorithm "knows" about me |
-|---|-------------------------------------|
-| 1 | ___ |
-| 2 | ___ |
-| 3 | ___ |
+Now go back to your homepage. Pull down to refresh. Look around — did anything change? The algorithm just heard you say "no thanks" and adjusted. You gave it a signal, and it listened. That's one of the most powerful tools you have.
 
 ---
 
-## Part 3: Compare Notes
+## Step 4: The Big Experiment
 
-A good detective never works alone! Ask a friend or family member to open the SAME app on THEIR device. Compare your home pages.
+This is where it gets wild. Search for something you have NEVER searched before. Something totally random for you — try **"origami crane tutorial"** or **"how to juggle"** or **"underwater volcano footage."**
 
-| Question | Your answer |
-|----------|-------------|
-| Partner's name | ___ |
-| Are your recommendations different from theirs? | Yes / No / A little |
-| Write 2 differences you noticed | 1. ___ |
-| | 2. ___ |
-| Write 1 similarity you noticed | ___ |
-| Why do you think these differences exist? | ___ |
+Watch one video all the way through. At least 30 seconds, but more is better. Then go back to your homepage and refresh.
+
+Can you spot any new recommendations related to what you just watched? Look carefully — they might be mixed in between your usual stuff. One origami video. One "paper crafts for beginners." Maybe a "satisfying folding videos" compilation.
+
+You watched ONE video and it already started reshaping your feed. That's how fast the algorithm learns.
 
 ---
 
-## Part 4: Bonus Detective Challenge
+## What You Just Proved
 
-This is for detectives who want to go the extra mile!
+Every single action you take — watching, skipping, searching, tapping "not interested" — is a signal. The algorithm collects all those signals and builds a picture of you in real time. You just watched it happen with your own eyes.
 
-**The Experiment:** Pick a topic you've NEVER searched for before (maybe pottery, cricket, origami, or anything unusual). Watch 3 videos about that topic. Wait a few hours. Then come back and check your home page.
-
-| Question | Your answer |
-|----------|-------------|
-| Topic you chose | ___ |
-| How many videos did you watch? | ___ |
-| How long did you wait before checking? | ___ |
-| Did new recommendations about that topic appear? | Yes / No |
-| How many? | ___ |
-| How fast did the algorithm "learn" your new interest? | Instantly / A few hours / Next day / Never |
-
----
-
-## Detective Conclusion
-
-Write your final detective report in 2-3 sentences. What did you learn about how recommendations work?
-
-> _______________________________________________________________
->
-> _______________________________________________________________
->
-> _______________________________________________________________
-
-**Case rating:** How well does this app's algorithm know you?
-
-| Rating | Meaning |
-|--------|---------|
-| ___/10 | (1 = doesn't know me at all, 10 = knows me perfectly) |
-
----
-
-*Remember: Being a good digital detective means understanding how technology works so YOU stay in control — not the other way around!*
+The takeaway? You're not just a viewer. Every time you use an app, you're training the algorithm. The question is: are you training it on purpose, or is it just happening to you?

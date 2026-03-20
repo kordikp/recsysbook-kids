@@ -1,136 +1,78 @@
 ---
 id: ch3-ws-build
 type: spine
-title: "Worksheet: Build a Movie Recommender by Hand!"
-readingTime: 15
+title: "Build a Recommender in Your Head"
+readingTime: 5
 standalone: true
-teaser: "Build a real recommendation system with just paper and pencil!"
+teaser: "You don't need a computer to do collaborative filtering — you just need a friend!"
 voice: universal
 parent: null
 diagram: null
 ---
 
-# Worksheet: Build a Movie Recommender by Hand!
+# Build a Recommender in Your Head
 
-Did you know you can build a real recommendation system without writing a single line of code? All you need is a pencil, this worksheet, and 5 friends (or family members). Let's go!
-
----
-
-## Step 1: Collect Ratings
-
-Ask 5 people to rate these movies from 1 to 5 stars. If someone hasn't seen a movie, write an X.
-
-**Rating scale:**
-- 1 = Hated it
-- 2 = Didn't like it
-- 3 = It was okay
-- 4 = Liked it!
-- 5 = Loved it!!
-- X = Haven't seen it
-
-Write each person's name at the top of their column, then fill in their ratings:
-
-| Movie | Friend 1: _____ | Friend 2: _____ | Friend 3: _____ | Friend 4: _____ | Friend 5: _____ | YOU |
-|-------|:-:|:-:|:-:|:-:|:-:|:-:|
-| Frozen | | | | | | |
-| Spider-Man: Across the Spider-Verse | | | | | | |
-| Encanto | | | | | | |
-| Moana | | | | | | |
-| Inside Out 2 | | | | | | |
-| Wonka | | | | | | |
-
-**Feel free to swap in other movies everyone might know!** The important thing is that everyone rates the same list.
+You don't need a computer to build a recommendation system. You don't even need an app. All you need is one friend (or sibling, or parent) and about five minutes. Ready? Let's do collaborative filtering — the human way.
 
 ---
 
-## Step 2: Find Your Taste Twin
+## Step 1: Pick Your Top 3
 
-Now the magic begins. Compare YOUR ratings to each friend's ratings. For every movie you BOTH rated (ignore the X's), check if your scores are within 1 star of each other. That counts as a match!
-
-**Example:** If you gave Frozen a 4 and your friend gave it a 5, that's a match (difference = 1). If you gave it a 4 and they gave it a 2, that's NOT a match (difference = 2).
-
-| Friend | Movies you both rated | Matching ratings (within 1 star) | Match score |
-|--------|:---------------------:|:--------------------------------:|:-----------:|
-| Friend 1: _____ | ___ out of 6 | ___ matches | ___% |
-| Friend 2: _____ | ___ out of 6 | ___ matches | ___% |
-| Friend 3: _____ | ___ out of 6 | ___ matches | ___% |
-| Friend 4: _____ | ___ out of 6 | ___ matches | ___% |
-| Friend 5: _____ | ___ out of 6 | ___ matches | ___% |
-
-**To calculate the match score:** matches divided by movies you both rated, times 100.
-
-Example: 4 matches out of 5 movies = 4/5 = 0.8 = **80%**
-
-**Your taste twin is:** _______________  (the friend with the highest match score!)
+Think of your 3 favorite movies or shows right now. Not all-time favorites — the ones you're into RIGHT NOW. Got them locked in your head? Good. Don't say them out loud yet.
 
 ---
 
-## Step 3: Get Your Recommendations!
+## Step 2: Get Their Top 3
 
-Look at your taste twin's ratings. Find movies that:
-- Your taste twin **rated** (not X)
-- **YOU** haven't seen yet (you wrote X)
-
-Those are your recommendations! Write them below, along with your taste twin's rating:
-
-| # | Recommended movie | Taste twin's rating |
-|---|-------------------|:-------------------:|
-| 1 | _______________ | ___/5 |
-| 2 | _______________ | ___/5 |
-| 3 | _______________ | ___/5 |
-
-**No recommendations?** If you and your taste twin have seen all the same movies, look at your second-closest friend instead!
+Now ask someone near you — a friend, a sibling, a parent, whoever's around — for THEIR current top 3 movies or shows. Let them answer first so you don't influence their picks.
 
 ---
 
-## Step 4: Test It!
+## Step 3: Count the Overlap
 
-This is the big moment. Watch one of the recommended movies and see if your "paper recommender" actually works!
+Compare your lists. How many titles show up on BOTH lists?
 
-| Question | Your answer |
-|----------|-------------|
-| Movie you watched | _______________ |
-| Your taste twin's rating | ___/5 |
-| YOUR rating after watching | ___/5 |
-| Difference | ___ stars |
-| Was it a good recommendation? | Great / Okay / Not really |
+- **2 or 3 matches:** You're taste twins! You like the same stuff. This is gold for recommendations.
+- **1 match:** Some overlap. You're in the same neighborhood but not the same house.
+- **Zero matches:** Totally different taste. That's fine — it just means recommendations between you two probably won't work well.
 
 ---
 
-## Step 5: Reflect
+## Step 4: Get Your Recommendation
 
-Answer these questions. There are no wrong answers — this is about thinking like a recommendation engineer!
+Here's where the magic happens.
 
-**What worked well about this method?**
+**If you're taste twins** (1 or more matches): Ask them what they've been watching lately that ISN'T on their top 3 list — something they loved that you haven't seen yet. THAT is your recommendation. Because you agree on so many things, there's a solid chance you'll love their pick too.
 
-> _______________________________________________________________
-
-**What's one problem you noticed?**
-(Hint: What happens when nobody has seen a brand-new movie? What if you only have 5 friends — is that enough?)
-
-> _______________________________________________________________
-
-**How would you improve this system?**
-
-> _______________________________________________________________
+**If you have zero overlap:** Their suggestion probably won't land for you. But try it anyway if you're feeling adventurous — sometimes the best discoveries come from unexpected places.
 
 ---
 
-## What You Just Built
+## Step 5: Test It
 
-Congratulations! You just did **collaborative filtering** by hand. This is the same basic idea that Netflix, Spotify, and YouTube use — just with millions of users instead of 5 friends, and computers doing the math instead of pencils.
+Watch their recommendation. Did they nail it? Did you love it, or was it a total miss?
 
-Here's how your paper version maps to the real thing:
-
-| Your paper version | Real recommendation system |
-|-------------------|---------------------------|
-| Asking 5 friends for ratings | Millions of users rate or watch content |
-| Finding your taste twin | Algorithm finds users with similar patterns |
-| Recommending their favorites | System suggests items similar users enjoyed |
-| Testing with 1 movie | A/B testing with thousands of users |
-
-The difference? Scale and speed. But the core idea is exactly the same.
+If it worked, congratulations — collaborative filtering just proved itself. If it didn't, that's useful data too. Even Netflix gets it wrong sometimes.
 
 ---
 
-*Fun fact: The Netflix Prize (2006-2009) offered $1,000,000 to anyone who could improve their recommendation algorithm by just 10%. The winning team used a much fancier version of what you just did!*
+## What Just Happened
+
+You just did **collaborative filtering** with your bare brain. Find someone with similar taste. See what they liked that you haven't tried. Use their taste to predict yours.
+
+Netflix does the exact same thing — but with **230 million people** instead of 2, and computers crunching the numbers instead of you asking "so what are you watching these days?"
+
+The core idea is identical. Scale and speed are the only differences. Not bad for five minutes of thinking, right?
+
+---
+
+**type: question**
+
+Your taste twin loves a movie you've never heard of. How confident are you that you'll like it too?
+
+- Very confident — we agreed on almost everything!
+- Somewhat confident — we had some overlap
+- Not confident — we had zero matches, so who knows
+- It depends on what kind of movie it is
+
+Think about it: the MORE things you agree on, the stronger the prediction. That's why Netflix needs millions of ratings — more data means better matches.
