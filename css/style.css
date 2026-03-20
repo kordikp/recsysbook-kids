@@ -253,8 +253,8 @@ button { font-family: var(--font-ui); cursor: pointer; border: none; background:
 .user-highlight:hover { background: #fde047; }
 
 /* Read next (inline, appears after reading a block) */
-.read-next { margin: .5em 0 1.5em; opacity: 0; max-height: 0; overflow: hidden; transition: all .4s ease; }
-.read-next.rn-visible { opacity: 1; max-height: 200px; }
+.read-next { margin: .5em 0 1.5em; opacity: 0; max-height: 0; overflow: hidden; transition: all .4s ease; clear: both; position: relative; z-index: 1; }
+.read-next.rn-visible { opacity: 1; max-height: none; }
 .rn-item { display: flex; align-items: center; gap: .6em; padding: .6em .8em; margin-bottom: .3em; background: var(--accent-bg); border: 1px solid var(--accent); border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
 .rn-item:hover { background: #fde68a; transform: translateX(3px); }
 .rn-label { font-family: var(--font-ui); font-size: .6rem; font-weight: 600; text-transform: uppercase; color: var(--accent); white-space: nowrap; flex-shrink: 0; width: 6em; }
