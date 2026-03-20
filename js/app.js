@@ -841,6 +841,16 @@ class PBook {
 
     // Fallback: generate from title
     if (quizzes.length === 0) {
+    // Ch6: Ethics
+    if (body.includes('rabbit hole') || body.includes('who decides')) quizzes.push({ q: 'Who decides what appears on your YouTube homepage — you, YouTube, or the algorithm?', a: 'The algorithm decides! It was built by YouTube engineers who told it to maximize watch time. You influence it with clicks, but the final call is the algorithm\'s.' });
+    if (body.includes('autoplay') || body.includes('infinite scroll') || body.includes('addictive')) quizzes.push({ q: 'Why is there no natural stopping point on TikTok or YouTube?', a: 'By design! Infinite scroll and autoplay mean there\'s always another video ready. It\'s like a bag of chips that never runs out. Knowing this is the first step to taking control.' });
+    if (body.includes('dopamine') || body.includes('one more')) quizzes.push({ q: 'What brain chemical makes you want to watch "just one more video"?', a: 'Dopamine! It\'s released when you see something surprising or rewarding. The uncertainty of "will the next video be good?" creates a dopamine loop. Recognizing it is a superpower!' });
+    if (body.includes('privacy') || body.includes('data') && body.includes('know')) quizzes.push({ q: 'Can you check what data YouTube has collected about you?', a: 'Yes! Go to myactivity.google.com — you can see every video you\'ve ever watched. You can also delete it or set it to auto-delete.' });
+    if (body.includes('future') || body.includes('your generation')) quizzes.push({ q: 'Why does YOUR generation understand algorithms better than most adults?', a: 'Because you grew up WITH them! You notice when recommendations are weird, you know how to game the algorithm, and you feel the pull of infinite scroll. That experience is real knowledge.' });
+    if (body.includes('eu') || body.includes('law') || body.includes('digital services')) quizzes.push({ q: 'What new right did the EU give people regarding algorithms?', a: 'The right to opt OUT of algorithmic recommendations! The Digital Services Act also stops platforms from using kids\' personal data for recommendations.' });
+
+    // Fallback
+    if (quizzes.length === 0)
       quizzes.push({ q: 'Can you explain "' + (block.title || 'this topic') + '" to a friend in one sentence?', a: 'Try it! If you can explain it simply, you really understand it. If not, read the section again — it will make more sense the second time!' });
     }
 
@@ -1719,6 +1729,12 @@ class PBook {
         B: "A music discovery engine! What if it could find genres you've never heard of based on the FEEL of music you like? Not just 'more pop' but 'here's this amazing Japanese city pop that has the same vibe.'",
         C: "A smart book recommender! It could track not just what books you like, but how fast you read, whether you prefer short or long chapters, and even match your mood. Libraries would love this!",
         D: "The best inventions are the ones nobody saw coming! Maybe a recommendation system for study buddies, hiking trails, science experiments, or even what to cook for dinner tonight. Dream big!"
+      },
+      'ch6-q1': {
+        A: "That's a valid choice — you value personalization. But think about this: if the algorithm ONLY shows you what you want, how will you ever discover something new? Sometimes the best experiences come from things you didn't know you'd like.",
+        B: "You want full control — respect! Some countries are actually making this a legal right. The EU's Digital Services Act lets people opt out of algorithmic recommendations entirely. You're thinking like a lawmaker!",
+        C: "That's a really mature perspective. Showing diverse viewpoints is important for understanding the world. The tricky part: who decides what counts as 'diverse'? It's harder than it sounds, but it's worth trying.",
+        D: "Honestly? This might be the wisest answer. These are genuinely hard questions with no perfect solutions. The fact that you recognize the complexity means you're thinking more deeply than most adults. Keep questioning!"
       }
     };
 

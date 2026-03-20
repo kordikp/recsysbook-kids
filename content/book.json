@@ -108,6 +108,28 @@
         "06-question-next.md",
         "07-spine-worksheet-design-challenge.md"
       ]
+    },
+    {
+      "id": "ch6-ethics-and-you",
+      "number": 6,
+      "title": "Ethics and You",
+      "subtitle": "Who decides what you see, and what can you do about it?",
+      "directory": "ch6-ethics-and-you",
+      "files": [
+        "01-spine-who-decides.md",
+        "01a-depth-thinker-whose-goals.md",
+        "01b-sidebar-rabbit-hole.md",
+        "02-spine-addictive-design.md",
+        "02a-depth-creator-take-control.md",
+        "02b-sidebar-dopamine.md",
+        "03-spine-privacy-for-real.md",
+        "03a-depth-explorer-check-your-data.md",
+        "03b-sidebar-age-guessing.md",
+        "04-spine-ai-and-you.md",
+        "04a-depth-thinker-hard-questions.md",
+        "04b-sidebar-eu-law.md",
+        "05-question-ethics.md"
+      ]
     }
   ]
 }
