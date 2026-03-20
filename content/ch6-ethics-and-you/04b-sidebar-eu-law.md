@@ -1,32 +1,30 @@
 ---
 id: ch6-law-sidebar
 type: sidebar
-title: "Laws Are Changing"
+title: "Laws Are Trying to Catch Up"
 readingTime: 2
 standalone: true
-teaser: "Governments are starting to write rules for recommendation algorithms. Here's what's already happened."
+teaser: "Governments want to regulate recommendation algorithms. But can they actually make Big Tech listen?"
 voice: universal
 parent: ch6-ai-future
 diagram: null
 ---
 
-For years, recommendation algorithms operated with almost no rules. Companies could design them however they wanted. That's changing -- fast.
+Governments around the world are TRYING to write rules for recommendation algorithms. But it's way harder than it sounds.
 
-**The European Union's Digital Services Act (DSA)**, which took full effect in 2024, requires platforms to:
+**The European Union passed the Digital Services Act (DSA)** in 2024. On paper, it says platforms must let users opt out of algorithmic feeds, stop profiling minors, and explain how recommendations work. Sounds great, right?
 
-- Let users choose a feed that is NOT based on algorithmic profiling. That means you can opt for a chronological feed instead of a personalized one.
-- Stop using personal data to target recommendations to minors. If you're under 18, platforms operating in the EU can't use your personal profile to decide what to show you.
-- Be transparent about how their recommendation systems work. No more "it's a secret." They have to explain the main parameters.
-- Provide researchers access to data so independent scientists can study how these algorithms actually affect people.
+**The reality is messier.** Big platforms have armies of lawyers and engineers. They can technically comply while barely changing anything. "Opt out of the algorithm" might mean getting a chronological feed that's so bad you switch right back. "Not profiling minors" might mean using slightly different data instead of no data. And "explaining how it works" can mean publishing a 200-page document nobody reads.
 
-**The EU AI Act** (2024) goes further. It classifies AI systems by risk level. Recommendation systems that can significantly influence people's opinions or behavior face stricter requirements.
+**Here's the honest truth:**
 
-**Other countries are following:**
+- Laws are always SLOWER than technology. By the time a rule is written, the algorithm has already changed 50 times.
+- If one platform turns off recommendations, users just move to a competitor that still has them. Nobody wants to use a "dumb" app.
+- Big Tech companies operate globally but laws are local. What's illegal in Europe might be perfectly fine in the US.
+- Enforcing these laws is incredibly difficult. How do you prove an algorithm is "profiling" a 14-year-old when the company says it isn't?
 
-- The UK's Online Safety Act requires platforms to protect children from harmful algorithmic recommendations.
-- Several US states have passed laws restricting how platforms can use data from minors.
-- South Korea and Australia have introduced their own rules about algorithmic transparency.
+**Some progress IS happening** — the UK's Online Safety Act, state laws in the US, rules in South Korea and Australia. But progress is slow and platforms often find loopholes.
 
-What does this mean for you? The apps you use TODAY might work differently in a few years. Not because the companies wanted to change, but because people -- citizens, lawmakers, activists -- demanded it.
+**So what actually works?** Maybe not just laws from above, but pressure from below — users who understand how the technology works and demand better. That's where YOU come in. You can't wait for governments to fix this. Understanding recommendations IS your superpower.
 
-And demands like that often start with young people who understand the technology and refuse to accept "that's just how it works" as an answer.
+The apps you use might change someday. But don't count on lawmakers to make it happen fast. Your best protection is your own knowledge.
