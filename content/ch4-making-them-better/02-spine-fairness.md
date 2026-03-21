@@ -4,6 +4,7 @@ type: spine
 title: "Is It Fair?"
 readingTime: 3
 standalone: true
+core: true
 teaser: "Popular creators get more popular. New creators stay invisible. Is that fair?"
 voice: universal
 parent: null

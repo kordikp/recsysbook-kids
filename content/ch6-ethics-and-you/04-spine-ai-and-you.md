@@ -4,6 +4,7 @@ type: spine
 title: "The Future Is Yours to Shape"
 readingTime: 4
 standalone: true
+core: true
 teaser: "The people who built today's algorithms grew up without them. You didn't. That gives you an edge nobody else has."
 voice: universal
 parent: null

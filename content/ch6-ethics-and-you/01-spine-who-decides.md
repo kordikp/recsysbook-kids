@@ -4,6 +4,7 @@ type: spine
 title: "Who Decides What You See?"
 readingTime: 4
 standalone: true
+core: true
 teaser: "When you open TikTok, who chose what's on your screen? Not you. Not your parents. Not even a human."
 voice: universal
 parent: null

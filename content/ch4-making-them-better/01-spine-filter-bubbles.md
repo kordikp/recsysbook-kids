@@ -4,6 +4,7 @@ type: spine
 title: "Trapped in a Bubble"
 readingTime: 3
 standalone: true
+core: true
 teaser: "When recommendations are TOO good, you only see what you already like."
 voice: universal
 parent: null

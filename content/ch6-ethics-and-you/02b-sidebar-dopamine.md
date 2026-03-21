@@ -4,6 +4,7 @@ type: spine
 title: "The Dopamine Connection"
 readingTime: 2
 standalone: true
+core: true
 teaser: "Your brain has a chemical reward system. Recommendation algorithms have accidentally learned to hijack it."
 voice: universal
 parent: null

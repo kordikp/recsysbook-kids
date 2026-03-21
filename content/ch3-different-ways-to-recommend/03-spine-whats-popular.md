@@ -4,6 +4,7 @@ type: spine
 title: "What's Popular Right Now?"
 readingTime: 2
 standalone: true
+core: true
 teaser: "The simplest recommendation of all: just show everyone what's trending."
 voice: universal
 parent: null

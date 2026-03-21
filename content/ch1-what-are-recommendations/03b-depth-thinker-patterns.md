@@ -4,6 +4,7 @@ type: spine
 title: "Patterns Are Everywhere"
 readingTime: 2
 standalone: false
+core: true
 teaser: "From Minecraft diamonds to weather forecasts -- patterns rule the world."
 voice: thinker
 parent: null

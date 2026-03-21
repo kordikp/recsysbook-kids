@@ -4,6 +4,7 @@ type: spine
 title: "Your Digital Footprints"
 readingTime: 2
 standalone: true
+core: true
 teaser: "Every click, every skip, every replay -- you're leaving a trail."
 voice: universal
 parent: null

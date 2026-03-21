@@ -4,6 +4,7 @@ type: spine
 title: "Three Types of Clues"
 readingTime: 2
 standalone: true
+core: true
 teaser: "Item clues, person clues, and action clues -- the three ingredients in every recommendation."
 voice: universal
 parent: null

@@ -4,6 +4,7 @@ type: spine
 title: "Step 4: Make It Better"
 readingTime: 3
 standalone: true
+core: true
 teaser: "Your system works! Now let's make it smarter."
 voice: universal
 parent: null

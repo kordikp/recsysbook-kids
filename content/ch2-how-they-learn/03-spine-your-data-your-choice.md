@@ -4,6 +4,7 @@ type: spine
 title: "Your Data, Your Choice"
 readingTime: 2
 standalone: true
+core: true
 teaser: "You're in charge of your digital footprints. Here's how."
 voice: universal
 parent: null

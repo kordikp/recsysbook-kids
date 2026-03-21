@@ -1272,9 +1272,9 @@ class PBook {
     // List mode legend
     html += `<div class="map-legend">
       <span class="ml-item"><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#059669"/></svg> Read</span>
-      <span class="ml-item"><svg width="14" height="14"><circle cx="7" cy="7" r="4" fill="#D97706" stroke="#D97706" stroke-width="3" opacity=".3"/><circle cx="7" cy="7" r="4" fill="#D97706"/></svg> Next</span>
       <span class="ml-item"><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#E7E5E4"/></svg> Unread</span>
-      <span class="ml-item"><svg width="10" height="10"><circle cx="5" cy="5" r="3.5" fill="none" stroke="#57534E" stroke-width="1.5"/></svg> Depth</span>
+      <span class="ml-item"><span style="font-size:.65rem;font-weight:700;color:var(--accent);background:var(--accent-bg);padding:.1em .3em;border-radius:3px">CORE</span> Must read</span>
+      <span class="ml-item"><span style="font-size:.65rem">\u{1F3AE}</span> Mini-game</span>
     </div>`;
 
     // Chapter reading order — which chapters should come before which
@@ -1293,26 +1293,15 @@ class PBook {
 
     this.book.chapters.forEach((ch, ci) => {
       const blocks = this.chapters[ci]?.blocks || [];
-      const spines = blocks.filter(b => b.type === 'spine');
-      const depths = blocks.filter(b => b.type === 'depth');
-      const sidebars = blocks.filter(b => b.type === 'sidebar');
-      const readCount = spines.filter(b => this.user.readBlocks.has(b.id)).length;
-      const totalCount = spines.length;
+      const allItems = blocks.filter(b => b.type === 'spine' || b.type === 'game');
+      const readCount = allItems.filter(b => this.user.readBlocks.has(b.id)).length;
+      const coreCount = allItems.filter(b => b.core).length;
+      const coreRead = allItems.filter(b => b.core && this.user.readBlocks.has(b.id)).length;
+      const totalCount = allItems.length;
       const chPct = Math.round((readCount / Math.max(totalCount, 1)) * 100);
 
-      // Check if prerequisites are met
-      const prereqs = chapterPrereqs[ci] || [];
-      const prereqsMet = prereqs.every(pi => {
-        const pSpines = (this.chapters[pi]?.blocks || []).filter(b => b.type === 'spine');
-        const pRead = pSpines.filter(b => this.user.readBlocks.has(b.id)).length;
-        return pRead >= Math.ceil(pSpines.length * 0.5); // At least 50% read
-      });
-      const prereqLabels = prereqs.map(pi => `Ch${this.book.chapters[pi].number}`).join(', ');
-      const isLocked = !prereqsMet && prereqs.length > 0 && readCount === 0;
+      html += `<div class="map-chapter fade-up">`;
 
-      html += `<div class="map-chapter ${isLocked ? 'map-ch-locked' : ''} fade-up">`;
-
-      // Chapter header with progress ring
       html += `<div class="map-ch-head" onclick="app.goChapter(${ci})">
         <div class="map-ch-ring" data-pct="${chPct}">
           <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="var(--border)" stroke-width="2.5"/>
@@ -1322,63 +1311,35 @@ class PBook {
         <div class="map-ch-info">
           <div class="map-ch-title">${ch.title}</div>
           <div class="map-ch-sub">${ch.subtitle}</div>
-          <div class="map-ch-stats">${readCount}/${totalCount} sections${isLocked ? ` &middot; <span class="map-prereq">Read ${prereqLabels} first</span>` : ''}</div>
+          <div class="map-ch-stats">${readCount}/${totalCount} read &middot; ${coreRead}/${coreCount} core</div>
         </div>
         <div class="map-ch-arrow">&rsaquo;</div>
       </div>`;
 
-      // Spine blocks with their depth cards + signals
+      // All blocks: spine + game + question
       html += '<div class="map-blocks">';
-      spines.forEach((spine, si) => {
-        const isRead = this.user.readBlocks.has(spine.id);
-        const isSeen = this.user.seenBlocks.has(spine.id);
-        const isSuggested = suggestedNext === spine.id;
-        const sig = this.user.getBlockSignals(spine.id);
-        const spineDepths = depths.filter(d => d.parent === spine.id);
-        const spineDepthsVisible = spineDepths.filter(d => visibleVoices.includes(d.voice));
-        const spineSidebars = sidebars.filter(s => s.parent === spine.id);
-        const hasChildren = spineDepthsVisible.length > 0 || spineSidebars.length > 0;
+      allItems.forEach(item => {
+        const isRead = this.user.readBlocks.has(item.id);
+        const isCore = item.core;
+        const isGame = item.type === 'game';
+        const icon = isGame ? '\u{1F3AE}' : isCore ? '\u{25CF}' : '\u{25CB}';
+        const badge = isCore ? '<span class="map-core-badge">CORE</span>' : '';
+        const gameTag = isGame ? '<span class="map-game-tag">\u{1F3AE}</span>' : '';
 
-        // Signal icons for this block
-        const signals = this._signalIcons(sig, spine.id);
-
-        html += `<div class="map-spine-group">
-          <div class="map-block map-spine ${isRead ? 'read' : isSeen ? 'seen' : ''} ${isSuggested ? 'suggested' : ''}" onclick="app.openBlock('${spine.id}')">
-            <div class="map-dot ${isRead ? 'done' : isSeen ? 'seen-dot' : ''} ${isSuggested ? 'next' : ''}"></div>
-            <span class="map-block-title">${spine.title}</span>
-            <span class="map-signals">${signals}</span>
-            <span class="map-block-time">${spine.readingTime || 3}m</span>
-          </div>`;
-
-        // Depth cards + sidebars
-        if (hasChildren) {
-          html += '<div class="map-children">';
-          spineDepthsVisible.forEach(d => {
-            const dRead = this.user.readBlocks.has(d.id);
-            const dSeen = this.user.seenBlocks.has(d.id);
-            const dSig = this.user.getBlockSignals(d.id);
-            const vc = CONFIG.voices[d.voice] || {};
-            const dSignals = this._signalIcons(dSig, d.id);
-            html += `<div class="map-block map-depth ${dRead ? 'read' : dSeen ? 'seen' : ''}" onclick="app.openBlock('${d.parent}')">
-              <div class="map-dot depth-dot" style="border-color:var(--${d.voice})"></div>
-              <span class="map-block-title">${d.title}</span>
-              <span class="map-signals">${dSignals}</span>
-              <span class="map-voice-tag ${d.voice}">${vc.label || d.voice}</span>
-            </div>`;
-          });
-          spineSidebars.forEach(s => {
-            const sSig = this.user.getBlockSignals(s.id);
-            const sSignals = this._signalIcons(sSig, s.id);
-            html += `<div class="map-block map-depth" onclick="app.openBlock('${s.parent}')">
-              <div class="map-dot depth-dot" style="border-color:var(--sidebar-color)"></div>
-              <span class="map-block-title">${s.title}</span>
-              <span class="map-signals">${sSignals}</span>
-              <span class="map-voice-tag" style="background:var(--sidebar-color)">Story</span>
-            </div>`;
-          });
-          html += '</div>';
-        }
-        html += '</div>';
+        html += `<div class="map-block ${isRead ? 'read' : ''}" onclick="app.openBlock('${item.id}')">
+          <div class="map-dot ${isRead ? 'done' : ''}"></div>
+          <span class="map-block-title">${item.title}</span>
+          ${badge}${gameTag}
+          <span class="map-block-time">${item.readingTime || 3}m</span>
+        </div>`;
+      });
+      // Questions
+      blocks.filter(b => b.type === 'question').forEach(q => {
+        html += `<div class="map-block" onclick="app.openBlock('${q.id}')">
+          <div class="map-dot" style="background:var(--accent)"></div>
+          <span class="map-block-title">${q.title}</span>
+          <span class="map-game-tag">\u{2753}</span>
+        </div>`;
       });
       html += '</div></div>';
     });
@@ -1818,24 +1779,42 @@ class PBook {
       h += '</div>';
     }
 
-    // Certificate
-    const certReady = p.progress.pct >= 80 && u.level >= 3;
-    const certLocked = !certReady;
+    // Knowledge cloud
+    const readTopics = {};
+    [...u.readBlocks].forEach(id => {
+      const topics = this.blockTopics[id] || [];
+      topics.forEach(t => { readTopics[t] = (readTopics[t] || 0) + 1; });
+    });
+    const cloudEntries = Object.entries(readTopics).sort((a, b) => b[1] - a[1]);
+    if (cloudEntries.length > 0) {
+      h += '<div class="profile-section"><h3>Your Knowledge</h3>';
+      h += '<div class="knowledge-cloud">';
+      const maxCount = cloudEntries[0][1];
+      cloudEntries.forEach(([topic, count]) => {
+        const size = 0.65 + (count / maxCount) * 0.6;
+        const opacity = 0.4 + (count / maxCount) * 0.6;
+        h += `<span class="cloud-word" style="font-size:${size}rem;opacity:${opacity}">${topic}</span>`;
+      });
+      h += '</div></div>';
+    }
+
+    // Certificate — requires all CORE blocks read
+    const coreBlocks = this.allBlocks.filter(b => b.meta.core);
+    const coreRead = coreBlocks.filter(b => u.readBlocks.has(b.meta.id)).length;
+    const coreTotal = coreBlocks.length;
+    const certReady = coreRead >= coreTotal && coreTotal > 0;
     h += '<div class="profile-section"><h3>Certificate</h3>';
     if (certReady) {
       h += `<div class="cert-ready">
-        <p style="font-size:.85rem;margin-bottom:.6em">You've completed <strong>${p.progress.pct}%</strong> of the book and reached <strong>Level ${u.level}</strong>. You've earned your certificate!</p>
-        <button class="cert-btn" onclick="app.generateCertificate()">Download Certificate (PDF)</button>
+        <p style="font-size:.85rem;margin-bottom:.6em">You've read all <strong>${coreTotal} core sections</strong>. You've earned your certificate!</p>
+        <button class="cert-btn" onclick="app.generateCertificate()">Download Certificate</button>
       </div>`;
     } else {
-      const needs = [];
-      if (p.progress.pct < 80) needs.push(`read ${80 - p.progress.pct}% more content`);
-      if (u.level < 3) needs.push(`reach Level 3 (need ${(3 - 1) * 50 - u.xp + 50} more XP)`);
       h += `<div class="cert-locked">
-        <p style="font-size:.85rem;color:var(--text-2)">Complete the book to earn your certificate in Recommender Systems!</p>
-        <div style="font-size:.8rem;color:var(--text-3);margin-top:.3em">Requirements: ${needs.join(', ')}</div>
+        <p style="font-size:.85rem;color:var(--text-2)">Read all core sections to earn your certificate!</p>
+        <div style="font-size:.8rem;color:var(--text-3);margin-top:.3em">${coreRead}/${coreTotal} core sections read</div>
         <div class="cert-progress">
-          <div class="cert-progress-fill" style="width:${Math.min(100, Math.round((p.progress.pct / 80 + (u.level >= 3 ? 1 : u.level / 3)) / 2 * 100))}%"></div>
+          <div class="cert-progress-fill" style="width:${Math.round((coreRead / Math.max(coreTotal, 1)) * 100)}%"></div>
         </div>
       </div>`;
     }

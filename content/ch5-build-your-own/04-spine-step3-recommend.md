@@ -4,6 +4,7 @@ type: spine
 title: "Step 3: Make Your Predictions"
 readingTime: 3
 standalone: true
+core: true
 teaser: "Use your similar users to predict ratings and make real recommendations."
 voice: universal
 parent: null

@@ -4,6 +4,7 @@ type: spine
 title: "The Rabbit Hole Effect"
 readingTime: 2
 standalone: true
+core: true
 teaser: "You searched for card tricks. Twenty minutes later you're watching conspiracy videos. How did THAT happen?"
 voice: universal
 parent: null

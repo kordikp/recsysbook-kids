@@ -4,6 +4,7 @@ type: spine
 title: "Echo Chambers: When Bubbles Get Serious"
 readingTime: 3
 standalone: false
+core: true
 teaser: "What happens when filter bubbles affect how we see the world?"
 voice: thinker
 parent: null

@@ -4,6 +4,7 @@ type: spine
 title: "Have You Ever Noticed?"
 readingTime: 2
 standalone: true
+core: true
 teaser: "YouTube somehow knows you love Minecraft videos. But how?"
 voice: universal
 parent: null

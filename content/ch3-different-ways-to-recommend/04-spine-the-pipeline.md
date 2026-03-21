@@ -4,6 +4,7 @@ type: spine
 title: "The Recommendation Pipeline"
 readingTime: 3
 standalone: true
+core: true
 teaser: "Real systems don't use just one method. They use ALL of them, in three clever steps."
 voice: universal
 parent: null

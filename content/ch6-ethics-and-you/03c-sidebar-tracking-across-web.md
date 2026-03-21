@@ -4,6 +4,7 @@ type: spine
 title: "They Follow You Across the Internet"
 readingTime: 2
 standalone: true
+core: true
 teaser: "Some companies don't just track you on one app — they follow you across the ENTIRE web."
 voice: universal
 parent: null

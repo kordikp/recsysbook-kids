@@ -4,6 +4,7 @@ type: spine
 title: "Designed to Keep You Watching"
 readingTime: 4
 standalone: true
+core: true
 teaser: "Infinite scroll. Autoplay. 'Just one more.' These aren't accidents -- they're design choices."
 voice: universal
 parent: null

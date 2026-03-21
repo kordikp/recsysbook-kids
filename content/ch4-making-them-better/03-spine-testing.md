@@ -4,6 +4,7 @@ type: spine
 title: "Testing, Testing, 1-2-3"
 readingTime: 3
 standalone: true
+core: true
 teaser: "How do you know if a recommendation system actually works? Science!"
 voice: universal
 parent: null

@@ -4,6 +4,7 @@ type: spine
 title: "The Popularity Trap"
 readingTime: 2
 standalone: true
+core: true
 teaser: "When popular stuff gets MORE popular just because it's popular. A vicious cycle."
 voice: universal
 parent: null

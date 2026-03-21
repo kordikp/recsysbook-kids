@@ -4,6 +4,7 @@ type: spine
 title: "Ask Your Friends"
 readingTime: 3
 standalone: true
+core: true
 teaser: "What if a million people with your exact taste could recommend stuff to you?"
 voice: universal
 parent: null

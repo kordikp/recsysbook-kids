@@ -4,6 +4,7 @@ type: spine
 title: "Step 1: Collect the Data"
 readingTime: 3
 standalone: true
+core: true
 teaser: "Survey your friends, build a rating grid, and watch the pattern emerge."
 voice: universal
 parent: null

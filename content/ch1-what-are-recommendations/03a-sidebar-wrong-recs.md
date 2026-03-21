@@ -4,6 +4,7 @@ type: spine
 title: "When Recommendations Go Hilariously Wrong"
 readingTime: 2
 standalone: true
+core: true
 teaser: "One slime video and suddenly you're a slime expert forever."
 voice: universal
 parent: null

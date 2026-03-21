@@ -4,6 +4,7 @@ type: spine
 title: "The Million-Dollar Recommendation Challenge"
 readingTime: 2
 standalone: true
+core: true
 teaser: "Netflix offered $1,000,000 to anyone who could make their recommendations 10% better."
 voice: universal
 parent: null

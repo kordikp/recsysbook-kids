@@ -4,6 +4,7 @@ type: spine
 title: "You Can Actually Do This"
 readingTime: 2
 standalone: true
+core: true
 teaser: "You learned how recs work. Now it's time to build one yourself."
 voice: universal
 parent: null

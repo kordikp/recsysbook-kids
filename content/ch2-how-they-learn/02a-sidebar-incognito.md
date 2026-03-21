@@ -4,6 +4,7 @@ type: spine
 title: "The Cold Start Problem"
 readingTime: 1
 standalone: false
+core: true
 teaser: "New account, zero clues -- now what?"
 voice: universal
 parent: null

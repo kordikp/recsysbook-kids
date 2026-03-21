@@ -4,6 +4,7 @@ type: spine
 title: "It's Not Magic -- It's Patterns"
 readingTime: 2
 standalone: true
+core: true
 teaser: "Recommender systems are like detectives. They find clues in your clicks."
 voice: universal
 parent: null

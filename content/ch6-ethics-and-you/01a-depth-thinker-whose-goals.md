@@ -4,6 +4,7 @@ type: spine
 title: "Whose Goals Are Being Optimized?"
 readingTime: 4
 standalone: true
+core: true
 teaser: "Three groups want different things from the same algorithm. When their goals clash, guess who usually loses?"
 voice: thinker
 parent: null

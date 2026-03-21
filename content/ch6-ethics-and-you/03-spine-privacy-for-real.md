@@ -4,6 +4,7 @@ type: spine
 title: "Your Data: What They Actually Know"
 readingTime: 4
 standalone: true
+core: true
 teaser: "Let's skip the vague warnings and get specific. Here's what apps actually know about you."
 voice: universal
 parent: null

@@ -575,6 +575,13 @@ pre code { font-family: var(--font-mono); font-size: .82rem; line-height: 1.5; b
 
 .map-block-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .map-block-time { font-size: .68rem; color: var(--text-3); flex-shrink: 0; }
+.map-core-badge { font-family: var(--font-ui); font-size: .55rem; font-weight: 700; color: var(--accent); background: var(--accent-bg); padding: .1em .3em; border-radius: 3px; flex-shrink: 0; }
+.map-game-tag { font-size: .7rem; flex-shrink: 0; }
+
+/* Knowledge cloud */
+.knowledge-cloud { display: flex; flex-wrap: wrap; gap: .3em; justify-content: center; padding: .5em; }
+.cloud-word { font-family: var(--font-ui); font-weight: 600; color: var(--accent); white-space: nowrap; transition: all .2s; cursor: default; }
+.cloud-word:hover { transform: scale(1.1); }
 
 /* Voice tags in map */
 .map-voice-tag { font-family: var(--font-ui); font-size: .58rem; font-weight: 700; text-transform: uppercase; padding: .12em .35em; border-radius: 3px; color: #fff; flex-shrink: 0; margin-left: auto; }

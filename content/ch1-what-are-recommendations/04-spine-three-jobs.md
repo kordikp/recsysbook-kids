@@ -4,6 +4,7 @@ type: spine
 title: "The Three Jobs of a Recommender"
 readingTime: 2
 standalone: true
+core: true
 teaser: "Discover, find, and keep you interested -- that's the gig."
 voice: universal
 parent: null

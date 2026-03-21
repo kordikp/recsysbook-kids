@@ -4,6 +4,7 @@ type: spine
 title: "Look at the Thing Itself"
 readingTime: 3
 standalone: true
+core: true
 teaser: "Forget other people. What if the system just looked at WHAT the thing actually is?"
 voice: universal
 parent: null

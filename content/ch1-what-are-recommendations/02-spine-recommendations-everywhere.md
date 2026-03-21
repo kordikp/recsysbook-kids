@@ -4,6 +4,7 @@ type: spine
 title: "Recommendations Are Everywhere"
 readingTime: 2
 standalone: true
+core: true
 teaser: "Once you start looking, you can't stop seeing them."
 voice: universal
 parent: null
