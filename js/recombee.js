@@ -115,7 +115,7 @@ export class RecombeeClient {
 
   async setUserProperties(props) {
     if (this.enabled) {
-      return this.api('PUT', `/users/${this.userId}/?cascadeCreate=true`, props);
+      return this.api('POST', `/users/${this.userId}/?cascadeCreate=true`, props);
     }
   }
 
