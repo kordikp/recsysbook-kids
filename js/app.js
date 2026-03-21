@@ -2672,28 +2672,22 @@ class PBook {
 
   _scrollToBlock(parentId, meta) {
     setTimeout(() => {
-      const el = document.getElementById(`b-${parentId}`);
+      const el = document.getElementById(`b-${parentId}`) || document.getElementById(`b-${meta.id}`);
       if (!el) return;
 
       if (meta.type === 'depth' && meta.voice) {
         // For depth cards: first expand the tab, then scroll to the depth content
         const tab = document.querySelector(`.depth-group[data-parent="${parentId}"] .d-tab[data-voice="${meta.voice}"]`);
         if (tab && !tab.classList.contains('active')) tab.click();
-        // Scroll to the expanded depth card content, not the parent spine
         setTimeout(() => {
           const depthContent = document.getElementById(`dc-${meta.id}`);
           if (depthContent) depthContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
           else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 200);
-      } else if (meta.type === 'sidebar') {
-        // For sidebars: scroll to the sidebar block itself
-        // Sidebars don't have unique IDs in DOM, scroll to parent
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
       } else {
-        // Spine blocks: scroll directly
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 150);
+    }, 300);
   }
 
   goChapter(idx) {
