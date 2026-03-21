@@ -452,6 +452,7 @@ class PBook {
     this._observeBlocks(ch);
     this.updateLinearNav();
     this._updateMissionBar();
+    this._showMissionIntro();
   }
 
   async _renderChapterContent(ch, idx) {
@@ -2224,7 +2225,7 @@ class PBook {
     }
 
     // Block content preview
-    html += `<div class="wizard-block-card" onclick="app.openBlock('${blockId}')">
+    html += `<div class="wizard-block-card" onclick="app._pendingMissionIntro='${(intro||'').replace(/'/g,"\\'")}';app.openBlock('${blockId}')">
       <div class="wizard-block-title">${block?.meta?.title || blockId}</div>
       <div class="wizard-block-teaser">${block?.meta?.teaser || ''}</div>
       <div class="wizard-block-meta">Chapter ${block?.meta?._chapterNum || '?'} &middot; ${block?.meta?.readingTime || 3} min read</div>
@@ -2618,37 +2619,59 @@ class PBook {
     this.renderRead(chIdx);
   }
 
-  // Show/hide mission bar when reading from a mission wizard
+  // Show/hide mission indicator in topbar
   _updateMissionBar() {
-    let bar = document.getElementById('missionBar');
+    const container = document.getElementById('missionBarInline');
     const m = this._wizardMission;
-    if (!m) { if (bar) bar.style.display = 'none'; return; }
+    if (!container) return;
+    if (!m) { container.style.display = 'none'; return; }
 
+    container.style.display = 'flex';
     const step = this._wizardStep;
-    const coreRead = m.core.filter(id => this.user.readBlocks.has(id)).length;
-
-    if (!bar) {
-      bar = document.createElement('div');
-      bar.id = 'missionBar';
-      bar.className = 'mission-bar';
-      document.body.appendChild(bar);
-    }
-    bar.style.display = 'flex';
-    bar.innerHTML = `
-      <button class="mission-bar-back" onclick="app._returnToWizard()">&#8592; ${m.icon} ${m.title}</button>
+    container.innerHTML = `
+      <button class="mission-bar-back" onclick="app._returnToWizard()" title="Next step">${m.icon}</button>
       <div class="mission-bar-dots">${m.core.map((id, i) => `<span class="mission-dot ${this.user.readBlocks.has(id) ? 'done' : i === step ? 'current' : ''}"></span>`).join('')}</div>
-      <span class="mission-bar-count">${coreRead}/${m.core.length}</span>
     `;
   }
 
   _returnToWizard() {
     if (!this._wizardMission) return;
-    // If current block was just read, advance to next step
-    const currentId = this._wizardMission.core[this._wizardStep];
-    if (currentId && this.user.readBlocks.has(currentId) && this._wizardStep < this._wizardMission.core.length) {
-      this._wizardStep++;
+    const m = this._wizardMission;
+
+    // Find next unread step
+    let nextStep = this._wizardStep;
+    const currentId = m.core[nextStep];
+    if (currentId && this.user.readBlocks.has(currentId)) nextStep++;
+    while (nextStep < m.core.length && this.user.readBlocks.has(m.core[nextStep])) nextStep++;
+    this._wizardStep = nextStep;
+
+    if (nextStep >= m.core.length) {
+      // All done — show boss quiz
+      this._renderWizardStep();
+      return;
     }
-    this._renderWizardStep();
+
+    // Navigate to next block and show intro banner
+    const nextId = m.core[nextStep];
+    const intro = m.intros?.[nextStep] || '';
+    this._pendingMissionIntro = intro;
+    this.openBlock(nextId);
+  }
+
+  // Show mission intro banner above the read content
+  _showMissionIntro() {
+    const intro = this._pendingMissionIntro;
+    this._pendingMissionIntro = null;
+    if (!intro) return;
+
+    const pane = document.getElementById('readPane');
+    if (!pane) return;
+    // Remove old banner if exists
+    pane.querySelector('.mission-intro-banner')?.remove();
+    const banner = document.createElement('div');
+    banner.className = 'mission-intro-banner fade-up';
+    banner.innerHTML = `<span class="mission-intro-text">${this._wizardMission?.icon || ''} ${intro}</span><button class="mission-intro-close" onclick="this.parentElement.remove()">&times;</button>`;
+    pane.prepend(banner);
   }
 
   _scrollToBlock(parentId, meta) {

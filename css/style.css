@@ -186,15 +186,14 @@ button { font-family: var(--font-ui); cursor: pointer; border: none; background:
 .home-mode-label { font-family: var(--font-ui); font-size: .78rem; font-weight: 700; }
 .home-mode-desc { font-family: var(--font-ui); font-size: .62rem; color: var(--text-3); }
 
-/* Mission bar (sticky when reading from a mission) */
-.mission-bar { position: fixed; top: var(--topbar-h); left: 0; right: 0; height: 36px; background: var(--accent); color: #fff; display: flex; align-items: center; gap: .5em; padding: 0 .8em; z-index: 150; font-family: var(--font-ui); font-size: .75rem; box-shadow: 0 2px 8px rgba(124,58,237,.3); }
-.mission-bar-back { background: none; border: none; color: #fff; font-family: var(--font-ui); font-size: .75rem; font-weight: 600; cursor: pointer; white-space: nowrap; padding: 0; }
-.mission-bar-back:hover { opacity: .8; }
-.mission-bar .mission-dot { width: 7px; height: 7px; background: rgba(255,255,255,.35); }
-.mission-bar .mission-dot.done { background: #fff; }
-.mission-bar .mission-dot.current { background: #FDE68A; }
-.mission-bar-dots { display: flex; gap: 3px; flex: 1; justify-content: center; }
-.mission-bar-count { font-size: .65rem; opacity: .7; }
+/* Mission progress in topbar */
+.mission-bar-inline { display: flex; align-items: center; gap: 4px; margin: 0 .3em; }
+.mission-bar-back { background: none; border: none; font-size: 1rem; cursor: pointer; padding: 0 2px; line-height: 1; }
+.mission-bar-back:hover { transform: scale(1.15); }
+.mission-bar-dots { display: flex; gap: 3px; align-items: center; }
+.mission-bar-inline .mission-dot { width: 7px; height: 7px; }
+.mission-bar-inline .mission-dot.done { background: var(--product); }
+.mission-bar-inline .mission-dot.current { background: var(--accent); box-shadow: 0 0 0 2px var(--accent-bg); }
 
 /* Shelves */
 .home-inner { padding: 1em 0; }
@@ -754,6 +753,11 @@ pre code { font-family: var(--font-mono); font-size: .82rem; line-height: 1.5; b
 .boss-hint { margin-top: .6em; padding: .6em; border-radius: var(--radius-sm); font-size: .82rem; text-align: left; }
 .boss-pass { background: #D1FAE5; color: #065F46; border: 1px solid #10B981; }
 .boss-retry { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+
+/* Mission intro banner in read view */
+.mission-intro-banner { display: flex; align-items: flex-start; gap: .5em; padding: .6em .8em; margin-bottom: 1em; background: linear-gradient(135deg, var(--accent-bg), #F5F3FF); border: 1px solid var(--accent); border-radius: var(--radius-sm); font-size: .82rem; line-height: 1.4; color: var(--text); }
+.mission-intro-text { flex: 1; font-style: italic; }
+.mission-intro-close { background: none; border: none; font-size: 1.1rem; color: var(--text-3); cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
 
 /* Topic tags on cards */
 .card-topics { display: flex; gap: .2em; flex-wrap: wrap; }
