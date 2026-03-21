@@ -17,48 +17,51 @@
 <div class="overlay" id="onboarding">
   <div class="onboarding-card">
 
-    <!-- Step 0: Author's story -->
+    <!-- Step 0: What you'll learn (lead with value) -->
     <div class="step active" data-step="0">
       <h1>How Recommendations Work</h1>
-      <p class="author">by Pavel Kordik</p>
-      <p class="intro-quote">"I co-founded Recombee, a company that builds recommendation engines used by hundreds of services worldwide. One day my daughter asked me: <em>Dad, how does YouTube know what I want to watch?</em> I realized I'd never explained it simply. This book is my answer."</p>
-      <button class="btn-primary btn-large" onclick="app.showStep(1)">Tell me more &#10132;</button>
-      <button class="btn-ghost" onclick="app.showStep(2)">Skip to the book &#128640;</button>
-    </div>
+      <p class="intro-subtitle">Understand the algorithms behind YouTube, TikTok, Spotify & more</p>
 
-    <!-- Step 1: Why this book + testimonials -->
-    <div class="step" data-step="1">
-      <h2>Why this book?</h2>
-      <div class="intro-why">
-        <p>Recommendation algorithms decide what you see on YouTube, TikTok, Spotify, Netflix, and almost every app you use. <strong>Understanding them is a superpower.</strong></p>
-        <p>This isn't a textbook. It's a <strong>personalized adventure</strong> that adapts to how you like to learn. You'll earn XP, complete missions, and the book remembers what you've read so you can review and actually <em>remember</em> what you learned.</p>
-      </div>
       <div class="intro-features">
-        <div class="intro-feature"><span>&#127919;</span><span><b>Story-driven missions</b> that teach through real scenarios</span></div>
-        <div class="intro-feature"><span>&#129504;</span><span><b>Spaced repetition</b> so you actually remember what you read</span></div>
-        <div class="intro-feature"><span>&#127942;</span><span><b>XP, badges & certificate</b> to track your progress</span></div>
-        <div class="intro-feature"><span>&#128260;</span><span><b>Three learning paths</b> — Explorer, Creator, or Thinker</span></div>
+        <div class="intro-feature"><span>&#127919;</span><span><b>6 story-driven missions</b> — learn through real scenarios like "How does YouTube know?"</span></div>
+        <div class="intro-feature"><span>&#128260;</span><span><b>3 learning paths</b> — Explorer, Creator, or Thinker. The book adapts to you.</span></div>
+        <div class="intro-feature"><span>&#129504;</span><span><b>Spaced repetition</b> — recall quizzes so you actually remember what you read</span></div>
+        <div class="intro-feature"><span>&#127942;</span><span><b>XP, badges & certificate</b> — earn rewards as you master each topic</span></div>
       </div>
-      <h3 style="font-size:.85rem;margin:1em 0 .5em;color:var(--text-2)">What readers say</h3>
-      <div class="intro-testimonials">
-        <div class="intro-testimonial">
-          <p>"I finally understand why my feed looks the way it does. The missions made it feel like a game, not homework."</p>
-          <span class="testimonial-author">&#8212; Emma, 14</span>
+
+      <button class="btn-primary btn-large" onclick="app.showStep(1)">Start learning &#128640;</button>
+
+      <!-- Collapsible: What readers say -->
+      <details class="intro-details">
+        <summary>What readers say</summary>
+        <div class="intro-testimonials">
+          <div class="intro-testimonial">
+            <p>"I finally understand why my feed looks the way it does. The missions made it feel like a game, not homework."</p>
+            <span class="testimonial-author">&#8212; Emma, 14</span>
+          </div>
+          <div class="intro-testimonial">
+            <p>"I built my own recommendation system with my friends! The step-by-step mission was amazing."</p>
+            <span class="testimonial-author">&#8212; Tom, 12</span>
+          </div>
+          <div class="intro-testimonial">
+            <p>"The recall quizzes actually work. I read this weeks ago and I still remember how collaborative filtering works."</p>
+            <span class="testimonial-author">&#8212; Mia, 15</span>
+          </div>
         </div>
-        <div class="intro-testimonial">
-          <p>"I built my own recommendation system with my friends! The step-by-step mission was amazing."</p>
-          <span class="testimonial-author">&#8212; Tom, 12</span>
+      </details>
+
+      <!-- Collapsible: About the author -->
+      <details class="intro-details">
+        <summary>About the author</summary>
+        <div class="intro-author-bio">
+          <p><b>Pavel Kordik</b> is co-founder of <b>Recombee</b>, a recommendation engine used by hundreds of services worldwide, and associate professor at Czech Technical University.</p>
+          <p>"One day my daughter asked me: <em>Dad, how does YouTube know what I want to watch?</em> I realized I'd spent 15 years building recommendation systems but never explained them simply. This book is my answer — for her, and for every curious kid who wants to understand the technology that shapes what they see online."</p>
         </div>
-        <div class="intro-testimonial">
-          <p>"The recall quizzes actually work. I read this weeks ago and I still remember how collaborative filtering works."</p>
-          <span class="testimonial-author">&#8212; Mia, 15</span>
-        </div>
-      </div>
-      <button class="btn-primary btn-large" onclick="app.showStep(2)">Let's start! &#128640;</button>
+      </details>
     </div>
 
-    <!-- Step 2: Voice picker -->
-    <div class="step" data-step="2">
+    <!-- Step 1: Voice picker -->
+    <div class="step" data-step="1">
       <h2>How do you like to learn?</h2>
       <p style="font-size:.82rem;color:var(--text-2);margin-bottom:.8em">Pick your style. You can change anytime.</p>
       <div class="onboard-opts">
@@ -254,6 +257,6 @@
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=18"></script>
+<script type="module" src="js/app.js?v=19"></script>
 </body>
 </html>
