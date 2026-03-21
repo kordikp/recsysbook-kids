@@ -143,7 +143,7 @@ button { font-family: var(--font-ui); cursor: pointer; border: none; background:
 .shelf-head { padding: 0 1em; margin-bottom: .4em; }
 .shelf-title { font-family: var(--font-ui); font-size: 1rem; font-weight: 700; }
 .shelf-wrap { position: relative; }
-.shelf-scroll { display: flex; gap: .6em; overflow-x: auto; padding: 0 1em .5em; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; scroll-behavior: smooth; }
+.shelf-scroll { display: flex; gap: .6em; overflow-x: auto; padding: 0 1em .5em; scroll-snap-type: x proximity; scroll-padding-inline-start: 1em; -webkit-overflow-scrolling: touch; scrollbar-width: none; scroll-behavior: smooth; }
 .shelf-scroll::-webkit-scrollbar { display: none; }
 .shelf-btn { position: absolute; top: 0; bottom: .5em; width: 2.8em; z-index: 5; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 300; color: var(--text); transition: opacity var(--transition); opacity: 0; }
 .shelf-wrap:hover .shelf-btn:not(.arrow-hidden) { opacity: 1; }

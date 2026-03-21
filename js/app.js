@@ -165,6 +165,12 @@ class PBook {
 
     // 1b. Recall cards — spaced repetition review
     const dueRecalls = this.user.getDueRecalls();
+    // Also show practice button if user has read anything
+    const hasRecallData = Object.keys(this.user.recall).length > 0;
+    if (hasRecallData && dueRecalls.length === 0) {
+      html += `<section class="shelf fade-up"><div class="shelf-head"><h3 class="shelf-title">Practice recall</h3></div>
+        <div style="padding:0 1em .5em"><button class="recall-reveal" style="max-width:300px" onclick="app.startPractice()">No reviews due yet — practice anyway?</button></div></section>`;
+    }
     if (dueRecalls.length > 0) {
       const recallCards = dueRecalls.slice(0, 6).map(r => {
         const block = this.findBlock(r.blockId);
@@ -307,10 +313,11 @@ class PBook {
     const left = wrap.querySelector('.shelf-btn-left');
     const right = wrap.querySelector('.shelf-btn-right');
     if (!left || !right) return;
-    // scrollLeft can be fractional in some browsers — round it
+    // scrollLeft can be offset by padding/snap — use generous threshold
     const sl = Math.round(scroll.scrollLeft);
-    const canScrollLeft = sl > 5;
-    const canScrollRight = sl + scroll.clientWidth < scroll.scrollWidth - 5;
+    const pad = parseFloat(getComputedStyle(scroll).paddingLeft) || 16;
+    const canScrollLeft = sl > pad + 2;
+    const canScrollRight = sl + scroll.clientWidth < scroll.scrollWidth - pad - 2;
     left.classList.toggle('arrow-hidden', !canScrollLeft);
     right.classList.toggle('arrow-hidden', !canScrollRight);
   }
@@ -975,6 +982,42 @@ class PBook {
 
     // Fallback: ask about the section title
     return { q: `Can you explain "${title}" in your own words?`, a: `Re-read the section "${title}" to refresh your memory. The best way to learn is to explain things simply!` };
+  }
+
+  startPractice() {
+    // Pick random read blocks for practice (even if not due yet)
+    const readIds = [...this.user.readBlocks];
+    if (readIds.length === 0) return;
+    const shuffled = readIds.sort(() => Math.random() - 0.5).slice(0, 6);
+    const el = document.getElementById('homeContent');
+    const cards = shuffled.map(blockId => {
+      const block = this.findBlock(blockId);
+      if (!block) return '';
+      const quiz = this._getRecallQuestion(block);
+      return `<div class="card recall-card" style="border-top: 3px solid #F59E0B; flex: 0 0 280px">
+        <div class="card-chapter" style="color:#F59E0B;font-weight:700">Practice recall</div>
+        <div class="card-title">${quiz.q}</div>
+        <div class="recall-answer" id="recall-a-${blockId}" style="display:none">
+          <div class="recall-answer-text">${quiz.a}</div>
+          <div class="recall-hint" style="font-size:.7rem;color:var(--text-3);margin:.3em 0">From: ${block.meta.title}</div>
+          <div class="recall-buttons">
+            <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${blockId}',0)">Forgot</button>
+            <button class="recall-btn recall-hard" onclick="app.scoreRecall('${blockId}',1)">Hard</button>
+            <button class="recall-btn recall-good" onclick="app.scoreRecall('${blockId}',2)">Good</button>
+            <button class="recall-btn recall-easy" onclick="app.scoreRecall('${blockId}',3)">Easy!</button>
+          </div>
+        </div>
+        <button class="recall-reveal" id="recall-r-${blockId}" onclick="document.getElementById('recall-a-${blockId}').style.display='block';this.style.display='none'">Show answer</button>
+      </div>`;
+    }).filter(Boolean);
+    if (cards.length) {
+      // Prepend practice shelf to home
+      const practiceHtml = this.shelf('Practice mode', cards);
+      el.insertAdjacentHTML('afterbegin', practiceHtml);
+      this._updateShelfArrows();
+      setTimeout(() => this._updateShelfArrows(), 300);
+      window.scrollTo(0, 0);
+    }
   }
 
   scoreRecall(blockId, quality) {
