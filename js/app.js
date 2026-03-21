@@ -36,9 +36,23 @@ class PBook {
     this.rc.setAllBlocks(this.allBlocks);
     this.rc._loadInteractions(); // Restore persisted interactions
 
-    // Sync voice preference to Recombee
-    if (this.user.preferredVoice && this.rc.enabled) {
-      this.rc.setUserProperties({ voice: this.user.preferredVoice });
+    // Sync user profile to Recombee
+    if (this.rc.enabled) {
+      const prog = this.user.getProgress(this.allBlocks);
+      const coreBlocks = this.allBlocks.filter(b => b.meta.core);
+      const coreRead = coreBlocks.filter(b => this.user.readBlocks.has(b.meta.id)).length;
+      this.rc.setUserProperties({
+        voice: this.user.preferredVoice || 'universal',
+        level: this.user.level,
+        xp: this.user.xp,
+        readCount: prog.read,
+        readPct: prog.pct,
+        coreRead,
+        coreTotal: coreBlocks.length,
+        sessions: this.user.sessionCount,
+        completedMissions: (this.user.completedMissions || []).length,
+        activePath: this.user.activePath || '',
+      });
     }
 
     // Detect stale data: if readBlocks has IDs that don't exist in allBlocks, reset
@@ -148,6 +162,11 @@ class PBook {
   // ===== VIEW SWITCHING =====
   switchView(view) {
     this.currentView = view;
+    // Log mode switch for research analytics
+    const modeMap = { home: 'netflix', read: 'read', map: 'map', glossary: 'mission', chat: 'tutor', profile: 'profile' };
+    this.rc.setContext(modeMap[view] || view);
+    this.rc.logEvent('mode_switch', { mode: modeMap[view] || view, from: this._prevView });
+    this._prevView = view;
 
     // Hide all views, show the selected one
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1242,7 +1261,7 @@ class PBook {
     const el = document.getElementById('mapContent');
     const prog = this.user.getProgress(this.allBlocks);
     const visibleVoices = this.user.getVisibleVoices();
-    const mapMode = this._mapMode || 'visual';
+    const mapMode = this._mapMode || 'list';
 
     const summary = this.user.getSignalSummary();
 
@@ -2584,7 +2603,7 @@ class PBook {
       const b = this.findBlock(r.id);
       const meta = b?.meta || r.values || {};
       const badge = meta.voice && meta.voice !== 'universal' ? `<span class="card-badge ${meta.voice}">${CONFIG.voices[meta.voice]?.label || meta.voice}</span>` : '';
-      return `<div class="card" style="margin-bottom:.5em" onclick="app.openBlock('${r.id}');app.closeSearch()"><div class="card-chapter">${meta._chapterTitle || ''}</div><div class="card-title">${meta.title || r.id}</div><div class="card-meta">${badge}<span class="card-time">${meta.readingTime || 3} min</span></div></div>`;
+      return `<div class="card" style="margin-bottom:.5em" onclick="app.openBlock('${r.id}','search');app.closeSearch()"><div class="card-chapter">${meta._chapterTitle || ''}</div><div class="card-title">${meta.title || r.id}</div><div class="card-meta">${badge}<span class="card-time">${meta.readingTime || 3} min</span></div></div>`;
     }).join('');
   }
 
@@ -2723,7 +2742,7 @@ class PBook {
     this.renderRead(chapterIdx);
   }
 
-  openBlock(blockId) {
+  openBlock(blockId, source) {
     const block = this.findBlock(blockId);
     if (!block) return;
     const chIdx = block.meta._chapterIdx;
@@ -2731,6 +2750,10 @@ class PBook {
     this.user.currentBlock = blockId;
     this.user.currentChapter = chIdx;
     this.user.save();
+    // Set analytics context: where did user discover this block?
+    const mode = source || (this._wizardMission ? 'mission' : this.currentView === 'home' ? 'netflix' : this.currentView === 'map' ? 'map' : this.currentView === 'read' ? 'read' : this.currentView);
+    this.rc.setContext(mode, { blockId, chapter: chIdx });
+    this.rc.logEvent('open_block', { mode, blockId });
 
     // If already viewing this chapter, just scroll
     if (this.currentView === 'read' && this._renderedChapter === chIdx) {
@@ -2906,11 +2929,40 @@ class PBook {
     const profile = this.user.getProfile(this.allBlocks);
     const interactions = this.rc.interactions;
     const notes = JSON.parse(localStorage.getItem('pbook-notes') || '{}');
-    const data = { profile, interactions, notes, exportedAt: new Date().toISOString() };
+
+    // Analytics summary for research
+    const modeCounts = {};
+    const modeBlocks = {};
+    const modeTime = {};
+    interactions.forEach(i => {
+      const m = i.mode || 'unknown';
+      if (i.type === 'detailview') {
+        modeCounts[m] = (modeCounts[m] || 0) + 1;
+        if (!modeBlocks[m]) modeBlocks[m] = new Set();
+        modeBlocks[m].add(i.itemId);
+        if (i.duration) modeTime[m] = (modeTime[m] || 0) + i.duration;
+      }
+    });
+    const modeSwitches = interactions.filter(i => i.event === 'mode_switch');
+    const analytics = {
+      totalInteractions: interactions.length,
+      detailviews: interactions.filter(i => i.type === 'detailview').length,
+      ratings: interactions.filter(i => i.type === 'rating').length,
+      bookmarks: interactions.filter(i => i.type === 'bookmark').length,
+      modeSwitches: modeSwitches.length,
+      byMode: Object.fromEntries(Object.entries(modeCounts).map(([m, c]) => [m, {
+        views: c,
+        uniqueBlocks: modeBlocks[m]?.size || 0,
+        totalDurationSec: modeTime[m] || 0
+      }])),
+      modeSequence: modeSwitches.map(s => ({ mode: s.mode, ts: s.ts })),
+    };
+
+    const data = { profile, analytics, interactions, notes, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `pbook-profile-${profile.userId.substring(0, 8)}.json`;
+    a.download = `pbook-analytics-${profile.userId.substring(0, 8)}.json`;
     a.click();
   }
 

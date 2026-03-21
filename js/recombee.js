@@ -47,9 +47,17 @@ export class RecombeeClient {
     }
   }
 
+  // --- Analytics context ---
+  // Tracks how user discovered content for research comparison
+  // Modes: netflix, read, mission, map, search, tutor, recall, direct
+  setContext(mode, extra) {
+    this._ctx = { mode, ...extra, ts: Date.now() };
+  }
+
   // --- Interactions (always stored locally + sent to Recombee) ---
   async sendView(itemId, duration) {
-    const i = { type: 'detailview', itemId, userId: this.userId, ts: Date.now(), duration };
+    const ctx = this._ctx || {};
+    const i = { type: 'detailview', itemId, userId: this.userId, ts: Date.now(), duration, mode: ctx.mode };
     this.interactions.push(i);
     this._saveInteractions();
     const body = { userId: this.userId, itemId, cascadeCreate: true, timestamp: new Date().toISOString() };
@@ -59,7 +67,8 @@ export class RecombeeClient {
   }
 
   async sendRating(itemId, rating) {
-    const i = { type: 'rating', itemId, userId: this.userId, ts: Date.now(), rating };
+    const ctx = this._ctx || {};
+    const i = { type: 'rating', itemId, userId: this.userId, ts: Date.now(), rating, mode: ctx.mode };
     this.interactions.push(i);
     this._saveInteractions();
     if (this.enabled) return this.api('POST', '/ratings/', {
@@ -69,7 +78,8 @@ export class RecombeeClient {
   }
 
   async sendBookmark(itemId) {
-    const i = { type: 'bookmark', itemId, userId: this.userId, ts: Date.now() };
+    const ctx = this._ctx || {};
+    const i = { type: 'bookmark', itemId, userId: this.userId, ts: Date.now(), mode: ctx.mode };
     this.interactions.push(i);
     this._saveInteractions();
     if (this.enabled) return this.api('POST', '/bookmarks/', {
@@ -79,13 +89,28 @@ export class RecombeeClient {
   }
 
   async sendCartAdd(itemId) {
-    const i = { type: 'cartaddition', itemId, userId: this.userId, ts: Date.now() };
+    const ctx = this._ctx || {};
+    const i = { type: 'cartaddition', itemId, userId: this.userId, ts: Date.now(), mode: ctx.mode };
     this.interactions.push(i);
     this._saveInteractions();
     if (this.enabled) return this.api('POST', '/cartadditions/', {
       userId: this.userId, itemId,
       cascadeCreate: true, timestamp: new Date().toISOString()
     });
+  }
+
+  // Log navigation/mode events (local only — for research analytics)
+  logEvent(event, data) {
+    const entry = { type: 'event', event, userId: this.userId, ts: Date.now(), ...data };
+    this.interactions.push(entry);
+    this._saveInteractions();
+    // Also send as purchase with zero amount to Recombee (abusing purchases as event log)
+    if (this.enabled && event === 'mode_switch') {
+      this.api('POST', '/purchases/', {
+        userId: this.userId, itemId: `_event:${data.mode || event}`,
+        cascadeCreate: true, timestamp: new Date().toISOString()
+      });
+    }
   }
 
   async setUserProperties(props) {
