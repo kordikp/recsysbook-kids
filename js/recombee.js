@@ -37,10 +37,11 @@ export class RecombeeClient {
         body: JSON.stringify({ endpoint, body })
       });
       if (res.ok) return await res.json();
-      // Any error → silently switch to local mode
-      this.enabled = false;
+      // 401 = bad token → disable. Other errors (403 scenario, 404) → just return null, keep trying.
+      if (res.status === 401) this.enabled = false;
       return null;
     } catch (e) {
+      // Network error → disable
       this.enabled = false;
       return null;
     }
@@ -137,7 +138,12 @@ export class RecombeeClient {
       if (scenario) body.scenario = scenario;
       if (filter) body.filter = filter;
       if (booster) body.booster = booster;
-      const result = await this.api('POST', `/recomms/users/${this.userId}/items/`, body);
+      let result = await this.api('POST', `/recomms/users/${this.userId}/items/`, body);
+      // Retry without scenario if it failed (scenario might not exist)
+      if (!result && scenario) {
+        delete body.scenario;
+        result = await this.api('POST', `/recomms/users/${this.userId}/items/`, body);
+      }
       if (result) {
         if (result.recommId) this._lastRecommId = result.recommId;
         return result;
