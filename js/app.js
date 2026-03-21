@@ -2631,7 +2631,12 @@ class PBook {
     const step = this._wizardStep;
     container.innerHTML = `
       <button class="mission-bar-back" onclick="app._returnToWizard()" title="Next step">&#127919;</button>
-      <div class="mission-bar-dots">${m.core.map((id, i) => `<span class="mission-dot ${this.user.readBlocks.has(id) ? 'done' : i === step ? 'current' : ''}"></span>`).join('')}</div>
+      <div class="mission-bar-dots">${m.core.map((id, i) => {
+        const b = this.findBlock(id);
+        const title = b?.meta?.title || id;
+        const cls = this.user.readBlocks.has(id) ? 'done' : i === step ? 'current' : '';
+        return `<span class="mission-dot ${cls}" title="${this.escHtml(title)}" onclick="app._wizardStep=${i};app._pendingMissionIntro='${(m.intros?.[i]||'').replace(/'/g,"\\'")}';app.openBlock('${id}')" style="cursor:pointer"></span>`;
+      }).join('')}</div>
     `;
   }
 
