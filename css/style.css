@@ -579,9 +579,9 @@ pre code { font-family: var(--font-mono); font-size: .82rem; line-height: 1.5; b
 .map-game-tag { font-size: .7rem; flex-shrink: 0; }
 
 /* Knowledge cloud */
-.knowledge-cloud { display: flex; flex-wrap: wrap; gap: .3em; justify-content: center; padding: .5em; }
-.cloud-word { font-family: var(--font-ui); font-weight: 600; color: var(--accent); white-space: nowrap; transition: all .2s; cursor: default; }
-.cloud-word:hover { transform: scale(1.1); }
+.knowledge-cloud { display: flex; flex-wrap: wrap; gap: .25em .5em; justify-content: center; align-items: baseline; padding: .6em; line-height: 1.8; }
+.cloud-word { font-family: var(--font-ui); font-weight: 600; color: var(--accent); white-space: nowrap; padding: .1em .3em; border-radius: 4px; transition: all .2s; cursor: default; }
+.cloud-word:hover { background: var(--accent-bg); transform: scale(1.05); }
 
 /* Voice tags in map */
 .map-voice-tag { font-family: var(--font-ui); font-size: .58rem; font-weight: 700; text-transform: uppercase; padding: .12em .35em; border-radius: 3px; color: #fff; flex-shrink: 0; margin-left: auto; }

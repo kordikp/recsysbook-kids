@@ -227,19 +227,25 @@ class PBook {
     });
     if (missionCards.length) html += this.shelf('Your missions', missionCards);
 
+    // Core essentials — unread core blocks
+    const unreadCore = this.allBlocks.filter(b => b.meta.core && b.meta.type === 'spine' && !this.user.readBlocks.has(b.meta.id)).slice(0, 10);
+    if (unreadCore.length) {
+      html += this.shelf('Essential reading', unreadCore.map(b => this.cardHtml(b.meta)));
+    }
+
     // 2. Recommended for you
     const forYou = await this.rc.getRecsForUser('pbook:personal', 8, this.rc.reql({ type: 'spine' }), this.rc.reqlBoost(this.user));
     if (forYou?.recomms?.length) {
       html += this.shelf('Picked for you', forYou.recomms.map(r => this.cardFromRec(r)));
     }
 
-    // 3. Matching your interest (preferred voice depth cards)
+    // 3. Matching your interest (preferred voice blocks)
     const topVoice = this.user.getTopVoice();
     if (topVoice) {
       const voiceLabel = CONFIG.voices[topVoice]?.label || topVoice;
-      const voiceBlocks = this.allBlocks.filter(b => b.meta.voice === topVoice && b.meta.type === 'depth' && !this.user.readBlocks.has(b.meta.id)).slice(0, 10);
+      const voiceBlocks = this.allBlocks.filter(b => b.meta.voice === topVoice && b.meta.type === 'spine' && !this.user.readBlocks.has(b.meta.id)).slice(0, 10);
       if (voiceBlocks.length) {
-        html += this.shelf(`${voiceLabel} deep dives`, voiceBlocks.map(b => this.cardHtml(b.meta)));
+        html += this.shelf(`${voiceLabel} picks`, voiceBlocks.map(b => this.cardHtml(b.meta)));
       }
     }
 
@@ -1779,21 +1785,58 @@ class PBook {
       h += '</div>';
     }
 
-    // Knowledge cloud
-    const readTopics = {};
+    // Knowledge cloud — extract terms from read blocks
+    const termCounts = {};
+    const CLOUD_TERMS = {
+      'Collaborative Filtering': ['collaborative filter'],
+      'Content-Based': ['content-based', 'content based'],
+      'Cold Start': ['cold start', 'cold-start'],
+      'Filter Bubble': ['filter bubble', 'bubble'],
+      'Echo Chamber': ['echo chamber'],
+      'A/B Testing': ['a/b test', 'ab test'],
+      'Digital Footprints': ['footprint', 'digital footprint'],
+      'Pipeline': ['pipeline', 'candidate generation'],
+      'Popularity Bias': ['popular', 'trending', 'popularity'],
+      'Privacy': ['privacy', 'gdpr', 'data protection'],
+      'Tracking': ['tracker', 'cookie', 'tracking'],
+      'Dopamine Loop': ['dopamine'],
+      'Autoplay': ['autoplay', 'infinite scroll'],
+      'Fairness': ['fair', 'unfair', 'bias'],
+      'Diversity': ['diversity', 'long tail', 'coverage'],
+      'Algorithms': ['algorithm'],
+      'Recommendations': ['recommend', 'suggestion'],
+      'User Signals': ['signal', 'implicit', 'explicit'],
+      'Ratings': ['rating', 'stars', 'score'],
+      'Similarity': ['similar', 'cosine', 'taste twin'],
+      'Matrix Factorization': ['matrix factor', 'svd', 'latent'],
+      'Machine Learning': ['machine learn', 'neural', 'deep learn'],
+      'YouTube': ['youtube'],
+      'TikTok': ['tiktok'],
+      'Netflix': ['netflix'],
+      'Spotify': ['spotify'],
+      'Personalization': ['personali', 'personal'],
+      'Data Collection': ['data collect', 'item catalog', 'user data'],
+      'Exploration': ['exploration', 'exploit', 'bandit'],
+      'Ethics': ['ethic', 'responsible', 'transparent'],
+    };
     [...u.readBlocks].forEach(id => {
-      const topics = this.blockTopics[id] || [];
-      topics.forEach(t => { readTopics[t] = (readTopics[t] || 0) + 1; });
+      const block = this.findBlock(id);
+      if (!block) return;
+      const text = ((block.meta.title || '') + ' ' + (block.body || '')).toLowerCase();
+      for (const [term, keywords] of Object.entries(CLOUD_TERMS)) {
+        if (keywords.some(kw => text.includes(kw))) termCounts[term] = (termCounts[term] || 0) + 1;
+      }
     });
-    const cloudEntries = Object.entries(readTopics).sort((a, b) => b[1] - a[1]);
+    const cloudEntries = Object.entries(termCounts).sort((a, b) => b[1] - a[1]);
     if (cloudEntries.length > 0) {
       h += '<div class="profile-section"><h3>Your Knowledge</h3>';
       h += '<div class="knowledge-cloud">';
-      const maxCount = cloudEntries[0][1];
-      cloudEntries.forEach(([topic, count]) => {
-        const size = 0.65 + (count / maxCount) * 0.6;
-        const opacity = 0.4 + (count / maxCount) * 0.6;
-        h += `<span class="cloud-word" style="font-size:${size}rem;opacity:${opacity}">${topic}</span>`;
+      const maxCount = Math.max(cloudEntries[0][1], 1);
+      cloudEntries.forEach(([term, count]) => {
+        const weight = count / maxCount;
+        const size = 0.6 + weight * 0.55;
+        const opacity = 0.35 + weight * 0.65;
+        h += `<span class="cloud-word" style="font-size:${size}rem;opacity:${opacity}">${term}</span>`;
       });
       h += '</div></div>';
     }
