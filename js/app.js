@@ -253,19 +253,22 @@ class PBook {
       html += this.shelf('Essential reading', unreadCore.map(b => this.cardHtml(b.meta)));
     }
 
-    // 2. Recommended for you
-    const forYou = await this.rc.getRecsForUser('personal', 8, this.rc.reql({ type: 'spine' }), this.rc.reqlBoost(this.user));
+    // 2. Recommended for you (Recombee scenario: homepage-personal)
+    const forYou = await this.rc.getRecsForUser('homepage-personal', 8, this.rc.reql({ type: 'spine' }), this.rc.reqlBoost(this.user));
     if (forYou?.recomms?.length) {
       html += this.shelf('Picked for you', forYou.recomms.map(r => this.cardFromRec(r)));
     }
 
-    // 3. Matching your interest (preferred voice blocks)
+    // 3. Matching your interest (Recombee scenario: homepage-voice)
     const topVoice = this.user.getTopVoice();
     if (topVoice) {
       const voiceLabel = CONFIG.voices[topVoice]?.label || topVoice;
-      const voiceBlocks = this.allBlocks.filter(b => b.meta.voice === topVoice && b.meta.type === 'spine' && !this.user.readBlocks.has(b.meta.id)).slice(0, 10);
-      if (voiceBlocks.length) {
-        html += this.shelf(`${voiceLabel} picks`, voiceBlocks.map(b => this.cardHtml(b.meta)));
+      const voiceRecs = await this.rc.getRecsForUser('homepage-voice', 8, this.rc.reql({ voice: [topVoice] }));
+      if (voiceRecs?.recomms?.length) {
+        html += this.shelf(`${voiceLabel} picks`, voiceRecs.recomms.map(r => this.cardFromRec(r)));
+      } else {
+        const voiceBlocks = this.allBlocks.filter(b => b.meta.voice === topVoice && b.meta.type === 'spine' && !this.user.readBlocks.has(b.meta.id)).slice(0, 10);
+        if (voiceBlocks.length) html += this.shelf(`${voiceLabel} picks`, voiceBlocks.map(b => this.cardHtml(b.meta)));
       }
     }
 
@@ -1022,7 +1025,7 @@ class PBook {
     this.updateContext();
   }
 
-  updateContext(currentBlockId) {
+  async updateContext(currentBlockId) {
     const ch = this._ctxChapter;
     if (!ch) return;
 
@@ -1053,12 +1056,21 @@ class PBook {
       show('ctxNext', `<h4>Up next</h4><div class="ctx-next" onclick="app.openBlock('${nextBlock.id}')"><span class="ctx-next-label">Continue</span><span>${nextBlock.title}</span></div>`);
     } else hide('ctxNext');
 
-    // 3. Related
-    const pool = this.allBlocks.filter(b => b._chapter !== ch.id && b.meta.type === 'spine');
-    const unread = pool.filter(b => !this.user.readBlocks.has(b.meta.id));
-    const related = (unread.length >= 4 ? unread : [...unread, ...pool]).sort(() => Math.random() - 0.5).slice(0, 4);
-    show('ctxRelated', `<h4>Related</h4>${related.map(b =>
-      `<div class="ctx-item" onclick="app.openBlock('${b.meta.id}')"><span>Ch${b.meta._chapterNum}: ${b.meta.title}</span></div>`
+    // 3. Related (Recombee scenario: context-related)
+    let related = [];
+    if (currentBlock && this.rc.enabled) {
+      const relRecs = await this.rc.getRecsForItem(currentBlock.id, 4, this.rc.reql({ type: 'spine' }), 'context-related');
+      if (relRecs?.recomms?.length) related = relRecs.recomms.map(r => { const b = this.findBlock(r.id); return b ? b : null; }).filter(Boolean);
+    }
+    if (related.length < 3) {
+      const pool = this.allBlocks.filter(b => b._chapter !== ch.id && b.meta.type === 'spine');
+      const unread = pool.filter(b => !this.user.readBlocks.has(b.meta.id));
+      related = (unread.length >= 4 ? unread : [...unread, ...pool]).sort(() => Math.random() - 0.5).slice(0, 4);
+    }
+    show('ctxRelated', `<h4>Related</h4>${related.map(b => {
+      const meta = b.meta || b;
+      return `<div class="ctx-item" onclick="app.openBlock('${meta.id}')"><span>Ch${meta._chapterNum}: ${meta.title}</span></div>`;
+    }
     ).join('')}`);
 
     // 4. Quiz / comprehension check
@@ -2597,7 +2609,7 @@ class PBook {
   async onSearch(query) {
     const el = document.getElementById('searchResults');
     if (!query || query.length < 2) { el.innerHTML = '<div class="search-empty">Type to search across all content...</div>'; return; }
-    const results = await this.rc.searchItems(query, 15);
+    const results = await this.rc.searchItems(query, 15, null, 'search');
     if (!results?.recomms?.length) { el.innerHTML = '<div class="search-empty">No results found.</div>'; return; }
     el.innerHTML = results.recomms.map(r => {
       const b = this.findBlock(r.id);

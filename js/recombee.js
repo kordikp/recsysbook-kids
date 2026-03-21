@@ -177,11 +177,13 @@ export class RecombeeClient {
     return this._localRecsForUser(scenario, count);
   }
 
-  async getRecsForItem(itemId, count, filter) {
+  async getRecsForItem(itemId, count, filter, scenario) {
     if (this.enabled) {
       const body = { count, targetUserId: this.userId, cascadeCreate: true };
+      if (scenario) body.scenario = scenario;
       if (filter) body.filter = filter;
-      const result = await this.api('POST', `/recomms/items/${itemId}/items/`, body);
+      let result = await this.api('POST', `/recomms/items/${itemId}/items/`, body);
+      if (!result && scenario) { delete body.scenario; result = await this.api('POST', `/recomms/items/${itemId}/items/`, body); }
       if (result) {
         if (result.recommId) this._lastRecommId = result.recommId;
         return result;
@@ -190,9 +192,10 @@ export class RecombeeClient {
     return this._localRecsForItem(itemId, count);
   }
 
-  async searchItems(query, count, filter) {
+  async searchItems(query, count, filter, scenario) {
     if (this.enabled) {
       const body = { searchQuery: query, count, cascadeCreate: true };
+      if (scenario) body.scenario = scenario;
       if (filter) body.filter = filter;
       const result = await this.api('POST', `/search/users/${this.userId}/items/`, body);
       if (result) return result;
