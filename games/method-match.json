@@ -1,0 +1,18 @@
+{
+  "type": "sort",
+  "title": "Name That Method",
+  "instruction": "Which recommendation method is this describing?",
+  "buckets": ["Collaborative filtering", "Content-based"],
+  "items": [
+    { "text": "People who liked X also liked Y", "answer": 0 },
+    { "text": "This movie has the same actors as one you liked", "answer": 1 },
+    { "text": "Users with similar ratings to yours enjoyed this", "answer": 0 },
+    { "text": "This song has a similar tempo and mood", "answer": 1 },
+    { "text": "Your taste twin just discovered something new", "answer": 0 },
+    { "text": "This book is in the same genre you always read", "answer": 1 },
+    { "text": "87% of people who bought A also bought B", "answer": 0 },
+    { "text": "The description matches your search keywords", "answer": 1 },
+    { "text": "Neighbors in the rating matrix rated this highly", "answer": 0 },
+    { "text": "Tags and categories match your preferences", "answer": 1 }
+  ]
+}

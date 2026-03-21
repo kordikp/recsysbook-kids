@@ -1,7 +1,7 @@
 ---
 id: ch3-game-taste
 type: game
-gameType: taste-match
+game: taste-match
 title: "Find Your Taste Twin!"
 readingTime: 1
 standalone: true

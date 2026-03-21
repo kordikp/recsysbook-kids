@@ -1,0 +1,16 @@
+{
+  "type": "sort",
+  "title": "A/B Test Judge",
+  "instruction": "You're running an A/B test. Is this result SIGNIFICANT or just RANDOM noise?",
+  "buckets": ["Significant result", "Random noise"],
+  "items": [
+    { "text": "Version A: 1000 users, 52% clicked. Version B: 1000 users, 48% clicked.", "answer": 1 },
+    { "text": "Version A: 10,000 users, 12% bought. Version B: 10,000 users, 8% bought.", "answer": 0 },
+    { "text": "Version A: 50 users, 60% liked. Version B: 50 users, 40% liked.", "answer": 1 },
+    { "text": "Version A: 100,000 users, 3.1% converted. Version B: 100,000 users, 3.5% converted.", "answer": 0 },
+    { "text": "Version A: 20 users, 5 liked. Version B: 20 users, 8 liked.", "answer": 1 },
+    { "text": "Version A: 5,000 users, 25% engaged. Version B: 5,000 users, 15% engaged.", "answer": 0 },
+    { "text": "Version A tested for 2 hours. Version B tested for 2 weeks.", "answer": 1 },
+    { "text": "Both versions tested on 50,000 users for 30 days. B wins by 4%.", "answer": 0 }
+  ]
+}

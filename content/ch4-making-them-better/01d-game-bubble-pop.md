@@ -1,7 +1,7 @@
 ---
 id: ch4-game-bubble
 type: game
-gameType: bubble-pop
+game: bubble-pop
 title: "Pop the Filter Bubble!"
 readingTime: 1
 standalone: true

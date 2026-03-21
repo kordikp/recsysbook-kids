@@ -1,0 +1,7 @@
+{
+  "type": "match",
+  "title": "Find Your Taste Twin",
+  "instruction": "Look at the ratings. Who has the most similar taste to YOU? Click their name!",
+  "items": ["Frozen", "Avengers", "Moana", "Spider-Man", "Coco"],
+  "users": ["Alex", "Sam", "Jordan", "Taylor"]
+}

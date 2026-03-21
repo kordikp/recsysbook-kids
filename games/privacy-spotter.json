@@ -1,0 +1,6 @@
+{
+  "type": "pop",
+  "title": "Privacy Spotter",
+  "instruction": "Some of these are fine, some are privacy risks. Tap the RISKY ones!",
+  "categories": ["Saves your search history", "Tracks you across websites", "Remembers your language", "Shares data with advertisers", "Stores your login cookie", "Records your location 24/7", "Shows your username", "Guesses your age from behavior", "Keeps your dark mode setting", "Sells your browsing profile"]
+}

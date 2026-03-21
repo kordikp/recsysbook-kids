@@ -38,6 +38,7 @@
         "02-spine-three-types-of-clues.md",
         "02a-sidebar-incognito.md",
         "02b-sidebar-myth-buster.md",
+        "02c-game-cold-start.md",
         "03-spine-your-data-your-choice.md",
         "03a-depth-thinker-privacy.md",
         "03b-depth-creator-experiment.md",
@@ -60,6 +61,7 @@
         "02-spine-look-at-the-thing.md",
         "02a-depth-thinker-compare.md",
         "02b-sidebar-spot-the-method.md",
+        "02c-game-method-match.md",
         "03-spine-whats-popular.md",
         "03a-sidebar-popularity-trap.md",
         "04-spine-the-pipeline.md",
@@ -87,6 +89,7 @@
         "02b-sidebar-unfair-game.md",
         "03-spine-testing.md",
         "03a-depth-explorer-ab-test.md",
+        "03b-game-ab-test.md",
         "04-question-ethics.md",
         "05-spine-worksheet-bubble-audit.md"
       ]
@@ -130,6 +133,7 @@
         "03a-depth-explorer-check-your-data.md",
         "03b-sidebar-age-guessing.md",
         "03c-sidebar-tracking-across-web.md",
+        "03d-game-privacy-spotter.md",
         "04-spine-ai-and-you.md",
         "04a-depth-thinker-hard-questions.md",
         "04b-sidebar-eu-law.md",

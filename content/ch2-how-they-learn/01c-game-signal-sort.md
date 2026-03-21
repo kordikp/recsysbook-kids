@@ -1,7 +1,7 @@
 ---
 id: ch2-game-signal
 type: game
-gameType: signal-sort
+game: signal-sort
 title: "Signal Sort Game"
 readingTime: 1
 standalone: true

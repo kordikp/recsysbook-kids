@@ -1,0 +1,20 @@
+{
+  "type": "sort",
+  "title": "Signal Sort",
+  "instruction": "Is this a STRONG or WEAK signal for a recommender system?",
+  "buckets": ["Strong signal", "Weak signal"],
+  "items": [
+    { "text": "Watched a video to the end", "answer": 0 },
+    { "text": "Scrolled past in 1 second", "answer": 1 },
+    { "text": "Searched for it by name", "answer": 0 },
+    { "text": "Liked and shared with friends", "answer": 0 },
+    { "text": "Opened app while bored", "answer": 1 },
+    { "text": "Rewatched 3 times", "answer": 0 },
+    { "text": "Clicked by accident, left immediately", "answer": 1 },
+    { "text": "Added to a playlist", "answer": 0 },
+    { "text": "Skipped after 2 seconds", "answer": 1 },
+    { "text": "Left a comment", "answer": 0 },
+    { "text": "Paused halfway and never came back", "answer": 1 },
+    { "text": "Bought the product after clicking", "answer": 0 }
+  ]
+}

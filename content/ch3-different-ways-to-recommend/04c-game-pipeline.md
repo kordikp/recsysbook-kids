@@ -1,7 +1,7 @@
 ---
 id: ch3-game-pipeline
 type: game
-gameType: pipeline-builder
+game: pipeline-order
 title: "Build the Pipeline!"
 readingTime: 1
 standalone: true

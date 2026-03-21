@@ -1,0 +1,18 @@
+{
+  "type": "sort",
+  "title": "Cold Start Challenge",
+  "instruction": "A brand new user just signed up. Which strategy helps with cold start?",
+  "buckets": ["Helps with cold start", "Needs existing data"],
+  "items": [
+    { "text": "Show what's popular right now", "answer": 0 },
+    { "text": "Use collaborative filtering", "answer": 1 },
+    { "text": "Ask the user to pick favorite genres", "answer": 0 },
+    { "text": "Recommend based on similar users' history", "answer": 1 },
+    { "text": "Show trending items from today", "answer": 0 },
+    { "text": "Use the user's past purchase history", "answer": 1 },
+    { "text": "Recommend based on the user's country/language", "answer": 0 },
+    { "text": "Find taste twins from their rating history", "answer": 1 },
+    { "text": "Show editor's picks and curated lists", "answer": 0 },
+    { "text": "Predict preferences from their watch history", "answer": 1 }
+  ]
+}

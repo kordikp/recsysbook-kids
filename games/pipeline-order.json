@@ -1,0 +1,12 @@
+{
+  "type": "order",
+  "title": "Build the Pipeline",
+  "instruction": "Put the recommendation pipeline steps in the correct order!",
+  "steps": [
+    "Collect clicks, watches, and ratings from users",
+    "Find hundreds of possible items (candidates)",
+    "Score and rank each candidate for this user",
+    "Add diversity and remove things already seen",
+    "Show the final recommendations on screen"
+  ]
+}

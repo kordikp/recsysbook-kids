@@ -765,9 +765,9 @@ class PBook {
     } catch (e) {}
   }
 
-  // ===== MINI-GAMES =====
+  // ===== MINI-GAMES (data-driven from games/*.json) =====
   renderGame(block) {
-    const gameType = block.gameType || block.id;
+    const gameFile = block.game || block.gameType || block.id;
     return `<div class="game-block fade-up" id="b-${block.id}">
       <div class="game-header">
         <span class="game-icon">\u{1F3AE}</span>
@@ -775,209 +775,153 @@ class PBook {
         <span class="game-timer" id="gt-${block.id}">1:00</span>
       </div>
       <div class="game-area" id="ga-${block.id}"></div>
-      <button class="game-start-btn" onclick="app.startGame('${block.id}','${gameType}')">Play!</button>
+      <button class="game-start-btn" onclick="app.startGame('${block.id}','${gameFile}')">Play!</button>
     </div>`;
   }
 
-  startGame(blockId, gameType) {
+  async startGame(blockId, gameFile) {
     const area = document.getElementById(`ga-${blockId}`);
     const timerEl = document.getElementById(`gt-${blockId}`);
     const startBtn = area?.parentElement?.querySelector('.game-start-btn');
     if (!area) return;
     if (startBtn) startBtn.style.display = 'none';
 
-    // 60 second timer — game auto-hides
+    // Load game data from JSON
+    let game;
+    try {
+      const res = await fetch(`games/${gameFile}.json`);
+      game = await res.json();
+    } catch (e) {
+      area.innerHTML = '<div class="game-over">Could not load game.</div>';
+      return;
+    }
+
+    // 60s timer
     let seconds = 60;
-    const timer = setInterval(() => {
+    if (this._activeGameTimer) clearInterval(this._activeGameTimer);
+    this._activeGameTimer = setInterval(() => {
       seconds--;
       if (timerEl) timerEl.textContent = `0:${seconds.toString().padStart(2, '0')}`;
+      if (seconds <= 10 && timerEl) timerEl.style.color = '#EF4444';
       if (seconds <= 0) {
-        clearInterval(timer);
-        area.innerHTML = '<div class="game-over">Time\'s up! Back to reading. You earned <b>+5 XP</b>!</div>';
-        this.user.addXP(5);
-        this.user.save();
-        this.showXPToast('+5 XP \u{1F3AE}', 'xp');
-        this._updateMissionBar();
-        setTimeout(() => {
-          const block = area.closest('.game-block');
-          if (block) { block.style.opacity = '.5'; block.style.pointerEvents = 'none'; }
-        }, 2000);
+        clearInterval(this._activeGameTimer);
+        this._gameEnd(area, 'Time\'s up! Nice try.');
       }
     }, 1000);
-    this._activeGameTimer = timer;
 
-    // Launch game based on type
-    if (gameType.includes('sort') || gameType.includes('signal')) this._gameSignalSort(area);
-    else if (gameType.includes('match') || gameType.includes('twin')) this._gameTasteMatch(area);
-    else if (gameType.includes('bubble') || gameType.includes('pop')) this._gameBubblePop(area);
-    else if (gameType.includes('pipeline')) this._gamePipelineBuilder(area);
-    else this._gameSignalSort(area); // default
+    // Launch by type
+    if (game.type === 'sort') this._gameSort(area, game);
+    else if (game.type === 'match') this._gameMatch(area, game);
+    else if (game.type === 'pop') this._gamePop(area, game);
+    else if (game.type === 'order') this._gameOrder(area, game);
+    else this._gameSort(area, game);
   }
 
-  // Game 1: Signal Sort — drag signals into "strong" or "weak" buckets
-  _gameSignalSort(area) {
-    const signals = [
-      { text: 'Watched a video to the end', strong: true },
-      { text: 'Scrolled past quickly', strong: false },
-      { text: 'Searched for it by name', strong: true },
-      { text: 'Opened app at 3 AM', strong: false },
-      { text: 'Liked and shared', strong: true },
-      { text: 'Paused halfway', strong: false },
-      { text: 'Rewatched 3 times', strong: true },
-      { text: 'Clicked by accident', strong: false },
-      { text: 'Added to playlist', strong: true },
-      { text: 'Skipped after 2 seconds', strong: false },
-    ].sort(() => Math.random() - 0.5);
-    let score = 0, shown = 0;
-    const next = () => {
-      if (shown >= signals.length) { area.innerHTML = `<div class="game-over">Done! You got <b>${score}/${signals.length}</b> right!</div>`; return; }
-      const s = signals[shown++];
-      area.innerHTML = `<div class="game-signal-card">"${s.text}"</div>
-        <div class="game-buckets">
-          <button class="game-bucket strong" onclick="app._gameCheck(this,${s.strong},true)">Strong signal</button>
-          <button class="game-bucket weak" onclick="app._gameCheck(this,${!s.strong},true)">Weak signal</button>
-        </div>
-        <div class="game-score">${score}/${shown - 1} correct</div>`;
-      area._next = next;
-      area._score = () => score;
-      area._addScore = () => score++;
+  _gameEnd(area, msg) {
+    if (this._activeGameTimer) clearInterval(this._activeGameTimer);
+    area.innerHTML = `<div class="game-over">${msg} <b>+5 XP</b></div>`;
+    this.user.addXP(5); this.user.save();
+    this.showXPToast('+5 XP \u{1F3AE}', 'xp');
+    this._updateMissionBar();
+    setTimeout(() => {
+      const block = area.closest('.game-block');
+      if (block) { block.style.opacity = '.5'; block.style.pointerEvents = 'none'; }
+    }, 2500);
+  }
+
+  // Sort game: classify items into two buckets
+  _gameSort(area, game) {
+    const items = [...game.items].sort(() => Math.random() - 0.5);
+    let score = 0, idx = 0;
+    const show = () => {
+      if (idx >= items.length) { this._gameEnd(area, `Done! ${score}/${items.length} correct.`); return; }
+      const item = items[idx++];
+      area.innerHTML = `<div class="game-signal-card">${item.text}</div>
+        <div class="game-buckets">${game.buckets.map((b, bi) =>
+          `<button class="game-bucket ${bi === 0 ? 'strong' : 'weak'}" data-ans="${bi}">${b}</button>`
+        ).join('')}</div>
+        <div class="game-score">${score}/${idx - 1} correct</div>`;
+      area.querySelectorAll('.game-bucket').forEach(btn => {
+        btn.onclick = () => {
+          area.querySelectorAll('.game-bucket').forEach(b => b.disabled = true);
+          if (parseInt(btn.dataset.ans) === item.answer) { btn.classList.add('game-correct'); score++; }
+          else btn.classList.add('game-wrong');
+          setTimeout(show, 500);
+        };
+      });
     };
-    next();
+    show();
   }
 
-  _gameCheck(btn, correct) {
-    const area = btn.closest('.game-area');
-    if (!area) return;
-    btn.parentElement.querySelectorAll('button').forEach(b => b.disabled = true);
-    if (correct) {
-      btn.classList.add('game-correct');
-      area._addScore();
-    } else {
-      btn.classList.add('game-wrong');
-    }
-    setTimeout(() => area._next(), 600);
-  }
-
-  // Game 2: Taste Match — find which users have similar taste
-  _gameTasteMatch(area) {
-    const movies = ['Frozen', 'Avengers', 'Moana', 'Spider-Man', 'Coco'];
-    const you = movies.map(() => Math.ceil(Math.random() * 5));
-    const users = Array.from({ length: 4 }, (_, i) => ({
-      name: ['Alex', 'Sam', 'Jordan', 'Taylor'][i],
-      ratings: movies.map((_, j) => {
-        if (Math.random() < 0.3) return Math.max(1, Math.min(5, you[j] + (Math.random() < 0.5 ? -1 : 1)));
-        return Math.ceil(Math.random() * 5);
-      })
+  // Match game: find taste twin in a rating grid
+  _gameMatch(area, game) {
+    const items = game.items;
+    const you = items.map(() => Math.ceil(Math.random() * 5));
+    const users = game.users.map(name => ({
+      name,
+      ratings: items.map(() => Math.ceil(Math.random() * 5))
     }));
-    // Make one user very similar
-    const twin = Math.floor(Math.random() * 4);
-    users[twin].ratings = movies.map((_, j) => Math.max(1, Math.min(5, you[j] + (Math.random() < 0.7 ? 0 : (Math.random() < 0.5 ? -1 : 1)))));
+    const twin = Math.floor(Math.random() * users.length);
+    users[twin].ratings = items.map((_, j) => Math.max(1, Math.min(5, you[j] + (Math.random() < 0.65 ? 0 : (Math.random() < 0.5 ? -1 : 1)))));
 
-    let table = '<table class="game-table"><tr><th></th>' + movies.map(m => `<th>${m}</th>`).join('') + '</tr>';
-    table += '<tr class="game-you"><td><b>You</b></td>' + you.map(r => `<td>${'\u2B50'.repeat(r)}</td>`).join('') + '</tr>';
-    users.forEach((u, i) => {
-      table += `<tr><td>${u.name}</td>` + u.ratings.map(r => `<td>${'\u2B50'.repeat(r)}</td>`).join('') + '</tr>';
-    });
+    let table = `<table class="game-table"><tr><th></th>${items.map(m => `<th>${m}</th>`).join('')}</tr>`;
+    table += `<tr class="game-you"><td><b>You</b></td>${you.map(r => `<td>${'\u2B50'.repeat(r)}</td>`).join('')}</tr>`;
+    users.forEach(u => { table += `<tr><td class="game-pick">${u.name}</td>${u.ratings.map(r => `<td>${'\u2B50'.repeat(r)}</td>`).join('')}</tr>`; });
     table += '</table>';
-    area.innerHTML = `<div class="game-prompt">Who is your taste twin? Click their name!</div>${table}`;
-    area.querySelectorAll('tr:not(.game-you):not(:first-child) td:first-child').forEach((td, i) => {
-      td.style.cursor = 'pointer';
-      td.style.fontWeight = '600';
+    area.innerHTML = `<div class="game-prompt">${game.instruction}</div>${table}`;
+    area.querySelectorAll('.game-pick').forEach((td, i) => {
       td.onclick = () => {
-        if (i === twin) {
-          td.style.color = '#059669';
-          area.innerHTML += '<div class="game-over" style="color:#059669"><b>Correct!</b> That\'s collaborative filtering — finding your taste twin!</div>';
-          this.user.addXP(3);
-          this.showXPToast('+3 XP', 'xp');
-        } else {
-          td.style.color = '#EF4444';
-          td.style.textDecoration = 'line-through';
-        }
+        if (i === twin) { this._gameEnd(area, `Correct! ${users[twin].name} is your taste twin! That's collaborative filtering.`); }
+        else { td.style.color = '#EF4444'; td.style.textDecoration = 'line-through'; }
       };
     });
   }
 
-  // Game 3: Bubble Pop — click diverse items to "pop" filter bubbles
-  _gameBubblePop(area) {
-    const categories = ['\u{1F3B5} Music', '\u{1F3AE} Games', '\u{26BD} Sports', '\u{1F4D6} Books', '\u{1F373} Cooking', '\u{1F52C} Science', '\u{1F3A8} Art', '\u{1F30D} Travel'];
-    const bubble = categories[Math.floor(Math.random() * categories.length)];
-    let popped = new Set(), clicks = 0;
+  // Pop game: click items to collect/escape
+  _gamePop(area, game) {
+    const cats = [...game.categories];
+    const target = cats[Math.floor(Math.random() * cats.length)];
+    const popped = new Set();
     const render = () => {
-      const items = categories.sort(() => Math.random() - 0.5).map(c => {
-        const inBubble = c === bubble;
-        const isPopped = popped.has(c);
-        return `<button class="game-bubble-item ${inBubble ? 'in-bubble' : ''} ${isPopped ? 'popped' : ''}"
-          onclick="app._bubbleClick(this,'${c}')" ${isPopped ? 'disabled' : ''}>${c}</button>`;
-      }).join('');
-      area.innerHTML = `<div class="game-prompt">You're stuck in a "${bubble}" bubble! Click OTHER topics to pop it. (${popped.size}/${categories.length - 1} popped)</div>
-        <div class="game-bubble-grid">${items}</div>`;
-      area._popped = popped;
-      area._bubble = bubble;
-      area._render = render;
+      area.innerHTML = `<div class="game-prompt">${game.instruction} Your bubble: <b>${target}</b> (${popped.size}/${cats.length - 1})</div>
+        <div class="game-bubble-grid">${cats.sort(() => Math.random() - 0.5).map(c => {
+          const done = popped.has(c);
+          return `<button class="game-bubble-item ${c === target ? 'in-bubble' : ''} ${done ? 'popped' : ''}" ${done ? 'disabled' : ''}>${c}</button>`;
+        }).join('')}</div>`;
+      area.querySelectorAll('.game-bubble-item:not([disabled])').forEach(btn => {
+        btn.onclick = () => {
+          if (btn.textContent.trim() === target) { btn.classList.add('game-wrong'); }
+          else { popped.add(btn.textContent.trim()); if (popped.size >= cats.length - 1) this._gameEnd(area, 'Bubble popped! Diversity wins!'); else render(); }
+        };
+      });
     };
     render();
   }
 
-  _bubbleClick(btn, category) {
-    const area = btn.closest('.game-area');
-    if (category === area._bubble) {
-      btn.classList.add('game-wrong');
-      btn.textContent += ' (that\'s your bubble!)';
-    } else {
-      area._popped.add(category);
-      if (area._popped.size >= 7) {
-        area.innerHTML = '<div class="game-over" style="color:#059669"><b>Bubble popped!</b> Diversity is the cure for filter bubbles!</div>';
-        this.user.addXP(5);
-        this.showXPToast('+5 XP \u{1FAE7}', 'xp');
-      } else {
-        area._render();
-      }
-    }
-  }
-
-  // Game 4: Pipeline Builder — put pipeline steps in correct order
-  _gamePipelineBuilder(area) {
-    const steps = [
-      { text: 'Collect user clicks and watches', order: 1 },
-      { text: 'Find hundreds of candidate items', order: 2 },
-      { text: 'Score and rank each candidate', order: 3 },
-      { text: 'Add diversity and remove duplicates', order: 4 },
-      { text: 'Show the final recommendations', order: 5 },
-    ];
-    const shuffled = [...steps].sort(() => Math.random() - 0.5);
-    let selected = [];
+  // Order game: put steps in correct sequence
+  _gameOrder(area, game) {
+    const steps = game.steps;
+    const shuffled = steps.map((text, i) => ({ text, order: i })).sort(() => Math.random() - 0.5);
+    const selected = [];
     const render = () => {
       const remaining = shuffled.filter(s => !selected.includes(s));
-      area.innerHTML = `<div class="game-prompt">Put the recommendation pipeline in order! Click steps 1 to 5.</div>
+      area.innerHTML = `<div class="game-prompt">${game.instruction}</div>
         <div class="game-pipeline-selected">${selected.map((s, i) => `<div class="game-pipe-step done">${i + 1}. ${s.text}</div>`).join('')}</div>
         <div class="game-pipeline-options">${remaining.map(s =>
-          `<button class="game-pipe-btn" onclick="app._pipelineSelect(this,${s.order})">${s.text}</button>`
+          `<button class="game-pipe-btn">${s.text}</button>`
         ).join('')}</div>`;
+      area.querySelectorAll('.game-pipe-btn').forEach(btn => {
+        btn.onclick = () => {
+          const step = remaining.find(s => s.text === btn.textContent);
+          if (step && step.order === selected.length) {
+            selected.push(step);
+            if (selected.length >= steps.length) this._gameEnd(area, 'Perfect order! You nailed the pipeline!');
+            else render();
+          } else { btn.classList.add('game-wrong'); setTimeout(() => btn.classList.remove('game-wrong'), 400); }
+        };
+      });
     };
-    area._selected = selected;
-    area._steps = steps;
-    area._shuffled = shuffled;
-    area._render = render;
     render();
-  }
-
-  _pipelineSelect(btn, correctOrder) {
-    const area = btn.closest('.game-area');
-    const expected = area._selected.length + 1;
-    if (correctOrder === expected) {
-      const step = area._shuffled.find(s => s.order === correctOrder);
-      area._selected.push(step);
-      if (area._selected.length >= 5) {
-        area.innerHTML = '<div class="game-over" style="color:#059669"><b>Perfect pipeline!</b> You understand how recommendations are built!</div>';
-        this.user.addXP(5);
-        this.showXPToast('+5 XP \u{1F527}', 'xp');
-      } else {
-        area._render();
-      }
-    } else {
-      btn.classList.add('game-wrong');
-      setTimeout(() => btn.classList.remove('game-wrong'), 500);
-    }
   }
 
   renderQuestion(block) {
@@ -2622,9 +2566,7 @@ class PBook {
   }
 
   // ===== INTERACTIONS =====
-  // toggleDepth removed — depth cards are now regular spine blocks
-
-  _placeholder_toggleDepth() { // keep anchor for line references
+  _placeholder_unused() { // removed methods anchor
   }
 
   answerQ(el, voice, qId) {
