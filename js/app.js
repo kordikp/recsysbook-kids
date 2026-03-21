@@ -1495,6 +1495,7 @@ class PBook {
       { id: 'level_5', icon: '🏆', name: 'Level 5!' }, { id: 'save_5', icon: '🔖', name: 'Collector' },
       { id: 'xp_200', icon: '💎', name: 'XP Hunter' }, { id: 'deep_diver', icon: '🤿', name: 'Deep Diver' },
       { id: 'recall_5', icon: '🧠', name: 'Memory Pro' },
+      { id: 'certified', icon: '🎓', name: 'Certified!' },
     ];
     const locked = allBadges.filter(a => !earnedIds.has(a.id));
     if (locked.length) {
@@ -1527,6 +1528,29 @@ class PBook {
       });
       h += '</div>';
     }
+
+    // Certificate
+    const certReady = p.progress.pct >= 80 && u.level >= 3;
+    const certLocked = !certReady;
+    h += '<div class="profile-section"><h3>Certificate</h3>';
+    if (certReady) {
+      h += `<div class="cert-ready">
+        <p style="font-size:.85rem;margin-bottom:.6em">You've completed <strong>${p.progress.pct}%</strong> of the book and reached <strong>Level ${u.level}</strong>. You've earned your certificate!</p>
+        <button class="cert-btn" onclick="app.generateCertificate()">Download Certificate (PDF)</button>
+      </div>`;
+    } else {
+      const needs = [];
+      if (p.progress.pct < 80) needs.push(`read ${80 - p.progress.pct}% more content`);
+      if (u.level < 3) needs.push(`reach Level 3 (need ${(3 - 1) * 50 - u.xp + 50} more XP)`);
+      h += `<div class="cert-locked">
+        <p style="font-size:.85rem;color:var(--text-2)">Complete the book to earn your certificate in Recommender Systems!</p>
+        <div style="font-size:.8rem;color:var(--text-3);margin-top:.3em">Requirements: ${needs.join(', ')}</div>
+        <div class="cert-progress">
+          <div class="cert-progress-fill" style="width:${Math.min(100, Math.round((p.progress.pct / 80 + (u.level >= 3 ? 1 : u.level / 3)) / 2 * 100))}%"></div>
+        </div>
+      </div>`;
+    }
+    h += '</div>';
 
     // Reset
     h += '<div class="profile-section">';
@@ -2119,6 +2143,89 @@ class PBook {
     a.href = URL.createObjectURL(blob);
     a.download = `pbook-profile-${profile.userId.substring(0, 8)}.json`;
     a.click();
+  }
+
+  generateCertificate() {
+    const u = this.user;
+    const p = u.getProfile(this.allBlocks);
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const uid = (localStorage.getItem('pbook-uid') || 'reader').substring(0, 12);
+
+    // Award certificate achievement
+    if (!u.achievements.find(a => a.id === 'certified')) {
+      u.achievements.push({ id: 'certified', name: 'Certified!', icon: '\u{1F393}', desc: 'Earned your certificate', earnedAt: Date.now() });
+      u.addXP(50);
+      u.save();
+      this.showXPToast('+50 XP \u{1F393} Certificate earned!', 'achievement');
+    }
+
+    // Generate SVG certificate
+    const topVoice = u.getTopVoice();
+    const voiceLabel = CONFIG.voices[topVoice]?.label || 'Universal';
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 566" width="800" height="566">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F5F3FF"/>
+      <stop offset="100%" stop-color="#EDE9FE"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="566" fill="url(#bg)" rx="16"/>
+  <rect x="20" y="20" width="760" height="526" fill="none" stroke="#7C3AED" stroke-width="2" rx="12" stroke-dasharray="8 4"/>
+  <rect x="30" y="30" width="740" height="506" fill="none" stroke="#7C3AED" stroke-width="1" rx="10" opacity=".3"/>
+
+  <!-- Header -->
+  <text x="400" y="80" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#A78BFA" letter-spacing="6">CERTIFICATE OF COMPLETION</text>
+  <line x1="200" y1="95" x2="600" y2="95" stroke="#C4B5FD" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="400" y="140" text-anchor="middle" font-family="Georgia,serif" font-size="28" fill="#4C1D95" font-weight="bold">How Recommendations Work</text>
+  <text x="400" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#7C3AED">A p-book by Pavel Kordik</text>
+
+  <!-- This certifies -->
+  <text x="400" y="210" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#6B7280">This certifies that</text>
+  <text x="400" y="245" text-anchor="middle" font-family="Georgia,serif" font-size="24" fill="#1C1917">Reader ${uid}</text>
+  <line x1="250" y1="255" x2="550" y2="255" stroke="#D4B5FD" stroke-width="1"/>
+
+  <!-- Achievement stats -->
+  <text x="400" y="290" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#6B7280">has successfully completed the study of Modern Recommender Systems</text>
+
+  <text x="200" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">${p.progress.read} sections read</text>
+  <text x="400" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">Level ${u.level} \u2022 ${u.xp} XP</text>
+  <text x="600" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">${u.achievements.length} badges earned</text>
+
+  <text x="200" y="355" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${p.progress.pct}% complete</text>
+  <text x="400" y="355" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${voiceLabel} path</text>
+  <text x="600" y="355" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${p.readingTimeMin} min reading</text>
+
+  <!-- Specialization -->
+  <rect x="280" y="375" width="240" height="30" rx="15" fill="#7C3AED" opacity=".1"/>
+  <text x="400" y="395" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#7C3AED" font-weight="600">Specialization: ${voiceLabel}</text>
+
+  <!-- Topics -->
+  <text x="400" y="435" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">Key topics: ${(p.topTopics || []).slice(0, 4).join(' \u2022 ') || 'Recommender Systems'}</text>
+
+  <!-- Footer -->
+  <line x1="150" y1="470" x2="350" y2="470" stroke="#D4B5FD" stroke-width="1"/>
+  <text x="250" y="488" text-anchor="middle" font-family="Georgia,serif" font-size="12" fill="#4C1D95">Pavel Kordik</text>
+  <text x="250" y="502" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#9CA3AF">Author &amp; Recombee Co-founder</text>
+
+  <line x1="450" y1="470" x2="650" y2="470" stroke="#D4B5FD" stroke-width="1"/>
+  <text x="550" y="488" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#4C1D95">${date}</text>
+  <text x="550" y="502" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#9CA3AF">Date of completion</text>
+
+  <!-- Seal -->
+  <circle cx="400" cy="490" r="22" fill="#7C3AED" opacity=".15"/>
+  <text x="400" y="496" text-anchor="middle" font-size="20">\u{1F393}</text>
+</svg>`;
+
+    // Download as SVG (can be opened/printed from browser)
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `recsys-certificate-${uid}.svg`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   resetAll() {
