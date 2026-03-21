@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>p-book Admin — Content & Marketing Pipeline</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 :root{--bg:#f3f4f6;--surface:#fff;--text:#111827;--text2:#6b7280;--text3:#9ca3af;--border:#e5e7eb;--accent:#d97706;--accent-bg:#fef3c7;--eng:#2563eb;--prod:#059669;--biz:#d97706;--side:#7c3aed;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06);--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--font);color:var(--text);background:var(--bg);font-size:14px;line-height:1.5}
@@ -807,20 +808,25 @@ window.testRC=function(){
   const statusEl=document.getElementById('rcStatus');
   statusEl.innerHTML='Testing...';
 
-  // Compute HMAC and test
-  const path='/'+db+'/items/list/';
-  const encoder=new TextEncoder();
-  crypto.subtle.importKey('raw',encoder.encode(token),{name:'HMAC',hash:'SHA-1'},false,['sign'])
-    .then(function(key){return crypto.subtle.sign('HMAC',key,encoder.encode(path))})
-    .then(function(sig){
-      const hmac=Array.from(new Uint8Array(sig)).map(function(b){return b.toString(16).padStart(2,'0')}).join('');
-      return fetch('https://'+region+'.recombee.com'+path+'?count=1&hmac='+hmac);
-    })
-    .then(function(res){
-      if(res.ok) return res.json().then(function(data){statusEl.innerHTML='<span style="color:var(--prod)">&#10003; Connected! '+JSON.stringify(data).substring(0,100)+'</span>'});
-      else return res.json().then(function(data){statusEl.innerHTML='<span style="color:#dc2626">&#10007; Error '+res.status+': '+data.message+'</span>'});
-    })
-    .catch(function(e){statusEl.innerHTML='<span style="color:#dc2626">&#10007; Connection failed: '+e.message+'</span>'});
+  const isLocal=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+
+  if(isLocal){
+    // On localhost: no Netlify proxy, no CORS bypass — save config and test via proxy on deployed site
+    statusEl.innerHTML='<span style="color:var(--accent)">&#9888; Cannot test directly from localhost (CORS). Config saved — test on the deployed site, or use <code>netlify dev</code> for local proxy.</span>';
+    return;
+  }
+
+  // On deployed site: use Netlify proxy function (avoids CORS)
+  fetch('/.netlify/functions/recombee',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({endpoint:'/items/list/',body:{count:1}})
+  })
+  .then(function(res){
+    if(res.ok) return res.json().then(function(data){statusEl.innerHTML='<span style="color:var(--prod)">&#10003; Connected via proxy! '+JSON.stringify(data).substring(0,100)+'</span>'});
+    else return res.text().then(function(text){statusEl.innerHTML='<span style="color:#dc2626">&#10007; Proxy error '+res.status+': '+text.substring(0,100)+'</span>'});
+  })
+  .catch(function(e){statusEl.innerHTML='<span style="color:#dc2626">&#10007; Connection failed: '+e.message+'</span>'});
 };
 
 window.clearRCConfig=function(){
