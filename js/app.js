@@ -216,11 +216,12 @@ class PBook {
         <div class="card-chapter" style="color:var(--accent);font-weight:700">${isNext ? 'Next mission' : 'In progress'}</div>
         <div style="font-size:1.3rem;margin:.1em 0">${m.icon}</div>
         <div class="card-title">${m.title}</div>
-        <div class="mission-progress-dots" style="margin:.3em 0">${this._getMissionBlocks(m).map((id, i) => {
+        <div class="mission-progress-dots" style="margin:.3em 0">${m.core.map((id, i) => {
           const read = this.user.readBlocks.has(id);
-          return `<span class="mission-dot ${read ? 'done' : i === p.read ? 'current' : ''}"></span>`;
+          const coreRead = m.core.filter(x => this.user.readBlocks.has(x)).length;
+          return `<span class="mission-dot ${read ? 'done' : i === coreRead ? 'current' : ''}"></span>`;
         }).join('')}</div>
-        <div class="card-meta"><span class="card-time">${p.read}/${p.total} steps</span></div>
+        <div class="card-meta"><span class="card-time">${m.core.filter(id => this.user.readBlocks.has(id)).length}/${m.core.length} steps</span></div>
       </div>`;
     });
     if (missionCards.length) {
@@ -1976,9 +1977,8 @@ class PBook {
   }
 
   _getMissionProgress(mission) {
-    const blocks = this._getMissionBlocks(mission);
-    const read = blocks.filter(id => this.user.readBlocks.has(id)).length;
-    return { read, total: blocks.length, pct: Math.round((read / Math.max(blocks.length, 1)) * 100) };
+    const read = mission.core.filter(id => this.user.readBlocks.has(id)).length;
+    return { read, total: mission.core.length, pct: Math.round((read / Math.max(mission.core.length, 1)) * 100) };
   }
 
   _isMissionComplete(mission) {
@@ -2016,14 +2016,14 @@ class PBook {
           </div>
           <div class="mission-story">${isLocked ? `Complete ${m.prerequisite} missions to unlock` : m.story.substring(0, 80) + '...'}</div>
           <div class="mission-progress-dots">
-            ${this._getMissionBlocks(m).map((id, i) => {
-              const read = this.user.readBlocks.has(id);
+            ${m.core.map((id, i) => {
+              const read = isComplete || this.user.readBlocks.has(id);
               return `<span class="mission-dot ${read ? 'done' : i === prog.read ? 'current' : ''}"></span>`;
             }).join('')}
           </div>
           <div class="mission-meta">
             <span class="mission-reward-preview">${m.reward.title} +${m.reward.xp}XP</span>
-            ${isComplete ? '<span class="mission-complete-badge">\u2713 Complete</span>' : `<span>${prog.read}/${prog.total}</span>`}
+            ${isComplete ? '<span class="mission-complete-badge">\u2713 Complete</span>' : `<span>${prog.read}/${m.core.length}</span>`}
           </div>
         </div>
       </div>`;
@@ -2063,16 +2063,20 @@ class PBook {
       html += `<div style="text-align:center;margin-bottom:1em"><button class="mission-complete-btn" onclick="app.startMissionWizard('${m.id}')">${wizardLabel} &rarr;</button></div>`;
     }
 
-    // Progress overview
+    // Progress overview — show core dots + optional branch dots
+    const coreRead = m.core.filter(id => this.user.readBlocks.has(id)).length;
     html += `<div class="mission-detail-progress">
       <div class="mission-progress-dots" style="justify-content:center">
-        ${allBlocks.map((id, i) => {
-          const read = this.user.readBlocks.has(id);
-          const isBranch = !m.core.includes(id);
-          return `<span class="mission-dot ${read ? 'done' : ''} ${isBranch ? 'branch-dot' : ''}" title="${this.findBlock(id)?.meta?.title || id}"></span>`;
+        ${m.core.map((id, i) => {
+          const read = isComplete || this.user.readBlocks.has(id);
+          return `<span class="mission-dot ${read ? 'done' : ''}" title="${this.findBlock(id)?.meta?.title || id}"></span>`;
         }).join('')}
+        ${branch ? m.branches[branch].blocks.map(id => {
+          const read = this.user.readBlocks.has(id);
+          return `<span class="mission-dot branch-dot ${read ? 'done' : ''}" title="${this.findBlock(id)?.meta?.title || id}"></span>`;
+        }).join('') : ''}
       </div>
-      <div style="text-align:center;font-size:.75rem;color:var(--text-3);margin-top:.3em">${prog.read}/${prog.total} steps complete</div>
+      <div style="text-align:center;font-size:.75rem;color:var(--text-3);margin-top:.3em">${coreRead}/${m.core.length} core steps${branch ? ` + bonus ${m.branches[branch].blocks.filter(id => this.user.readBlocks.has(id)).length}/${m.branches[branch].blocks.length}` : ''}</div>
     </div>`;
 
     // Step list — core blocks
