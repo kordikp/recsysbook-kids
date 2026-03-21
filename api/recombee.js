@@ -1,7 +1,7 @@
 // Vercel serverless function — proxies Recombee API calls
 // Same logic as netlify/functions/recombee.js
 
-import crypto from 'crypto';
+const crypto = require('crypto');
 
 const DB = process.env.RECOMBEE_DB || 'cvachond-land-free-pbook-kids';
 const TOKEN = process.env.RECOMBEE_TOKEN || '';
@@ -10,12 +10,12 @@ const REGION = process.env.RECOMBEE_REGION || 'rapi-eu-west';
 function signUrl(path) {
   const ts = Math.floor(Date.now() / 1000);
   const sep = path.includes('?') ? '&' : '?';
-  const pathWithTs = `${path}${sep}hmac_timestamp=${ts}`;
+  const pathWithTs = path + sep + 'hmac_timestamp=' + ts;
   const hmac = crypto.createHmac('sha1', TOKEN).update(pathWithTs).digest('hex');
-  return `${pathWithTs}&hmac_sign=${hmac}`;
+  return pathWithTs + '&hmac_sign=' + hmac;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -27,19 +27,19 @@ export default async function handler(req, res) {
   const { endpoint, body, method: reqMethod } = req.body || {};
   if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
 
-  let basePath = `/${DB}${endpoint}`;
+  let basePath = '/' + DB + endpoint;
   const method = reqMethod || (body ? 'POST' : 'GET');
 
   if (method === 'GET' && body) {
-    const params = Object.entries(body).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    const params = Object.entries(body).map(function(e) { return e[0] + '=' + encodeURIComponent(e[1]); }).join('&');
     basePath += (basePath.includes('?') ? '&' : '?') + params;
   }
 
   const signedPath = signUrl(basePath);
-  const url = `https://${REGION}.recombee.com${signedPath}`;
+  const url = 'https://' + REGION + '.recombee.com' + signedPath;
 
   try {
-    const fetchOpts = { method, headers: { 'Content-Type': 'application/json' } };
+    const fetchOpts = { method: method, headers: { 'Content-Type': 'application/json' } };
     if (method !== 'GET' && body) fetchOpts.body = JSON.stringify(body);
     const response = await fetch(url, fetchOpts);
     const data = await response.text();
@@ -47,4 +47,4 @@ export default async function handler(req, res) {
   } catch (e) {
     res.status(502).json({ error: e.message });
   }
-}
+};
