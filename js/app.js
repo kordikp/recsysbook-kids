@@ -150,7 +150,7 @@ class PBook {
     if (view === 'home') this.renderHome();
     else if (view === 'read') { this.renderRead(); this.updateLinearNav(); }
     else if (view === 'map') this.renderMap();
-    else if (view === 'glossary') this.renderGlossary();
+    else if (view === 'glossary') this.renderMissions();
     else if (view === 'chat') this.initChatView();
     else if (view === 'profile') this.renderProfile();
     window.scrollTo(0, 0);
@@ -199,6 +199,32 @@ class PBook {
       if (recallCards.length) {
         html += this.shelf('Do you remember?', recallCards);
       }
+    }
+
+    // 1c. Active missions progress
+    const missions = this.getMissions();
+    const activeMissions = missions.filter(m => {
+      if (this._isMissionLocked(m)) return false;
+      const p = this._getMissionProgress(m);
+      return p.read > 0 && !((this.user.completedMissions || []).includes(m.id));
+    });
+    const nextMission = missions.find(m => !this._isMissionLocked(m) && this._getMissionProgress(m).read === 0);
+    const missionCards = [...activeMissions, ...(nextMission ? [nextMission] : [])].slice(0, 4).map(m => {
+      const p = this._getMissionProgress(m);
+      const isNext = p.read === 0;
+      return `<div class="card" style="border-top: 3px solid var(--accent); flex: 0 0 240px; cursor:pointer" onclick="app.showMission('${m.id}')">
+        <div class="card-chapter" style="color:var(--accent);font-weight:700">${isNext ? 'Next mission' : 'In progress'}</div>
+        <div style="font-size:1.3rem;margin:.1em 0">${m.icon}</div>
+        <div class="card-title">${m.title}</div>
+        <div class="mission-progress-dots" style="margin:.3em 0">${this._getMissionBlocks(m).map((id, i) => {
+          const read = this.user.readBlocks.has(id);
+          return `<span class="mission-dot ${read ? 'done' : i === p.read ? 'current' : ''}"></span>`;
+        }).join('')}</div>
+        <div class="card-meta"><span class="card-time">${p.read}/${p.total} steps</span></div>
+      </div>`;
+    });
+    if (missionCards.length) {
+      html += this.shelf('Your missions', missionCards);
     }
 
     // 2. Recommended for you
@@ -1101,15 +1127,11 @@ class PBook {
       <div class="map-mode-toggle">
         <button class="map-mode-btn ${mapMode === 'visual' ? 'active' : ''}" onclick="app.setMapMode('visual')">Visual</button>
         <button class="map-mode-btn ${mapMode === 'list' ? 'active' : ''}" onclick="app.setMapMode('list')">Detail List</button>
-        <button class="map-mode-btn ${mapMode === 'paths' ? 'active' : ''}" onclick="app.setMapMode('paths')">Reading Paths</button>
       </div>
       <button class="map-reset-btn" onclick="app.resetAll()">Reset progress</button>
     </div>`;
 
-    if (mapMode === 'paths') {
-      html += this.renderReadingPaths();
-      el.innerHTML = html;
-      return;
+    if (false) { // old paths mode removed — now in Missions tab
     }
 
     if (mapMode === 'visual') {
@@ -1812,69 +1834,293 @@ class PBook {
   }
 
   // ===== GLOSSARY / TOPICS =====
-  renderGlossary() {
-    const el = document.getElementById('glossaryContent');
-    const sorted = Object.entries(this.topicIndex).sort((a, b) => b[1].length - a[1].length);
+  // ===== MISSIONS =====
+  getMissions() {
+    return [
+      {
+        id: 'youtube', title: 'How Does YouTube Know?', icon: '\u{1F3AC}',
+        difficulty: 'Beginner',
+        story: 'Your friend asks: "How does YouTube always know what I want to watch?" Can you figure out the answer and explain it?',
+        goal: 'Explain how recommendations work to a friend',
+        reward: { title: 'Algorithm Explainer', xp: 20 },
+        core: ['ch1-noticed', 'ch1-everywhere', 'ch1-not-magic', 'ch1-three-jobs', 'ch2-footprints', 'ch2-clues'],
+        branches: {
+          explorer: { label: 'See it in action', blocks: ['ch1-everywhere-d-exp', 'ch2-track-d-exp'] },
+          creator: { label: 'Build something', blocks: ['ch1-first-d-create'] },
+          thinker: { label: 'Understand patterns', blocks: ['ch1-patterns-d-think'] }
+        }
+      },
+      {
+        id: 'detective', title: 'The Data Detective', icon: '\u{1F575}',
+        difficulty: 'Beginner',
+        story: 'Your recommendations are terrible — Peppa Pig keeps showing up because your sibling used your account. Time to investigate what data the algorithm actually uses.',
+        goal: 'Understand what data apps collect and how signals work',
+        reward: { title: 'Data Detective', xp: 20 },
+        core: ['ch2-footprints', 'ch2-clues', 'ch2-guess-signal', 'ch2-myth', 'ch2-privacy'],
+        branches: {
+          explorer: { label: 'Investigate your data', blocks: ['ch2-track-d-exp', 'ch2-ws-detective'] },
+          creator: { label: 'Run an experiment', blocks: ['ch2-privacy-d-create'] },
+          thinker: { label: 'Think about privacy', blocks: ['ch2-privacy-d-think'] }
+        }
+      },
+      {
+        id: 'builder', title: 'Build a Recommender', icon: '\u{1F527}',
+        difficulty: 'Intermediate',
+        story: 'Your class wants a movie recommender for Friday movie night. You volunteer to build one from scratch. Can you pull it off?',
+        goal: 'Build a working recommendation system step by step',
+        reward: { title: 'Recommendation Engineer', xp: 30 },
+        core: ['ch5-start', 'ch5-collect', 'ch3-friends', 'ch5-similar', 'ch5-recommend', 'ch5-improve'],
+        branches: {
+          creator: { label: 'Build it for real', blocks: ['ch5-spread-d-create', 'ch5-code-d-create', 'ch5-debug'] },
+          thinker: { label: 'Understand the math', blocks: ['ch5-math-d-think', 'ch5-real-numbers'] },
+          explorer: { label: 'See CF in action', blocks: ['ch3-cf-d-exp'] }
+        }
+      },
+      {
+        id: 'bubble', title: 'Pop the Bubble', icon: '\u{1FAE7}',
+        difficulty: 'Intermediate',
+        story: 'You notice your news feed only shows one type of content. Your friend sees completely different things. Are you both trapped in filter bubbles?',
+        goal: 'Understand filter bubbles, echo chambers, and fairness',
+        reward: { title: 'Bubble Buster', xp: 25 },
+        core: ['ch4-bubbles', 'ch4-fairness', 'ch4-testing', 'ch3-popular', 'ch3-popular-sidebar'],
+        branches: {
+          creator: { label: 'Pop your bubble', blocks: ['ch4-pop-d-create', 'ch4-experiment'] },
+          thinker: { label: 'Think deeply', blocks: ['ch4-echo-d-think', 'ch4-unfair-game'] },
+          explorer: { label: 'Run an A/B test', blocks: ['ch4-ab-d-exp'] }
+        }
+      },
+      {
+        id: 'control', title: 'Take Back Control', icon: '\u{1F6E1}',
+        difficulty: 'Advanced',
+        story: 'Apps know more about you than your best friend. They track you across websites, guess your age, and use tricks to keep you scrolling. Time to fight back.',
+        goal: 'Digital literacy — understand privacy, manipulation, and your rights',
+        reward: { title: 'Digital Citizen', xp: 25 },
+        core: ['ch6-who-decides', 'ch6-addictive', 'ch6-privacy-real', 'ch6-ai-future'],
+        branches: {
+          explorer: { label: 'Check your data', blocks: ['ch6-data-d-exp', 'ch6-age-sidebar'] },
+          creator: { label: 'Take control now', blocks: ['ch6-control-d-create'] },
+          thinker: { label: 'The big questions', blocks: ['ch6-goals-d-think', 'ch6-hard-d-think', 'ch6-law-sidebar'] }
+        }
+      },
+      {
+        id: 'master', title: 'Recommendation Master', icon: '\u{1F451}',
+        difficulty: 'Capstone',
+        story: "You've learned the pieces. Now put it all together. Can you explain the FULL journey of a recommendation — from the moment you click to the moment a new suggestion appears?",
+        goal: 'Deep mastery — understand the full pipeline, methods, and tradeoffs',
+        reward: { title: 'Recommendation Master', xp: 40 },
+        prerequisite: 2, // must complete 2 other missions
+        core: ['ch3-pipeline', 'ch3-content', 'ch3-friends', 'ch4-testing', 'ch5-improve', 'ch6-ai-future'],
+        branches: {
+          explorer: { label: 'Trace a real rec', blocks: ['ch3-pipeline-d-exp'] },
+          creator: { label: 'Build CF system', blocks: ['ch3-cf-d-create'] },
+          thinker: { label: 'Compare methods', blocks: ['ch3-compare-d-think', 'ch3-speed'] }
+        }
+      }
+    ];
+  }
 
-    let html = '<div class="glossary-head"><h2>Topics & Concepts</h2><p>All topics covered in the book. Click to explore.</p></div>';
-    html += '<div class="topic-grid">';
-    sorted.forEach(([topic, ids]) => {
-      const readCount = ids.filter(id => this.user.readBlocks.has(id)).length;
-      const pct = Math.round((readCount / ids.length) * 100);
-      html += `<div class="topic-card" onclick="app.showTopic('${topic}')">
-        <div class="topic-name">${topic}</div>
-        <div class="topic-count">${ids.length} blocks</div>
-        <div class="topic-bar"><div class="topic-bar-fill" style="width:${pct}%"></div></div>
-        <div class="topic-pct">${readCount} read</div>
+  _getMissionBlocks(mission) {
+    const branch = this.user.missionBranches?.[mission.id];
+    const branchBlocks = branch && mission.branches[branch] ? mission.branches[branch].blocks : [];
+    return [...mission.core, ...branchBlocks];
+  }
+
+  _getMissionProgress(mission) {
+    const blocks = this._getMissionBlocks(mission);
+    const read = blocks.filter(id => this.user.readBlocks.has(id)).length;
+    return { read, total: blocks.length, pct: Math.round((read / Math.max(blocks.length, 1)) * 100) };
+  }
+
+  _isMissionComplete(mission) {
+    const p = this._getMissionProgress(mission);
+    return p.read >= mission.core.length; // core blocks must all be read
+  }
+
+  _isMissionLocked(mission) {
+    if (!mission.prerequisite) return false;
+    const completed = (this.user.completedMissions || []).length;
+    return completed < mission.prerequisite;
+  }
+
+  renderMissions() {
+    const el = document.getElementById('glossaryContent');
+    const missions = this.getMissions();
+    const completed = new Set(this.user.completedMissions || []);
+
+    let html = '<div class="missions-inner">';
+    html += '<div class="missions-head"><h2>Missions</h2><p>Choose your adventure. Each mission tells a story and teaches you something new.</p></div>';
+
+    missions.forEach(m => {
+      const prog = this._getMissionProgress(m);
+      const isComplete = completed.has(m.id);
+      const isLocked = this._isMissionLocked(m);
+      const isActive = prog.read > 0 && !isComplete;
+      const diffColors = { Beginner: '#10B981', Intermediate: '#F59E0B', Advanced: '#EF4444', Capstone: '#8B5CF6' };
+
+      html += `<div class="mission-card ${isComplete ? 'mission-complete' : ''} ${isLocked ? 'mission-locked' : ''} ${isActive ? 'mission-active' : ''}" onclick="${isLocked ? '' : `app.showMission('${m.id}')`}">
+        <div class="mission-icon">${isLocked ? '\u{1F512}' : m.icon}</div>
+        <div class="mission-info">
+          <div class="mission-title-row">
+            <span class="mission-title">${m.title}</span>
+            <span class="mission-diff" style="background:${diffColors[m.difficulty]}">${m.difficulty}</span>
+          </div>
+          <div class="mission-story">${isLocked ? `Complete ${m.prerequisite} missions to unlock` : m.story.substring(0, 80) + '...'}</div>
+          <div class="mission-progress-dots">
+            ${this._getMissionBlocks(m).map((id, i) => {
+              const read = this.user.readBlocks.has(id);
+              return `<span class="mission-dot ${read ? 'done' : i === prog.read ? 'current' : ''}"></span>`;
+            }).join('')}
+          </div>
+          <div class="mission-meta">
+            <span class="mission-reward-preview">${m.reward.title} +${m.reward.xp}XP</span>
+            ${isComplete ? '<span class="mission-complete-badge">\u2713 Complete</span>' : `<span>${prog.read}/${prog.total}</span>`}
+          </div>
+        </div>
       </div>`;
     });
+
     html += '</div>';
     el.innerHTML = html;
   }
 
-  showTopic(topic) {
-    const ids = this.topicIndex[topic] || [];
-    const blocks = ids.map(id => this.findBlock(id)).filter(Boolean);
-
-    const el = document.getElementById('glossaryContent') || document.getElementById('homeContent');
+  showMission(missionId) {
+    const missions = this.getMissions();
+    const m = missions.find(x => x.id === missionId);
+    if (!m) return;
     if (this.currentView !== 'glossary') this.switchView('glossary');
 
-    let html = `<div class="glossary-head"><button class="btn-ghost" onclick="app.renderGlossary()">&larr; All topics</button><h2>${topic}</h2><p>${blocks.length} blocks about this topic</p></div>`;
+    const el = document.getElementById('glossaryContent');
+    const prog = this._getMissionProgress(m);
+    const isComplete = (this.user.completedMissions || []).includes(m.id);
+    const branch = this.user.missionBranches?.[m.id];
+    const allBlocks = this._getMissionBlocks(m);
+    const coreComplete = m.core.every(id => this.user.readBlocks.has(id));
 
-    // Group by type
-    const spines = blocks.filter(b => b.meta.type === 'spine');
-    const depths = blocks.filter(b => b.meta.type === 'depth');
-    const sidebars = blocks.filter(b => b.meta.type === 'sidebar');
+    let html = '<div class="missions-inner">';
+    html += `<button class="btn-ghost" onclick="app.renderMissions()" style="margin-bottom:.5em">&larr; All missions</button>`;
+    html += `<div class="mission-detail-header">
+      <span class="mission-detail-icon">${m.icon}</span>
+      <div>
+        <h2 class="mission-detail-title">${m.title}</h2>
+        <p class="mission-detail-goal">${m.goal}</p>
+      </div>
+    </div>`;
+    html += `<div class="mission-detail-story">${m.story}</div>`;
 
-    if (spines.length) {
-      html += '<h3 class="topic-section-title">Core sections</h3><div class="topic-list">';
-      spines.forEach(b => { html += this.topicItem(b); });
-      html += '</div>';
-    }
-    if (depths.length) {
-      html += '<h3 class="topic-section-title">Deep dives</h3><div class="topic-list">';
-      depths.forEach(b => { html += this.topicItem(b); });
-      html += '</div>';
-    }
-    if (sidebars.length) {
-      html += '<h3 class="topic-section-title">Stories & sidebars</h3><div class="topic-list">';
-      sidebars.forEach(b => { html += this.topicItem(b); });
-      html += '</div>';
+    // Progress overview
+    html += `<div class="mission-detail-progress">
+      <div class="mission-progress-dots" style="justify-content:center">
+        ${allBlocks.map((id, i) => {
+          const read = this.user.readBlocks.has(id);
+          const isBranch = !m.core.includes(id);
+          return `<span class="mission-dot ${read ? 'done' : ''} ${isBranch ? 'branch-dot' : ''}" title="${this.findBlock(id)?.meta?.title || id}"></span>`;
+        }).join('')}
+      </div>
+      <div style="text-align:center;font-size:.75rem;color:var(--text-3);margin-top:.3em">${prog.read}/${prog.total} steps complete</div>
+    </div>`;
+
+    // Step list — core blocks
+    html += '<div class="mission-steps">';
+    html += '<div class="mission-steps-label">Your journey</div>';
+    m.core.forEach((id, i) => {
+      const block = this.findBlock(id);
+      const isRead = this.user.readBlocks.has(id);
+      const title = block?.meta?.title || id;
+      const ch = block?.meta?._chapterNum || '?';
+      html += `<div class="mission-step ${isRead ? 'step-done' : ''}" onclick="app.openBlock('${id}')">
+        <div class="step-marker">${isRead ? '\u2713' : i + 1}</div>
+        <div class="step-content">
+          <div class="step-title">${title}</div>
+          <div class="step-meta">Chapter ${ch} &middot; ${block?.meta?.readingTime || 3} min</div>
+        </div>
+      </div>`;
+    });
+
+    // Branch point
+    if (!branch) {
+      html += `<div class="mission-branch-point">
+        <div class="branch-label">Choose your path</div>
+        <div class="branch-desc">The story branches here. Pick your style — the book adapts to you!</div>
+        <div class="branch-options">`;
+      Object.entries(m.branches).forEach(([voice, b]) => {
+        const vc = CONFIG.voices[voice] || {};
+        html += `<button class="branch-option ${voice}" onclick="app.pickBranch('${m.id}','${voice}')">
+          <span class="branch-icon">${vc.icon || ''}</span>
+          <span class="branch-name">${vc.label || voice}</span>
+          <span class="branch-desc-text">${b.label}</span>
+          <span class="branch-count">+${b.blocks.length} sections</span>
+        </button>`;
+      });
+      html += '</div></div>';
+    } else {
+      // Show chosen branch blocks
+      const b = m.branches[branch];
+      const vc = CONFIG.voices[branch] || {};
+      html += `<div class="mission-branch-chosen">
+        <div class="branch-label">${vc.icon || ''} ${vc.label || branch} path <button class="btn-ghost" style="font-size:.7rem" onclick="app.pickBranch('${m.id}',null)">change</button></div>
+      </div>`;
+      b.blocks.forEach((id, i) => {
+        const block = this.findBlock(id);
+        const isRead = this.user.readBlocks.has(id);
+        const title = block?.meta?.title || id;
+        html += `<div class="mission-step ${isRead ? 'step-done' : ''} step-branch" onclick="app.openBlock('${id}')">
+          <div class="step-marker">${isRead ? '\u2713' : '\u2022'}</div>
+          <div class="step-content">
+            <div class="step-title">${title}</div>
+            <div class="step-meta">${vc.label} path &middot; ${block?.meta?.readingTime || 3} min</div>
+          </div>
+        </div>`;
+      });
     }
 
-    document.getElementById('glossaryContent').innerHTML = html;
+    html += '</div>';
+
+    // Complete button or reward
+    if (isComplete) {
+      html += `<div class="mission-reward-earned">
+        <div class="reward-icon">\u{1F3C6}</div>
+        <div class="reward-text">Mission complete! You earned: <b>${m.reward.title}</b> +${m.reward.xp} XP</div>
+      </div>`;
+    } else if (coreComplete) {
+      html += `<div class="mission-complete-action">
+        <button class="mission-complete-btn" onclick="app.completeMission('${m.id}')">Complete mission &rarr;</button>
+      </div>`;
+    }
+
+    html += '</div>';
+    el.innerHTML = html;
   }
 
-  topicItem(b) {
-    const isRead = this.user.readBlocks.has(b.meta.id);
-    const isLiked = (this.user.ratings.get(b.meta.id) || 0) >= 0.7;
-    const voiceTag = b.meta.voice && b.meta.voice !== 'universal' ? `<span class="card-badge ${b.meta.voice}" style="font-size:.55rem">${b.meta.voice}</span>` : '';
-    return `<div class="topic-item ${isRead ? 'topic-read' : ''}" onclick="app.openBlock('${b.meta.id}')">
-      <span class="topic-item-status">${isRead ? '&#10003;' : isLiked ? '&#10084;' : '&#9675;'}</span>
-      <span class="topic-item-title">${b.meta.title}</span>
-      ${voiceTag}
-      <span class="topic-item-ch">Ch${b.meta._chapterNum}</span>
-    </div>`;
+  pickBranch(missionId, voice) {
+    if (!this.user.missionBranches) this.user.missionBranches = {};
+    if (voice === null) { delete this.user.missionBranches[missionId]; }
+    else { this.user.missionBranches[missionId] = voice; }
+    this.user.save();
+    this.showMission(missionId);
+  }
+
+  completeMission(missionId) {
+    const missions = this.getMissions();
+    const m = missions.find(x => x.id === missionId);
+    if (!m) return;
+    if (!this.user.completedMissions) this.user.completedMissions = [];
+    if (this.user.completedMissions.includes(missionId)) return;
+
+    this.user.completedMissions.push(missionId);
+    if (!this.user.missionTitles) this.user.missionTitles = [];
+    this.user.missionTitles.push(m.reward.title);
+    this.user.addXP(m.reward.xp);
+    this.user.checkAchievements();
+    this.user.save();
+
+    this.showXPToast(`\u{1F3C6} ${m.reward.title}! +${m.reward.xp} XP`, 'achievement');
+    this.checkGamificationEvents();
+    this.showMission(missionId);
+  }
+
+  showTopic(topic) {
+    // Redirect topic clicks to missions view
+    this.switchView('glossary');
   }
 
   // ===== CHAT =====

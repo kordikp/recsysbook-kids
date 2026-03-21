@@ -244,6 +244,9 @@ export class UserModel {
     // Spaced repetition recall (Anki-style)
     this.recall = {}; // blockId → { interval, ease, nextReview, lastReview, reps }
     this.activePath = null; // current reading path id
+    this.completedMissions = [];
+    this.missionTitles = [];
+    this.missionBranches = {};
     this.load();
     this._trackSession();
   }
@@ -276,6 +279,9 @@ export class UserModel {
       if (s.achievements) this.achievements = s.achievements;
       if (s.recall) this.recall = s.recall;
       if (s.activePath) this.activePath = s.activePath;
+      if (s.completedMissions) this.completedMissions = s.completedMissions;
+      if (s.missionTitles) this.missionTitles = s.missionTitles;
+      if (s.missionBranches) this.missionBranches = s.missionBranches;
     } catch (e) {}
   }
 
@@ -300,6 +306,9 @@ export class UserModel {
         achievements: this.achievements,
         recall: this.recall,
         activePath: this.activePath,
+        completedMissions: this.completedMissions,
+        missionTitles: this.missionTitles,
+        missionBranches: this.missionBranches,
       }));
     } catch (e) {}
   }
@@ -593,6 +602,9 @@ export class UserModel {
     this.achievements = [];
     this.recall = {};
     this.activePath = null;
+    this.completedMissions = [];
+    this.missionTitles = [];
+    this.missionBranches = {};
     this.save();
   }
 }
