@@ -1,0 +1,514 @@
+{
+  "exportedAt": "2026-03-26T08:10:59.854Z",
+  "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+  "interactions": [
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774130852153,
+      "mode": "mission"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774130861256,
+      "mode": "map",
+      "from": "glossary"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774130870588,
+      "mode": "tutor",
+      "from": "map"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774130872788,
+      "mode": "read",
+      "from": "chat"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774130875853,
+      "mode": "netflix",
+      "from": "read"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774130998761,
+      "mode": "mission"
+    },
+    {
+      "type": "event",
+      "event": "open_block",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131010615,
+      "mode": "mission",
+      "blockId": "ch2-footprints"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131010615,
+      "mode": "read",
+      "from": "glossary"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch2-footprints",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131014321,
+      "duration": 3,
+      "mode": "read"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch2-footprints",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131023456,
+      "duration": 12,
+      "mode": "read"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131129849,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131136844,
+      "mode": "mission",
+      "from": "home"
+    },
+    {
+      "type": "event",
+      "event": "open_block",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131140876,
+      "mode": "mission",
+      "blockId": "ch5-start"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131140877,
+      "mode": "read",
+      "from": "glossary"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch5-start",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131143985,
+      "duration": 3,
+      "mode": "read"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch5-start",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131152985,
+      "duration": 12,
+      "mode": "read"
+    },
+    {
+      "type": "event",
+      "event": "open_block",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131153118,
+      "mode": "search",
+      "blockId": "ch2-incognito-sidebar"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131153118,
+      "mode": "read",
+      "from": "read"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch2-incognito-sidebar",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131157248,
+      "duration": 3,
+      "mode": "read"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch2-incognito-sidebar",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131163248,
+      "duration": 9,
+      "mode": "read"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131163477,
+      "mode": "netflix",
+      "from": "read"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774131259526,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774168560346,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774169277362,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774189080843,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774189932064,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774200692096,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774200697601,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774210456981,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774210458139,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774214860027,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774218272272,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774218281516,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774218287388,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774218319906,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774218429666,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774218435547,
+      "mode": "netflix"
+    },
+    {
+      "type": "event",
+      "event": "random_start",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774248955165,
+      "mode": "glossary"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774248955166,
+      "mode": "mission"
+    },
+    {
+      "type": "event",
+      "event": "open_block",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774248961071,
+      "mode": "mission",
+      "blockId": "ch1-noticed"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774248961071,
+      "mode": "read",
+      "from": "glossary"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch1-everywhere",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774248966512,
+      "duration": 3,
+      "mode": "read"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch1-everywhere",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774248975512,
+      "duration": 12,
+      "mode": "read"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774248976151,
+      "mode": "mission",
+      "from": "read"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774248980235,
+      "mode": "map",
+      "from": "glossary"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774260116047,
+      "mode": "mission"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774260124652,
+      "mode": "netflix",
+      "from": "glossary"
+    },
+    {
+      "type": "event",
+      "event": "random_start",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774281414814,
+      "mode": "read"
+    },
+    {
+      "type": "event",
+      "event": "mode_switch",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774281414815,
+      "mode": "read"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch1-wrong-sidebar",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774281429782,
+      "duration": 3,
+      "mode": "read"
+    },
+    {
+      "type": "detailview",
+      "itemId": "ch1-wrong-sidebar",
+      "userId": "reader-26ef2078-bdd2-4214-bf81-8c716189d538",
+      "ts": 1774281438783,
+      "duration": 12,
+      "mode": "read"
+    }
+  ],
+  "user": {
+    "voiceScores": {
+      "explorer": 0,
+      "creator": 0,
+      "thinker": 0
+    },
+    "readBlocks": [
+      "ch2-footprints",
+      "ch5-start",
+      "ch2-incognito-sidebar",
+      "ch1-everywhere",
+      "ch1-wrong-sidebar"
+    ],
+    "seenBlocks": [
+      "ch2-footprints",
+      "ch5-start",
+      "ch2-incognito-sidebar",
+      "ch1-everywhere",
+      "ch1-wrong-sidebar"
+    ],
+    "savedBlocks": [],
+    "ratings": [],
+    "notes": [],
+    "signals": {
+      "ch1-noticed": {
+        "dwellMs": 5000
+      },
+      "ch2-footprints": {
+        "dwellMs": 25000,
+        "seen": true,
+        "seenAt": 1774131014321,
+        "read": true
+      },
+      "ch5-start": {
+        "dwellMs": 25000,
+        "seen": true,
+        "seenAt": 1774131143985,
+        "read": true
+      },
+      "ch2-incognito-sidebar": {
+        "dwellMs": 15000,
+        "seen": true,
+        "seenAt": 1774131157247,
+        "read": true
+      },
+      "ch1-everywhere": {
+        "dwellMs": 30000,
+        "seen": true,
+        "seenAt": 1774248966511,
+        "read": true
+      },
+      "ch1-wrong-sidebar": {
+        "dwellMs": 70000,
+        "seen": true,
+        "seenAt": 1774281429781,
+        "read": true
+      }
+    },
+    "totalInteractions": 5,
+    "currentChapter": 0,
+    "currentBlock": "ch1-noticed",
+    "preferredVoice": "universal",
+    "firstVisit": 1774130846658,
+    "sessionCount": 39,
+    "xp": 50,
+    "level": 2,
+    "achievements": [
+      {
+        "id": "first_read",
+        "name": "First Steps",
+        "icon": "👣",
+        "desc": "Read your first section",
+        "earnedAt": 1774131023455
+      },
+      {
+        "id": "reader_5",
+        "name": "Bookworm",
+        "icon": "📚",
+        "desc": "Read 5 sections",
+        "earnedAt": 1774281438782
+      }
+    ],
+    "recall": {
+      "ch2-footprints": {
+        "interval": 1,
+        "ease": 2.5,
+        "nextReview": 1774217423454,
+        "lastReview": 1774131023454,
+        "reps": 0
+      },
+      "ch5-start": {
+        "interval": 1,
+        "ease": 2.5,
+        "nextReview": 1774217552985,
+        "lastReview": 1774131152985,
+        "reps": 0
+      },
+      "ch2-incognito-sidebar": {
+        "interval": 1,
+        "ease": 2.5,
+        "nextReview": 1774217563247,
+        "lastReview": 1774131163247,
+        "reps": 0
+      },
+      "ch1-everywhere": {
+        "interval": 1,
+        "ease": 2.5,
+        "nextReview": 1774335375512,
+        "lastReview": 1774248975512,
+        "reps": 0
+      },
+      "ch1-wrong-sidebar": {
+        "interval": 1,
+        "ease": 2.5,
+        "nextReview": 1774367838783,
+        "lastReview": 1774281438783,
+        "reps": 0
+      }
+    },
+    "activePath": null,
+    "completedMissions": [],
+    "missionTitles": [],
+    "missionBranches": {}
+  }
+}

@@ -1241,6 +1241,8 @@ class PBook {
       'ch5-similar': { q: 'How do you find "taste twins" — users with similar preferences?', a: 'Compare their ratings — if two people rated the same movies similarly, they probably have matching taste.' },
       'ch5-recommend': { q: 'How do you predict if someone will like something they haven\'t seen?', a: 'Find 2-3 people with similar taste who DID see it, then average their ratings as your prediction.' },
       'ch5-improve': { q: 'Name 2 ways to improve a basic recommendation system.', a: 'Get more data (more users, more ratings) and look at item features (genre, actors), not just ratings.' },
+      'ch5-get-recommended': { q: 'What matters more to YouTube: total clicks or watch time?', a: 'Watch time! A video that 100 people watch to the end beats one that 1,000 click and immediately leave. The algorithm measures what happens AFTER the click.' },
+      'ch5-seo-algorithms': { q: 'Why doesn\'t "ranking #1 on Google" exist anymore?', a: 'Search results are personalized — they depend on your past behavior, location, and device. Your content might be #1 for your target audience and #50 for everyone else.' },
       'ch6-who-decides': { q: 'When you open TikTok, who decides what you see first?', a: 'The algorithm decides — not you, not your parents, not even a human at TikTok. Engineers designed it to maximize engagement.' },
       'ch6-addictive': { q: 'Name 2 design tricks that keep you scrolling.', a: 'Infinite scroll (no natural stopping point) and autoplay (next video starts automatically).' },
       'ch6-privacy-real': { q: 'What kind of data do apps actually collect about you?', a: 'Your location, device info, browsing history, search queries, how long you watch, what you skip, and sometimes your contacts.' },
@@ -2300,6 +2302,27 @@ class PBook {
           explorer: { label: 'Check your data', blocks: ['ch6-data-d-exp', 'ch6-age-sidebar'] },
           creator: { label: 'Take control now', blocks: ['ch6-control-d-create'] },
           thinker: { label: 'The big questions', blocks: ['ch6-hard-d-think', 'ch6-law-sidebar'] }
+        }
+      },
+      {
+        id: 'creator-boost', title: 'Get Your Content Recommended', icon: '\u{1F4F1}',
+        difficulty: 'Intermediate',
+        story: "You just made an amazing video / drawing / song / game. But nobody sees it — the algorithm doesn't know it exists. Can you learn to speak the algorithm's language and get your content discovered?",
+        goal: 'Understand how to make YOUR content visible to recommendation algorithms',
+        reward: { title: 'Algorithm Whisperer', xp: 30 },
+        core: ['ch5-get-recommended', 'ch5-seo-algorithms', 'ch3-pipeline', 'ch3-search-recs', 'ch3-popular'],
+        intros: [
+          "You know how algorithms pick content for viewers. Now flip it — how do you make them pick YOURS?",
+          "Search and recommendations are merging. Mastering discoverability is a superpower.",
+          "To beat the system, you need to understand the system. How does the pipeline actually work?",
+          "When you search on YouTube, results are personalized. How do you show up for the RIGHT people?",
+          "Everyone starts with popularity. But how do you escape the popularity trap as a new creator?"
+        ],
+        boss: { q: "You just uploaded a video about building a Minecraft castle. Describe 5 specific things you would do to maximize the chance the algorithm recommends it to the right audience — on YouTube AND TikTok.", hints: ['thumbnail', 'title', 'hook', 'watch time', 'trending', 'hashtag', 'first seconds', 'consistency'] },
+        branches: {
+          explorer: { label: 'Study the pipeline', blocks: ['ch3-pipeline-d-exp'] },
+          creator: { label: 'Build & optimize', blocks: ['ch5-spread-d-create'] },
+          thinker: { label: 'Ethics of gaming', blocks: ['ch4-objectives'] }
         }
       },
       {
