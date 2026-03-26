@@ -618,8 +618,8 @@ class PBook {
         spineCount++;
         // Insert inline quiz every 2-3 spine blocks
         if (spineCount % 3 === 0) {
-          const quiz = this._generateQuiz(block);
-          if (quiz) html += `<div class="inline-quiz fade-up"><div class="iq-icon">\u{1F9E0}</div><div class="iq-body"><div class="iq-q">${quiz.q}</div><button class="iq-reveal" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">Think... then reveal</button><div class="iq-a" style="display:none">${quiz.a}</div></div></div>`;
+          const quizHtml = this._generateQuiz(block);
+          if (quizHtml) html += `<div class="inline-quiz fade-up">${quizHtml}</div>`;
         }
       } else if (block.type === 'question') {
         html += this.renderQuestion(block);
