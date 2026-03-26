@@ -2968,6 +2968,14 @@ class PBook {
     if (!block) return;
     const chIdx = block.meta._chapterIdx;
     const parentId = blockId;
+
+    // Save current position to navigation history (for back button)
+    if (this.currentView === 'read' && this.user.currentBlock) {
+      if (!this._navHistory) this._navHistory = [];
+      this._navHistory.push({ blockId: this.user.currentBlock, chIdx: this.user.currentChapter, scrollY: window.scrollY });
+      if (this._navHistory.length > 20) this._navHistory.shift();
+    }
+
     this.user.currentBlock = blockId;
     this.user.currentChapter = chIdx;
     this.user.save();
@@ -3050,17 +3058,35 @@ class PBook {
     pane.prepend(banner);
   }
 
+  goBack() {
+    if (!this._navHistory || !this._navHistory.length) return;
+    const prev = this._navHistory.pop();
+    // Don't push to history again (avoid infinite loop)
+    this.user.currentBlock = prev.blockId;
+    this.user.currentChapter = prev.chIdx;
+    this.user.save();
+    if (this._renderedChapter === prev.chIdx) {
+      // Same chapter — just scroll back
+      window.scrollTo(0, prev.scrollY);
+    } else {
+      // Different chapter — render and scroll
+      this._pendingScroll = { parentId: prev.blockId, meta: this.findBlock(prev.blockId)?.meta || { id: prev.blockId } };
+      this.switchView('read', true);
+      this.renderRead(prev.chIdx);
+    }
+  }
+
   _updateFeedIndicator(ch, idx) {
     const el = document.getElementById('feedIndicator');
     if (!el) return;
     const prog = this.user.getProgress(this.allBlocks);
-    const loaded = this._loadedChapters ? this._loadedChapters.size : 1;
     const isPersonalized = this._f('personalization') && this.rc.enabled;
+    const hasHistory = this._navHistory && this._navHistory.length > 0;
     el.innerHTML = `
+      ${hasHistory ? '<button class="fi-back" onclick="app.goBack()" title="Go back">&#8592;</button>' : ''}
       <span class="fi-chapter">Ch${ch.number}: ${ch.title}</span>
       <span class="fi-sep">&middot;</span>
-      <span class="fi-mode">${isPersonalized ? '\u2728 Personalized feed' : '\u{1F4D6} Sequential reading'}</span>
-      <span class="fi-sep">&middot;</span>
+      <span class="fi-mode">${isPersonalized ? '\u2728 Personalized feed' : '\u{1F4D6} Sequential'}</span>
       <span class="fi-progress">${prog.read}/${prog.total} read</span>
     `;
 

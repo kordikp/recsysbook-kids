@@ -238,6 +238,8 @@ button { font-family: var(--font-ui); cursor: pointer; border: none; background:
 .fi-sep { color: var(--border); }
 .fi-mode { color: var(--accent); }
 .fi-progress { margin-left: auto; flex-shrink: 0; }
+.fi-back { background: none; border: none; font-size: .85rem; color: var(--accent); cursor: pointer; padding: 0 .3em 0 0; font-weight: 700; flex-shrink: 0; }
+.fi-back:hover { color: var(--text); }
 
 /* Shelves */
 .home-inner { padding: 1em 0; }
