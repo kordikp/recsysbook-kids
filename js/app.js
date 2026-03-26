@@ -206,12 +206,12 @@ class PBook {
   }
 
   // ===== VIEW SWITCHING =====
-  switchView(view) {
+  switchView(view, auto) {
     this.currentView = view;
-    // Log mode switch for research analytics
     const modeMap = { home: 'netflix', read: 'read', map: 'map', glossary: 'mission', chat: 'tutor', profile: 'profile' };
     this.rc.setContext(modeMap[view] || view);
-    this.rc.logEvent('mode_switch', { mode: modeMap[view] || view, from: this._prevView });
+    // Only log mode_switch for explicit user navigation, not automatic transitions
+    if (!auto) this.rc.logEvent('mode_switch', { mode: modeMap[view] || view, from: this._prevView });
     this._prevView = view;
 
     // Hide all views, show the selected one
@@ -1298,7 +1298,7 @@ class PBook {
         <button class="btn-primary" style="margin-top:1em" onclick="app.switchView('home')">Back to reading</button>
         <button class="btn-ghost" style="margin-top:.5em" onclick="app.startPractice()">Practice more</button>
       </div>`;
-      if (this.currentView !== 'home') this.switchView('home');
+      if (this.currentView !== 'home') this.switchView('home', true);
       return;
     }
 
@@ -1318,7 +1318,7 @@ class PBook {
         <div class="recall-card-q">${quiz.q}</div>
         <div class="recall-card-a" id="recallAnswer" style="display:none">
           <div class="recall-card-answer">${quiz.a}</div>
-          <div class="recall-card-source">From: ${block.meta.title} (Ch${block.meta._chapterNum})</div>
+          <div class="recall-card-source"><a href="#" onclick="event.preventDefault();app.openBlock('${item.blockId}')" style="color:var(--accent)">From: ${block.meta.title} (Ch${block.meta._chapterNum}) &rarr;</a></div>
           <div class="recall-buttons">
             <button class="recall-btn recall-forgot" onclick="app._answerRecall('${item.blockId}',0)">Forgot</button>
             <button class="recall-btn recall-hard" onclick="app._answerRecall('${item.blockId}',1)">Hard</button>
@@ -1329,7 +1329,7 @@ class PBook {
         <button class="recall-reveal-big" id="recallRevealBtn" onclick="document.getElementById('recallAnswer').style.display='block';this.style.display='none'">Show answer</button>
       </div>
     </div>`;
-    if (this.currentView !== 'home') this.switchView('home');
+    if (this.currentView !== 'home') this.switchView('home', true);
     window.scrollTo(0, 0);
   }
 
@@ -1338,8 +1338,18 @@ class PBook {
     if (quality >= 2) this._recallScore.correct++;
     const labels = ['Forgot', 'Hard', 'Good!', 'Easy!'];
     this.showXPToast(labels[quality], quality >= 2 ? 'xp' : 'info');
-    this._recallIdx++;
-    setTimeout(() => this._renderRecallCard(), 400);
+    if (quality === 0) {
+      // Forgot — show "re-read" link before moving on
+      const answerEl = document.getElementById('recallAnswer');
+      if (answerEl) {
+        answerEl.insertAdjacentHTML('beforeend', `<div style="text-align:center;margin-top:.5em"><a href="#" onclick="event.preventDefault();app.openBlock('${blockId}')" style="color:var(--accent);font-size:.82rem;font-weight:600">Re-read this section &rarr;</a></div>`);
+      }
+      this._recallIdx++;
+      setTimeout(() => this._renderRecallCard(), 2000); // longer pause to let them click
+    } else {
+      this._recallIdx++;
+      setTimeout(() => this._renderRecallCard(), 400);
+    }
   }
 
   scoreRecall(blockId, quality) {
@@ -2948,7 +2958,7 @@ class PBook {
     }
 
     this._pendingScroll = { parentId, meta: block.meta };
-    this.switchView('read');
+    this.switchView('read', true); // auto — don't log as user-initiated mode switch
     this.renderRead(chIdx);
   }
 

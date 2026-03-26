@@ -473,9 +473,8 @@ async function renderAnalytics(el){
   }
 
   h += `<div style="margin-top:1em;padding:.8em;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:.75rem;color:var(--text2)">
-    <b>How it works:</b> Every reader interaction is sent to the server-side log endpoint (<code>/.netlify/functions/log</code>).
-    On localhost, data is stored in <code>.log-interactions.jsonl</code>. On Vercel/Netlify, it's in <code>/tmp/</code> (ephemeral — persists until next deploy).
-    For production, connect a persistent store (database, Google Sheets, S3).
+    <b>How it works:</b> Every reader interaction is sent to <b>Supabase</b> (persistent database) via the <code>/.netlify/functions/log</code> endpoint.
+    Data persists across deploys and is accessible from both localhost and production.
   </div>`;
 
   el.innerHTML = h;
