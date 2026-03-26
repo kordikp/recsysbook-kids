@@ -1118,20 +1118,49 @@ class PBook {
     const spines = ch.blocks.filter(b => b.type === 'spine');
     const currentIdx = spines.findIndex(b => b.id === blockId);
     const nextInChapter = spines[currentIdx + 1];
-    // Also find a related block from another chapter
     const otherChapterBlock = this.allBlocks.find(b =>
       b._chapter !== ch.id && b.meta.type === 'spine' && !this.user.readBlocks.has(b.meta.id)
     );
 
     let items = '';
     if (nextInChapter) {
-      items += `<div class="rn-item" onclick="app.openBlock('${nextInChapter.id}')"><span class="rn-label">Next in chapter</span><span class="rn-title">${nextInChapter.title}</span><span class="rn-time">${nextInChapter.readingTime || 3}m</span></div>`;
+      items += `<div class="rn-item" onclick="app.previewBlock('${nextInChapter.id}')"><span class="rn-label">Next</span><span class="rn-title">${nextInChapter.title}</span><span class="rn-time">${nextInChapter.readingTime || 3}m</span></div>`;
     }
     if (otherChapterBlock) {
-      items += `<div class="rn-item" onclick="app.openBlock('${otherChapterBlock.meta.id}')"><span class="rn-label">From Ch${otherChapterBlock.meta._chapterNum}</span><span class="rn-title">${otherChapterBlock.meta.title}</span><span class="rn-time">${otherChapterBlock.meta.readingTime || 3}m</span></div>`;
+      items += `<div class="rn-item" onclick="app.previewBlock('${otherChapterBlock.meta.id}')"><span class="rn-label">Ch${otherChapterBlock.meta._chapterNum}</span><span class="rn-title">${otherChapterBlock.meta.title}</span><span class="rn-time">${otherChapterBlock.meta.readingTime || 3}m</span></div>`;
     }
     if (!items) return '';
     return `<div class="read-next" id="rn-${blockId}">${items}</div>`;
+  }
+
+  // Preview panel — shows teaser before navigating away
+  previewBlock(blockId) {
+    const block = this.findBlock(blockId);
+    if (!block) { this.openBlock(blockId); return; }
+    const m = block.meta;
+    const teaser = m.teaser || (block.body || '').substring(0, 200).replace(/[#*_\[\]]/g, '').trim();
+
+    // Remove existing preview
+    document.getElementById('previewPanel')?.remove();
+
+    const panel = document.createElement('div');
+    panel.id = 'previewPanel';
+    panel.className = 'preview-panel';
+    panel.innerHTML = `
+      <div class="preview-content">
+        <div class="preview-header">
+          <span class="preview-ch">Ch${m._chapterNum}</span>
+          <span class="preview-title">${m.title}</span>
+          <button class="preview-close" onclick="document.getElementById('previewPanel').remove()">&times;</button>
+        </div>
+        <div class="preview-teaser">${this.escHtml(teaser)}${teaser.length >= 200 ? '...' : ''}</div>
+        <div class="preview-actions">
+          <button class="preview-go" onclick="document.getElementById('previewPanel').remove();app.openBlock('${blockId}')">Read this &rarr;</button>
+          <button class="preview-dismiss" onclick="document.getElementById('previewPanel').remove()">Stay here</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(panel);
   }
 
   _updateInlineReadNext(blockId, ch) {
