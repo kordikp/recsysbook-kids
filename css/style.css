@@ -257,6 +257,19 @@ button { font-family: var(--font-ui); cursor: pointer; border: none; background:
 .cosmetic-name { font-family: var(--font-ui); font-size: .65rem; font-weight: 600; }
 .cosmetic-level { font-family: var(--font-ui); font-size: .55rem; color: var(--text-3); }
 
+/* Onboarding tour */
+.tour-overlay { position: fixed; inset: 0; z-index: 950; background: rgba(0,0,0,.45); }
+.tour-highlight { position: absolute; border: 2px solid var(--accent); border-radius: 8px; box-shadow: 0 0 0 4000px rgba(0,0,0,.4); z-index: 951; pointer-events: none; }
+.tour-tip { position: absolute; z-index: 952; background: #fff; border-radius: 12px; padding: .8em 1em; max-width: 250px; box-shadow: 0 8px 30px rgba(0,0,0,.2); animation: fadeUp .25s ease; }
+.tour-center { top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; max-width: 300px; }
+.tour-text { font-family: var(--font-ui); font-size: .82rem; line-height: 1.45; color: #1C1917; margin-bottom: .6em; }
+.tour-nav { display: flex; align-items: center; gap: .4em; }
+.tour-count { font-family: var(--font-ui); font-size: .65rem; color: #9ca3af; margin-right: auto; }
+.tour-btn { font-family: var(--font-ui); font-size: .72rem; font-weight: 600; padding: .3em .7em; border-radius: 6px; border: none; cursor: pointer; color: #6b7280; background: #f3f4f6; }
+.tour-btn:hover { background: #e5e7eb; }
+.tour-btn-primary { background: #7C3AED; color: #fff; }
+.tour-btn-primary:hover { background: #6D28D9; }
+
 .fi-back { background: none; border: none; font-size: .85rem; color: var(--accent); cursor: pointer; padding: 0 .3em 0 0; font-weight: 700; flex-shrink: 0; }
 .fi-back:hover { color: var(--text); }
 

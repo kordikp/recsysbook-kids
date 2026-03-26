@@ -200,10 +200,83 @@ class PBook {
     document.getElementById('onboarding').classList.add('hidden');
     this.updateVoiceBadge();
     this.updateXPBadge();
-    // Hide tabs for disabled features
     if (!this._f('missions')) document.querySelector('[data-view="glossary"]')?.style.setProperty('display', 'none');
     this.switchView('home');
+    // First-time tour
+    if (!localStorage.getItem('pbook-tour-done')) {
+      setTimeout(() => this.startTour(), 1500);
+    }
   }
+
+  // ===== ONBOARDING TOUR =====
+  startTour() {
+    this._tourSteps = [
+      { target: '.tab[data-view="home"]', text: 'This is your homepage — personalized shelves with recommended content.', pos: 'top' },
+      { target: '.tab[data-view="read"]', text: 'Feed mode — read sections one by one with infinite scroll. The algorithm picks what comes next.', pos: 'top' },
+      { target: '.tab[data-view="glossary"]', text: 'Missions — story-driven quests. Each has a goal, steps, and a final boss quiz!', pos: 'top' },
+      { target: '.tab[data-view="map"]', text: 'Map — see all chapters, your saved items, and notes in one place.', pos: 'top' },
+      { target: '.tab[data-view="chat"]', text: "Tutor — the author's AI assistant. Ask any question about the book!", pos: 'top' },
+      { target: '#xpBadge', text: 'Your level and XP. Read, play games, and complete missions to earn rewards and unlock themes!', pos: 'bottom' },
+      { target: null, text: "You're ready! Pick any reading mode to start. If you get lost, tap the p-book logo to return here. Have fun! \u{1F680}", pos: 'center' },
+    ];
+    this._tourIdx = 0;
+    this._showTourStep();
+  }
+
+  _showTourStep() {
+    // Remove previous
+    document.getElementById('tourOverlay')?.remove();
+
+    if (this._tourIdx >= this._tourSteps.length) {
+      localStorage.setItem('pbook-tour-done', '1');
+      return;
+    }
+
+    const step = this._tourSteps[this._tourIdx];
+    const total = this._tourSteps.length;
+    const isLast = this._tourIdx === total - 1;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'tourOverlay';
+    overlay.className = 'tour-overlay';
+
+    if (step.target) {
+      const el = document.querySelector(step.target);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        // Highlight circle
+        overlay.innerHTML = `<div class="tour-highlight" style="top:${rect.top - 4}px;left:${rect.left - 4}px;width:${rect.width + 8}px;height:${rect.height + 8}px"></div>`;
+        // Tooltip
+        const tipTop = step.pos === 'top' ? rect.top - 80 : rect.bottom + 12;
+        const tipLeft = Math.max(10, Math.min(rect.left, window.innerWidth - 260));
+        overlay.innerHTML += `<div class="tour-tip" style="top:${tipTop}px;left:${tipLeft}px">
+          <div class="tour-text">${step.text}</div>
+          <div class="tour-nav">
+            <span class="tour-count">${this._tourIdx + 1}/${total}</span>
+            ${isLast ? `<button class="tour-btn tour-btn-primary" onclick="app._endTour()">Got it!</button>` : `<button class="tour-btn tour-btn-primary" onclick="app._nextTour()">Next</button>`}
+            <button class="tour-btn" onclick="app._endTour()">Skip</button>
+          </div>
+        </div>`;
+      } else {
+        this._tourIdx++;
+        this._showTourStep();
+        return;
+      }
+    } else {
+      // Center message (no target)
+      overlay.innerHTML = `<div class="tour-tip tour-center">
+        <div class="tour-text">${step.text}</div>
+        <div class="tour-nav">
+          <button class="tour-btn tour-btn-primary" onclick="app._endTour()">Start reading!</button>
+        </div>
+      </div>`;
+    }
+
+    document.body.appendChild(overlay);
+  }
+
+  _nextTour() { this._tourIdx++; this._showTourStep(); }
+  _endTour() { document.getElementById('tourOverlay')?.remove(); localStorage.setItem('pbook-tour-done', '1'); }
 
   // ===== VIEW SWITCHING =====
   switchView(view, auto) {
@@ -2162,6 +2235,7 @@ class PBook {
 
     // Reset
     h += '<div class="profile-section">';
+    h += '<button class="btn-ghost" style="border:1px solid var(--accent);border-radius:6px;padding:.3em .8em;font-size:.75rem;color:var(--accent);margin-right:.5em" onclick="localStorage.removeItem(\'pbook-tour-done\');app.startTour()">Replay tour</button>';
     h += '<button class="btn-ghost" style="border:1px solid #dc2626;border-radius:6px;padding:.3em .8em;font-size:.75rem;color:#dc2626" onclick="app.resetAll()">Reset everything</button>';
     h += '</div>';
 
