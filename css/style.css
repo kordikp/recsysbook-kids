@@ -393,6 +393,16 @@ button { font-family: var(--font-ui); cursor: pointer; border: none; background:
 /* Block articles (each block is a distinct card) */
 .block-article { margin-bottom: 1.5em; padding: 1.5em; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); position: relative; overflow: visible; }
 
+/* Block-level navigation */
+.block-nav { display: flex; align-items: center; gap: .3em; margin-bottom: .5em; font-family: var(--font-ui); font-size: .68rem; color: var(--text-3); }
+.bnav-back { background: none; border: none; font-size: .8rem; color: var(--accent); cursor: pointer; padding: 0; font-weight: 700; }
+.bnav-back:hover { color: var(--text); }
+.bnav-ch { cursor: pointer; font-weight: 600; color: var(--accent); }
+.bnav-ch:hover { text-decoration: underline; }
+.bnav-sep { color: var(--border); }
+.bnav-progress { color: var(--text-3); }
+.block-nav .block-status { margin-left: auto; }
+
 /* Block with side notes — margin notes on wide screens */
 .block-with-side { position: relative; }
 .block-side { position: absolute; right: -190px; top: 0; width: 175px; display: flex; flex-direction: column; gap: .4em; }

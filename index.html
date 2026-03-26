@@ -147,7 +147,6 @@
 
   <!-- READ VIEW (focused reading) -->
   <div class="view" id="view-read">
-    <div class="feed-indicator" id="feedIndicator"></div>
     <div class="read-layout">
       <div class="read-pane" id="readPane">
         <!-- Content rendered by JS -->
@@ -200,13 +199,6 @@
 <div class="highlight-popup" id="highlightPopup" style="display:none">
   <button onclick="app.highlightSelection()" title="Highlight">&#127912;</button>
   <button onclick="app.highlightAndNote()" title="Highlight + Note">&#128221;</button>
-</div>
-
-<!-- LINEAR NAV BAR (prev/next through entire book DFS) -->
-<div class="linear-nav" id="linearNav" style="display:none">
-  <button class="ln-btn" id="lnPrev" onclick="app.linearPrev()">&#9664;</button>
-  <div class="ln-info" id="lnInfo" onclick="app.switchView('map')"></div>
-  <button class="ln-btn" id="lnNext" onclick="app.linearNext()">&#9654;</button>
 </div>
 
 <!-- BOTTOM TAB NAV -->

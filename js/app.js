@@ -296,11 +296,9 @@ class PBook {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
 
     // Linear nav only in read view
-    const linearNav = document.getElementById('linearNav');
-    if (linearNav) linearNav.style.display = view === 'read' ? 'flex' : 'none';
 
     if (view === 'home') this.renderHome();
-    else if (view === 'read') { this.renderRead(); this.updateLinearNav(); }
+    else if (view === 'read') this.renderRead();
     else if (view === 'map') this.renderMap();
     else if (view === 'glossary') { if (this._f('missions')) this.renderMissions(); else this.switchView('home'); }
     else if (view === 'chat') this.initChatView();
@@ -597,13 +595,9 @@ class PBook {
       window.scrollTo(0, 0);
     }
 
-    // Feed indicator
-    this._updateFeedIndicator(ch, idx);
-
     // Render math, observe blocks
     this.renderMath();
     this._observeBlocks(ch);
-    this.updateLinearNav();
     this._updateMissionBar();
     this._showMissionIntro();
   }
@@ -656,8 +650,7 @@ class PBook {
           this._observeBlocks(nextCh);
           this.user.currentChapter = nextChIdx;
           this.user.save();
-          this.updateLinearNav();
-        }
+              }
       }
       this._isLoadingMore = false;
     };
@@ -813,13 +806,22 @@ class PBook {
       sideHtml += '</div>';
     }
 
+    const hasBack = this._navHistory && this._navHistory.length > 0;
+    const chNum = block._chapterNum || '?';
+    const prog = this.user.getProgress(this.allBlocks);
+
     return `<article class="block-article fade-up" id="b-${block.id}">
-      <div class="block-header">
+      <div class="block-nav">
+        ${hasBack ? '<button class="bnav-back" onclick="app.goBack()" title="Go back">&larr;</button>' : ''}
+        <span class="bnav-ch" onclick="app.switchView('map')">Ch${chNum}</span>
+        <span class="bnav-sep">&middot;</span>
+        <span class="bnav-progress">${prog.read}/${prog.total}</span>
         <div class="block-status ${isRead ? 'read' : ''}"></div>
+      </div>
+      <div class="block-header">
         <h3>${block.title}</h3>
         <div class="block-meta">
           <span>${block.readingTime || 3} min read</span>
-          ${block.standalone ? '<span class="meta-standalone">Standalone</span>' : ''}
         </div>
       </div>
       <div class="block-with-side">
@@ -2359,7 +2361,6 @@ class PBook {
     // Navigate to the block (spine directly, depth/sidebar via parent)
     const targetId = node.parent || node.id;
     this.openBlock(targetId);
-    this.updateLinearNav();
   }
 
   linearNext() {
@@ -2371,7 +2372,6 @@ class PBook {
     this.user.save();
     const targetId = node.parent || node.id;
     this.openBlock(targetId);
-    this.updateLinearNav();
   }
 
   updateLinearNav() {
