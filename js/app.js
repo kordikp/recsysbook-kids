@@ -817,7 +817,7 @@ class PBook {
     return `<article class="block-article fade-up" id="b-${block.id}">
       <div class="block-nav">
         <button class="bnav-back" onclick="app.goBack()" title="Go back">&larr;</button>
-        <span class="bnav-ch" onclick="app.switchView('map')">Ch${chNum}</span>
+        <span class="bnav-ch" onclick="app.goToMapChapter(${block._chapterIdx})">Ch${chNum}</span>
         <span class="bnav-sep">&middot;</span>
         <span class="bnav-progress">${posInCh}/${totalInCh}</span>
         <div class="block-status ${isRead ? 'read' : ''}"></div>
@@ -3352,6 +3352,15 @@ class PBook {
     setTimeout(() => {
       const el = document.getElementById(`b-${meta.id}`) || document.getElementById(`b-${parentId}`);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  }
+
+  goToMapChapter(idx) {
+    this.switchView('map');
+    // Scroll to the chapter in map after render
+    setTimeout(() => {
+      const chEl = document.querySelectorAll('.map-chapter')[idx];
+      if (chEl) chEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 300);
   }
 
