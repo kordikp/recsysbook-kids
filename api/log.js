@@ -1,6 +1,22 @@
-// Server-side interaction log (Vercel version)
-const fs = require('fs');
-const LOG_FILE = '/tmp/pbook-interactions.jsonl';
+// Server-side interaction log — Supabase backend (Vercel version)
+
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tnjvbamehdhymmcktxuy.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_7HdCbfsTLiI3IH7FFmEQdw_A9sIqTcI';
+
+async function supabase(method, path, body) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=minimal' : '',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (method === 'GET') return res.json();
+  return { ok: res.ok, status: res.status };
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,10 +27,8 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      if (!fs.existsSync(LOG_FILE)) return res.status(200).json([]);
-      const lines = fs.readFileSync(LOG_FILE, 'utf8').trim().split('\n').filter(Boolean);
-      const entries = lines.map(l => { try { return JSON.parse(l); } catch(e) { return null; } }).filter(Boolean);
-      return res.status(200).json(entries);
+      const data = await supabase('GET', 'interactions?order=created_at.desc&limit=2000');
+      return res.status(200).json(data);
     } catch(e) { return res.status(200).json([]); }
   }
 
@@ -22,9 +36,22 @@ module.exports = async function handler(req, res) {
     try {
       const data = req.body || {};
       if (!data.type) return res.status(400).json({ error: 'type required' });
-      const entry = { ...data, serverTs: Date.now(), ip: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown' };
-      fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n');
-      return res.status(200).json({ ok: true });
+
+      const row = {
+        user_id: data.userId || 'unknown',
+        type: data.type,
+        item_id: data.itemId || null,
+        mode: data.mode || null,
+        event: data.event || null,
+        duration: data.duration || null,
+        rating: data.rating || null,
+        data: data,
+        server_ts: Date.now(),
+      };
+
+      const result = await supabase('POST', 'interactions', row);
+      if (result.ok) return res.status(200).json({ ok: true });
+      return res.status(500).json({ error: 'Supabase insert failed: ' + result.status });
     } catch(e) { return res.status(500).json({ error: e.message }); }
   }
 

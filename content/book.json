@@ -1,7 +1,7 @@
 {
   "title": "How Recommendations Work",
   "author": "Pavel Kordik",
-  "version": "0.1",
+  "version": "0.2",
   "chapters": [
     {
       "id": "ch1-what-are-recommendations",
@@ -12,13 +12,10 @@
       "files": [
         "01-spine-have-you-noticed.md",
         "02-spine-recommendations-everywhere.md",
-        "02a-depth-explorer-spot-them.md",
         "03-spine-not-magic.md",
         "03a-sidebar-wrong-recs.md",
         "03b-depth-thinker-patterns.md",
-        "03c-sidebar-challenge-count.md",
         "04-spine-three-jobs.md",
-        "04a-depth-creator-your-first.md",
         "04b-sidebar-would-you-rather.md",
         "05-question-what-type.md",
         "06-spine-worksheet-match-apps.md"
@@ -40,7 +37,6 @@
         "02b-sidebar-myth-buster.md",
         "02c-game-cold-start.md",
         "03-spine-your-data-your-choice.md",
-        "03a-depth-thinker-privacy.md",
         "03b-depth-creator-experiment.md",
         "04-spine-worksheet-data-detective.md"
       ]
@@ -56,7 +52,6 @@
         "01a-depth-explorer-cf-demo.md",
         "01b-depth-creator-build-cf.md",
         "01c-sidebar-netflix-story.md",
-        "01d-sidebar-taste-twin-game.md",
         "01e-game-taste-match.md",
         "02-spine-look-at-the-thing.md",
         "02a-depth-thinker-compare.md",
@@ -71,8 +66,7 @@
         "04b-sidebar-speed-challenge.md",
         "04c-game-pipeline.md",
         "04d-spine-search-and-recs.md",
-        "05-question-method.md",
-        "06-spine-worksheet-build-recommender.md"
+        "05-question-method.md"
       ]
     },
     {
@@ -84,7 +78,6 @@
       "files": [
         "01-spine-filter-bubbles.md",
         "01a-depth-thinker-echo-chamber.md",
-        "01b-depth-creator-pop-bubble.md",
         "01c-sidebar-experiment-idea.md",
         "01d-game-bubble-pop.md",
         "02-spine-fairness.md",
@@ -95,8 +88,7 @@
         "03-spine-testing.md",
         "03a-depth-explorer-ab-test.md",
         "03b-game-ab-test.md",
-        "04-question-ethics.md",
-        "05-spine-worksheet-bubble-audit.md"
+        "04-question-ethics.md"
       ]
     },
     {
@@ -117,8 +109,7 @@
         "04b-sidebar-debug-challenge.md",
         "05-spine-step4-improve.md",
         "05a-sidebar-career.md",
-        "06-question-next.md",
-        "07-spine-worksheet-design-challenge.md"
+        "06-question-next.md"
       ]
     },
     {
@@ -129,7 +120,6 @@
       "directory": "ch6-ethics-and-you",
       "files": [
         "01-spine-who-decides.md",
-        "01a-depth-thinker-whose-goals.md",
         "01b-sidebar-rabbit-hole.md",
         "02-spine-addictive-design.md",
         "02a-depth-creator-take-control.md",
@@ -138,7 +128,6 @@
         "03-spine-privacy-for-real.md",
         "03a-depth-explorer-check-your-data.md",
         "03b-sidebar-age-guessing.md",
-        "03c-sidebar-tracking-across-web.md",
         "03d-game-privacy-spotter.md",
         "04-spine-ai-and-you.md",
         "04a-depth-thinker-hard-questions.md",

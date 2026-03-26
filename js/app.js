@@ -2203,8 +2203,8 @@ class PBook {
         ],
         boss: { q: 'Your friend asks: "So how DOES YouTube know what I want to watch?" Explain it in one paragraph.', hints: ['patterns', 'clicks', 'data', 'similar'] },
         branches: {
-          explorer: { label: 'See it in action', blocks: ['ch1-everywhere-d-exp', 'ch2-track-d-exp'] },
-          creator: { label: 'Build something', blocks: ['ch1-first-d-create'] },
+          explorer: { label: 'See it in action', blocks: ['ch2-track-d-exp', 'ch1-ws-match'] },
+          creator: { label: 'Try it yourself', blocks: ['ch2-privacy-d-create'] },
           thinker: { label: 'Understand patterns', blocks: ['ch1-patterns-d-think'] }
         }
       },
@@ -2226,7 +2226,7 @@ class PBook {
         branches: {
           explorer: { label: 'Investigate your data', blocks: ['ch2-track-d-exp', 'ch2-ws-detective'] },
           creator: { label: 'Run an experiment', blocks: ['ch2-privacy-d-create'] },
-          thinker: { label: 'Think about privacy', blocks: ['ch2-privacy-d-think'] }
+          thinker: { label: 'Think about privacy', blocks: ['ch2-myth'] }
         }
       },
       {
@@ -2267,7 +2267,7 @@ class PBook {
         ],
         boss: { q: 'A new video app asks you to design their recommendation system. How would you prevent filter bubbles while still showing relevant content?', hints: ['diversity', 'explore', 'bubble', 'balance'] },
         branches: {
-          creator: { label: 'Pop your bubble', blocks: ['ch4-pop-d-create', 'ch4-experiment'] },
+          creator: { label: 'Pop your bubble', blocks: ['ch4-experiment'] },
           thinker: { label: 'Think deeply', blocks: ['ch4-echo-d-think', 'ch4-unfair-game'] },
           explorer: { label: 'Run an A/B test', blocks: ['ch4-ab-d-exp'] }
         }
@@ -2289,7 +2289,7 @@ class PBook {
         branches: {
           explorer: { label: 'Check your data', blocks: ['ch6-data-d-exp', 'ch6-age-sidebar'] },
           creator: { label: 'Take control now', blocks: ['ch6-control-d-create'] },
-          thinker: { label: 'The big questions', blocks: ['ch6-goals-d-think', 'ch6-hard-d-think', 'ch6-law-sidebar'] }
+          thinker: { label: 'The big questions', blocks: ['ch6-hard-d-think', 'ch6-law-sidebar'] }
         }
       },
       {

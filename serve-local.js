@@ -91,11 +91,21 @@ async function handleProxy(req, res) {
   }
 }
 
-// --- Interaction log ---
+// --- Interaction log (Supabase + local file fallback) ---
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tnjvbamehdhymmcktxuy.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_7HdCbfsTLiI3IH7FFmEQdw_A9sIqTcI';
 const LOG_FILE = path.join(ROOT, '.log-interactions.jsonl');
 
 async function handleLog(req, res) {
   if (req.method === 'GET') {
+    try {
+      // Try Supabase first
+      const sbRes = await fetch(SUPABASE_URL + '/rest/v1/interactions?order=created_at.desc&limit=2000', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      if (sbRes.ok) { const data = await sbRes.json(); res.writeHead(200, { ...CORS, 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)); return; }
+    } catch(e) {}
+    // Fallback to local file
     try {
       if (!fs.existsSync(LOG_FILE)) { res.writeHead(200, { ...CORS, 'Content-Type': 'application/json' }); res.end('[]'); return; }
       const lines = fs.readFileSync(LOG_FILE, 'utf8').trim().split('\n').filter(Boolean);
@@ -110,8 +120,14 @@ async function handleLog(req, res) {
   try {
     const data = JSON.parse(body || '{}');
     if (!data.type) { res.writeHead(400, { ...CORS, 'Content-Type': 'application/json' }); res.end('{"error":"type required"}'); return; }
-    const entry = { ...data, serverTs: Date.now() };
-    fs.appendFileSync(LOG_FILE, JSON.stringify(entry) + '\n');
+    // Write to Supabase
+    const row = { user_id: data.userId || 'unknown', type: data.type, item_id: data.itemId || null, mode: data.mode || null, event: data.event || null, duration: data.duration || null, rating: data.rating || null, data: data, server_ts: Date.now() };
+    fetch(SUPABASE_URL + '/rest/v1/interactions', {
+      method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(row)
+    }).catch(() => {});
+    // Also write to local file as backup
+    fs.appendFileSync(LOG_FILE, JSON.stringify({ ...data, serverTs: Date.now() }) + '\n');
     res.writeHead(200, { ...CORS, 'Content-Type': 'application/json' });
     res.end('{"ok":true}');
   } catch(e) { res.writeHead(500, { ...CORS, 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
