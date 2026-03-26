@@ -139,7 +139,22 @@ export class RecombeeClient {
     try {
       const saved = JSON.parse(localStorage.getItem('pbook-interactions') || '[]');
       this.interactions = saved;
+      // One-time sync: send unsent interactions to server log
+      this._syncHistorical();
     } catch (e) {}
+  }
+
+  _syncHistorical() {
+    const key = 'pbook-synced-to-server';
+    if (localStorage.getItem(key)) return; // already synced
+    const toSync = this.interactions.filter(i => i.type && i.ts);
+    if (toSync.length === 0) return;
+    // Send in batches of 20 (fire & forget)
+    for (let i = 0; i < toSync.length; i += 20) {
+      const batch = toSync.slice(i, i + 20);
+      batch.forEach(entry => this._sendToLog(entry));
+    }
+    localStorage.setItem(key, String(Date.now()));
   }
 
   // --- ReQL helpers ---
