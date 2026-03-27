@@ -504,6 +504,24 @@ button { font-family: var(--font-ui); cursor: pointer; border: none; background:
 .rn-skip { font-family: var(--font-ui); font-size: .7rem; color: var(--text-3); text-align: center; padding: .3em; cursor: pointer; }
 .rn-skip:hover { color: var(--accent); }
 
+/* Similar items */
+.rn-similar { margin-top: .5em; }
+.rn-similar-label { font-family: var(--font-ui); font-size: .65rem; font-weight: 700; text-transform: uppercase; color: var(--text-3); margin-bottom: .3em; }
+.rn-similar-item { display: flex; align-items: center; gap: .5em; padding: .35em .5em; cursor: pointer; border-radius: var(--radius-sm); transition: background .15s; font-size: .78rem; }
+.rn-similar-item:hover { background: var(--accent-bg); }
+.rn-read { opacity: .5; }
+.rn-similar-title { flex: 1; font-family: var(--font-ui); font-weight: 500; }
+.rn-similar-ch { font-family: var(--font-ui); font-size: .65rem; color: var(--text-3); }
+
+/* Share CTA for visitors */
+.rn-cta { margin-top: .8em; padding: .8em; background: linear-gradient(135deg, var(--accent-bg), #FEF3C7); border-radius: var(--radius); text-align: center; }
+.rn-cta-text { font-family: var(--font-ui); font-size: .82rem; color: var(--text-2); margin-bottom: .5em; }
+.rn-cta-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: .4em 1em; font-family: var(--font-ui); font-size: .82rem; font-weight: 600; cursor: pointer; }
+.rn-cta-btn:hover { opacity: .9; }
+
+/* Share button */
+.share-btn:hover { color: var(--accent); }
+
 /* Flag/report form */
 .flag-form { margin-top: .5em; padding: .8em; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-sm); animation: fadeUp .2s ease; }
 .flag-header { font-family: var(--font-ui); font-size: .8rem; font-weight: 600; color: #991B1B; margin-bottom: .5em; }

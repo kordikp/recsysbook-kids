@@ -72,8 +72,17 @@ class PBook {
       }
     }
 
-    // Returning users: show welcome screen (not auto-enter)
-    // They can pick a reading mode from there
+    // Check for deep link: /book#blockId or #blockId
+    const hash = window.location.hash?.substring(1);
+    if (hash && this.findBlock(hash)) {
+      // Direct read mode — skip onboarding, show block immediately
+      document.getElementById('onboarding').classList.add('hidden');
+      this.updateXPBadge();
+      this.openBlock(hash, 'share');
+      // After reading, show "read more" prompt
+      this._sharedBlockId = hash;
+    }
+
     this.applyTheme();
   }
 
@@ -879,6 +888,7 @@ class PBook {
           <button class="act-btn tutor-btn" onclick="app.askAboutBlock('${block.id}')" title="Ask the tutor">&#10067;</button>
           <button class="act-btn" onclick="app.toggleNote('${block.id}')" title="Add note">&#128221;</button>
           <button class="act-btn ${this.user.savedBlocks.has(block.id)?'active':''}" onclick="app.saveBlock('${block.id}')" title="Save for later">&#128278;</button>
+          <button class="act-btn share-btn" onclick="app.shareBlock('${block.id}')" title="Share">&#128279;</button>
           <button class="act-btn flag-btn" onclick="app.flagBlock('${block.id}')" title="Suggest edit to author">&#9873;</button>
         </div>
       </div>
@@ -1230,10 +1240,67 @@ class PBook {
       items += `<div class="rn-skip" onclick="app.previewBlock('${recBlock.meta.id}')">Not interested in next? Skip to something else &rarr;</div>`;
     }
     if (!items) return '';
+
+    // "More like this" — similar items based on shared topics
+    const blockTopics = this.blockTopics[blockId] || [];
+    if (blockTopics.length) {
+      const similar = [];
+      for (const b of this.allBlocks) {
+        if (b.meta.id === blockId || b.meta.type !== 'spine') continue;
+        if (similar.find(s => s.meta.id === b.meta.id)) continue;
+        const bTopics = this.blockTopics[b.meta.id] || [];
+        const overlap = blockTopics.filter(t => bTopics.includes(t)).length;
+        if (overlap > 0) similar.push({ ...b, _overlap: overlap });
+      }
+      similar.sort((a, b) => b._overlap - a._overlap);
+      const top3 = similar.slice(0, 3);
+      if (top3.length) {
+        items += '<div class="rn-similar"><div class="rn-similar-label">More like this</div>';
+        top3.forEach(s => {
+          const isRead = this.user.readBlocks.has(s.meta.id);
+          items += `<div class="rn-similar-item ${isRead ? 'rn-read' : ''}" onclick="app.previewBlock('${s.meta.id}')">
+            <span class="rn-similar-title">${s.meta.title}</span>
+            <span class="rn-similar-ch">Ch${s.meta._chapterNum}</span>
+          </div>`;
+        });
+        items += '</div>';
+      }
+    }
+
+    // For shared-link visitors: CTA to explore the full book
+    if (this._sharedBlockId === blockId) {
+      items += `<div class="rn-cta">
+        <div class="rn-cta-text">Enjoyed this? There are ${this.allBlocks.filter(b => b.meta.type === 'spine').length} more sections to explore!</div>
+        <button class="rn-cta-btn" onclick="app.showWelcome()">Explore the full book &rarr;</button>
+      </div>`;
+    }
+
     return `<div class="read-next" id="rn-${blockId}">${items}</div>`;
   }
 
   // Preview panel — shows teaser before navigating away
+  shareBlock(blockId) {
+    const block = this.findBlock(blockId);
+    if (!block) return;
+    const url = window.location.origin + window.location.pathname + '#' + blockId;
+    const title = block.meta.title;
+    const text = block.meta.teaser || 'Check out this section from "How Recommendations Work"';
+
+    // Try native share first (mobile)
+    if (navigator.share) {
+      navigator.share({ title, text, url }).catch(() => {});
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(url).then(() => {
+        this.showXPToast('Link copied!', 'info');
+      }).catch(() => {
+        // Double fallback
+        prompt('Share this link:', url);
+      });
+    }
+    this.rc.logEvent('share', { blockId, mode: 'share' });
+  }
+
   previewBlock(blockId) {
     const block = this.findBlock(blockId);
     if (!block) { this.openBlock(blockId); return; }
@@ -3255,6 +3322,8 @@ class PBook {
     this.user.currentBlock = blockId;
     this.user.currentChapter = chIdx;
     this.user.save();
+    // Update URL hash for sharing
+    history.replaceState(null, '', '#' + blockId);
     // Set analytics context: where did user discover this block?
     const mode = source || (this._wizardMission ? 'mission' : this.currentView === 'home' ? 'netflix' : this.currentView === 'map' ? 'map' : this.currentView === 'read' ? 'read' : this.currentView);
     this.rc.setContext(mode, { blockId, chapter: chIdx });
