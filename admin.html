@@ -238,7 +238,7 @@ const FMT = ['LinkedIn Post','LinkedIn Carousel','X Thread','Blog Article','YouT
 const STAGES = ['draft','review','approved','ready_for_pr','published'];
 const STAGE_LABELS = {draft:'Draft',review:'In Review',approved:'Approved',ready_for_pr:'Ready for PR',published:'Published'};
 const STAGE_COLORS = {draft:'#d1d5db',review:'#fbbf24',approved:'#60a5fa',ready_for_pr:'#a78bfa',published:'#34d399'};
-const TABS = ['Editorial','Analytics','Content','Feedback','PR Pipeline','PR Push'];
+const TABS = ['Editorial','Analytics','Content','Feedback','Certificates','PR Pipeline','PR Push'];
 
 let book,allBlocks=[],mktg={},currentTab='Editorial',sideFilter=null,editorBlock=null;
 // These must be on window because onclick handlers run in global scope
@@ -306,6 +306,7 @@ function showMain(){
   else if(currentTab==='Analytics')renderAnalytics(m);
   else if(currentTab==='Content')renderContent(m);
   else if(currentTab==='Feedback')renderFeedback(m);
+  else if(currentTab==='Certificates')renderCertificates(m);
   else if(currentTab==='PR Pipeline')renderPipeline(m);
   else if(currentTab==='PR Push')renderPR(m);
 }
@@ -1078,6 +1079,67 @@ window.exportCSV=function(){
 };
 
 // ---- Reader Feedback ----
+async function renderCertificates(el){
+  el.innerHTML='<div style="text-align:center;padding:2em;color:var(--text3)">Loading certificates...</div>';
+  let certs=[];
+  try{
+    const res=await fetch('/.netlify/functions/log');
+    if(res.ok){const data=await res.json();certs=data.filter(r=>r.type==='certificate').sort((a,b)=>(b.server_ts||0)-(a.server_ts||0))}
+  }catch(e){}
+  let h='<h2 style="font-size:1.1rem;font-weight:700;margin-bottom:.8em">Certificates & Reader Feedback</h2>';
+  // Summary cards
+  const withComment=certs.filter(c=>c.data?.comment);
+  const withEmail=certs.filter(c=>c.data?.email);
+  const avgStars=certs.filter(c=>c.data?.stars>0);
+  const avg=avgStars.length?((avgStars.reduce((s,c)=>s+c.data.stars,0)/avgStars.length).toFixed(1)):'—';
+  h+=`<div class="cg">
+    <div class="cg-card"><h4>Total Certificates</h4><div class="cg-num">${certs.length}</div></div>
+    <div class="cg-card"><h4>With Comments</h4><div class="cg-num">${withComment.length}</div></div>
+    <div class="cg-card"><h4>Avg Rating</h4><div class="cg-num">${avg}</div><div class="cg-sub">${avgStars.length} ratings</div></div>
+    <div class="cg-card"><h4>Email Subscribers</h4><div class="cg-num">${withEmail.length}</div></div>
+  </div>`;
+  // Email list (copyable)
+  if(withEmail.length){
+    h+=`<div style="margin-bottom:1.2em;padding:.8em;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+      <h4 style="font-size:.72rem;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:.4em">Email Subscribers</h4>
+      <div style="font-size:.78rem;word-break:break-all;color:var(--text2)">${withEmail.map(c=>c.data.email).join(', ')}</div>
+      <button style="margin-top:.4em;font-size:.7rem;padding:.25em .6em;border:1px solid var(--border);border-radius:4px;color:var(--accent)" onclick="navigator.clipboard.writeText('${withEmail.map(c=>c.data.email).join(', ')}');this.textContent='Copied!'">Copy emails</button>
+    </div>`;
+  }
+  // Certificate table
+  if(certs.length){
+    h+=`<table style="width:100%;border-collapse:collapse;font-size:.78rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      <thead><tr style="background:var(--bg)">
+        <th style="padding:.5em .6em;text-align:left;font-weight:600;color:var(--text3);font-size:.68rem;text-transform:uppercase">Name</th>
+        <th style="padding:.5em .6em;text-align:center">Rating</th>
+        <th style="padding:.5em .6em;text-align:left">Comment</th>
+        <th style="padding:.5em .6em;text-align:center">Level</th>
+        <th style="padding:.5em .6em;text-align:center">Sections</th>
+        <th style="padding:.5em .6em;text-align:left">Email</th>
+        <th style="padding:.5em .6em;text-align:left">Date</th>
+      </tr></thead><tbody>`;
+    certs.forEach(c=>{
+      const d=c.data||{};
+      const date=c.created_at?new Date(c.created_at).toLocaleDateString():(c.server_ts?new Date(c.server_ts).toLocaleDateString():'—');
+      const stars=d.stars?'★'.repeat(d.stars)+'☆'.repeat(5-d.stars):'—';
+      h+=`<tr style="border-top:1px solid var(--border)">
+        <td style="padding:.5em .6em;font-weight:600">${esc(d.name||'—')}</td>
+        <td style="padding:.5em .6em;text-align:center;color:#f59e0b">${stars}</td>
+        <td style="padding:.5em .6em;max-width:250px;color:var(--text2)">${esc((d.comment||'').substring(0,100))}${(d.comment||'').length>100?'…':''}</td>
+        <td style="padding:.5em .6em;text-align:center">${d.level||'—'}</td>
+        <td style="padding:.5em .6em;text-align:center">${d.sectionsRead||'—'}/${d.totalSections||'—'}</td>
+        <td style="padding:.5em .6em;font-size:.72rem;color:var(--text3)">${esc(d.email||'—')}</td>
+        <td style="padding:.5em .6em;font-size:.72rem;color:var(--text3)">${date}</td>
+      </tr>`;
+    });
+    h+='</tbody></table>';
+  }else{
+    h+='<p style="color:var(--text3);padding:2em;text-align:center">No certificates issued yet.</p>';
+  }
+  el.innerHTML=h;
+  function esc(s){return(s+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+}
+
 function renderFeedback(el){
   // Read from localStorage (same keys that reader.html writes to)
   let flags=[], notes={};

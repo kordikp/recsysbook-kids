@@ -92,6 +92,22 @@ class PBook {
     }
 
     this.applyTheme();
+
+    // Auto-sync for logged-in users: save every 2 minutes
+    setInterval(() => {
+      if (this._getAuth()) this.syncProfile().catch(() => {});
+    }, 120000);
+    // Also sync on page unload
+    window.addEventListener('beforeunload', () => {
+      const auth = this._getAuth();
+      if (auth) {
+        const blob = new Blob([JSON.stringify({
+          action: 'save', email: auth.email, token: auth.token,
+          profileData: this._collectProfileData(),
+        })], { type: 'application/json' });
+        navigator.sendBeacon?.(this._authEndpoint(), blob);
+      }
+    });
   }
 
   async loadAllContent() {
@@ -152,15 +168,6 @@ class PBook {
     document.querySelector(`.step[data-step="${n}"]`).classList.add('active');
   }
 
-  pickVoice(el) {
-    document.querySelectorAll('.opt-card').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    this.user.setVoice(el.dataset.voice);
-    this._saveFeatureToggles();
-    setTimeout(() => this.startApp(), 400);
-  }
-
-  startReading() { this.startApp(); }
 
   _saveFeatureToggles() {
     const get = id => document.getElementById(id)?.checked !== false;
@@ -897,11 +904,13 @@ class PBook {
       'ch6-who-decides': ['An algorithm decides what you see, not a human', 'Engineers designed it, but even they can\'t predict every recommendation', 'The algorithm\'s goal might not be the same as YOUR goal'],
       'ch6-addictive': ['Infinite scroll, autoplay = no natural stopping point', 'These are design choices, not accidents', 'You have more control than you think'],
       'ch6-adtech-vs-recs': ['Recommender = helps you within ONE app', 'Adtech = tracks you across the ENTIRE internet', 'That shoe ad following you everywhere is adtech, not recommendations'],
+      'ch3-cf-d-exp': ['Find your "taste twins" — people who liked the same things as you', 'Check what your twins liked that you haven\'t tried → that\'s the recommendation', 'This is how Netflix, Spotify, and YouTube recommend — find similar users, copy their taste'],
     };
     if (HIGHLIGHTS[id]) return HIGHLIGHTS[id];
-    // Auto-generate from content: extract sentences with bold/strong markers
-    const sentences = (block.body || '').split(/[.!?]\s/).filter(s => s.includes('**') || s.length > 40 && s.length < 150);
-    if (sentences.length >= 2) return sentences.slice(0, 3).map(s => s.replace(/[*#_\[\]]/g, '').trim());
+    // Auto-generate from content: extract sentences with bold markers, skip tables/headings
+    const lines = (block.body || '').split('\n').filter(l => !l.startsWith('|') && !l.startsWith('#') && !l.startsWith('---'));
+    const sentences = lines.join(' ').split(/[.!?]\s/).filter(s => s.includes('**') || s.length > 40 && s.length < 150);
+    if (sentences.length >= 2) return sentences.slice(0, 3).map(s => s.replace(/[*#_\[\]|]/g, '').trim());
     return null;
   }
 
@@ -910,21 +919,17 @@ class PBook {
     let diagramHtml = '';
     if (block.diagram) { const svg = await getDiagram(block.diagram); diagramHtml = `<div class="diagram-wrap">${svg}</div>`; }
     const isRead = this.user.readBlocks.has(block.id);
-    const savedNote = this.getNote(block.id);
+    const userNotes = this.getNotes(block.id);
     const highlights = CONFIG.features.highlights !== false ? this._getHighlights(block) : null;
 
-    // Side notes — all as uniform sticky notes (AI + user)
+    // Side notes — AI takeaways + user highlights/notes
     let sideHtml = '';
-    const notes = [];
-    if (highlights) highlights.forEach(h => notes.push({ text: h, type: 'ai' }));
-    if (savedNote) notes.push({ text: savedNote, type: 'user' });
-    if (notes.length) {
-      sideHtml = '<div class="block-side">';
-      notes.forEach(n => {
-        const icon = n.type === 'user' ? '\u{1F4DD}' : '\u{1F4CC}';
-        const editBtn = n.type === 'user' ? `<button class="snote-edit" onclick="app.editNote('${block.id}')">edit</button>` : '';
-        sideHtml += `<div class="snote snote-${n.type}"><span class="snote-icon">${icon}</span><span class="snote-text">${this.escHtml(n.text)}</span>${editBtn}</div>`;
-      });
+    const sideItems = [];
+    if (highlights) highlights.forEach(h => sideItems.push({ text: h, type: 'ai' }));
+    userNotes.forEach((n, i) => sideItems.push({ quote: n.quote, text: n.text, type: 'user', idx: i }));
+    if (sideItems.length) {
+      sideHtml = `<div class="block-side" id="side-${block.id}">`;
+      sideItems.forEach(n => sideHtml += this._renderSideNote(block.id, n));
       sideHtml += '</div>';
     }
 
@@ -974,7 +979,9 @@ class PBook {
         </div>
       </div>
       <div class="note-editor" id="note-${block.id}" style="display:none">
-        <textarea placeholder="Your private note on this section..." id="note-text-${block.id}">${this.escHtml(savedNote || '')}</textarea>
+        <div class="note-quote-preview" id="note-quote-${block.id}" style="display:none"></div>
+        <textarea placeholder="Your note on this section..." id="note-text-${block.id}"></textarea>
+        <input type="hidden" id="note-edit-idx-${block.id}" value="-1">
         <div class="note-actions">
           <button class="note-save" onclick="app.saveNote('${block.id}')">Save note</button>
           <button class="note-cancel" onclick="app.toggleNote('${block.id}')">Cancel</button>
@@ -998,38 +1005,127 @@ class PBook {
     </article>`;
   }
 
-  // Notes system
-  getNote(blockId) {
-    try { const notes = JSON.parse(localStorage.getItem('pbook-notes') || '{}'); return notes[blockId] || ''; } catch(e) { return ''; }
+  // Notes system — multiple notes per block, each with optional quote
+  getNotes(blockId) {
+    try {
+      const store = JSON.parse(localStorage.getItem('pbook-notes') || '{}');
+      const val = store[blockId];
+      if (!val) return [];
+      // Backwards compat: old format was a single string
+      if (typeof val === 'string') return [{ text: val, quote: '', ts: 0 }];
+      return Array.isArray(val) ? val : [];
+    } catch(e) { return []; }
+  }
+  _saveNotes(blockId, notesArr) {
+    try {
+      const store = JSON.parse(localStorage.getItem('pbook-notes') || '{}');
+      if (notesArr.length) store[blockId] = notesArr;
+      else delete store[blockId];
+      localStorage.setItem('pbook-notes', JSON.stringify(store));
+    } catch(e) {}
   }
   toggleNote(blockId) {
     const ed = document.getElementById(`note-${blockId}`);
     if (!ed) return;
     const visible = ed.style.display !== 'none';
     ed.style.display = visible ? 'none' : 'block';
-    if (!visible) ed.querySelector('textarea')?.focus();
+    if (!visible) {
+      // Reset editor for new note
+      const textarea = ed.querySelector('textarea');
+      const quotePreview = document.getElementById(`note-quote-${blockId}`);
+      const idxInput = document.getElementById(`note-edit-idx-${blockId}`);
+      if (idxInput) idxInput.value = '-1';
+      if (textarea) { textarea.value = ''; textarea.focus(); }
+      if (quotePreview) { quotePreview.style.display = 'none'; quotePreview.textContent = ''; }
+    }
   }
-  editNote(blockId) { this.toggleNote(blockId); }
+  editUserNote(blockId, idx) {
+    const notes = this.getNotes(blockId);
+    const note = notes[idx];
+    if (!note) return;
+    const ed = document.getElementById(`note-${blockId}`);
+    if (!ed) return;
+    ed.style.display = 'block';
+    const textarea = document.getElementById(`note-text-${blockId}`);
+    const quotePreview = document.getElementById(`note-quote-${blockId}`);
+    const idxInput = document.getElementById(`note-edit-idx-${blockId}`);
+    if (textarea) { textarea.value = note.text || ''; textarea.focus(); }
+    if (quotePreview && note.quote) { quotePreview.style.display = 'block'; quotePreview.textContent = `"${note.quote}"`; }
+    else if (quotePreview) quotePreview.style.display = 'none';
+    if (idxInput) idxInput.value = idx;
+  }
+  deleteUserNote(blockId, idx) {
+    const notes = this.getNotes(blockId);
+    notes.splice(idx, 1);
+    this._saveNotes(blockId, notes);
+    this._refreshSideNotes(blockId);
+  }
   saveNote(blockId) {
     const text = document.getElementById(`note-text-${blockId}`)?.value?.trim() || '';
-    try {
-      const notes = JSON.parse(localStorage.getItem('pbook-notes') || '{}');
-      if (text) { notes[blockId] = text; this.user.trackNote(blockId); }
-      else delete notes[blockId];
-      localStorage.setItem('pbook-notes', JSON.stringify(notes));
-    } catch(e) {}
+    const idxInput = document.getElementById(`note-edit-idx-${blockId}`);
+    const editIdx = idxInput ? parseInt(idxInput.value) : -1;
+    const quotePreview = document.getElementById(`note-quote-${blockId}`);
+    const quote = quotePreview?.textContent?.replace(/^"|"$/g, '') || '';
+
+    const notes = this.getNotes(blockId);
+    if (editIdx >= 0 && editIdx < notes.length) {
+      // Editing existing note
+      if (text) { notes[editIdx].text = text; }
+      else { notes.splice(editIdx, 1); } // empty = delete
+    } else if (text || quote) {
+      // New note
+      notes.push({ quote: quote.substring(0, 200), text, ts: Date.now() });
+      this.user.trackNote(blockId);
+      if (this._f('gamification')) { this.user.addXP(3); this.user.save(); this.showXPToast('+3 XP note added'); this.updateXPBadge(); }
+    }
+    this._saveNotes(blockId, notes);
     this.toggleNote(blockId);
-    // Re-render note display
+    this._refreshSideNotes(blockId);
+  }
+  _renderSideNote(blockId, n) {
+    const icon = n.type === 'user' ? '\u{1F4DD}' : '\u{1F4CC}';
+    const searchText = n.type === 'user' ? (n.quote || '') : n.text;
+    const clickAttr = searchText ? ` onclick="app.scrollToHighlight('${blockId}','${searchText.substring(0, 60).replace(/'/g, "\\'").replace(/\n/g, ' ')}')"` : '';
+    if (n.type === 'user') {
+      const quoteHtml = n.quote ? `<span class="snote-quote">"${this.escHtml(n.quote)}"</span>` : '';
+      const noteHtml = n.text ? `<span class="snote-text">${this.escHtml(n.text)}</span>` : '';
+      return `<div class="snote snote-user"${clickAttr}><span class="snote-icon">${icon}</span><div class="snote-body">${quoteHtml}${noteHtml}</div><button class="snote-edit" onclick="event.stopPropagation();app.editUserNote('${blockId}',${n.idx})">edit</button><button class="snote-del" onclick="event.stopPropagation();app.deleteUserNote('${blockId}',${n.idx})">&times;</button></div>`;
+    }
+    return `<div class="snote snote-ai"${clickAttr}><span class="snote-icon">${icon}</span><span class="snote-text">${this.escHtml(n.text)}</span></div>`;
+  }
+
+  _refreshSideNotes(blockId) {
+    const block = this.findBlock(blockId);
+    if (!block) return;
+    const userNotes = this.getNotes(blockId);
+    const highlights = CONFIG.features.highlights !== false ? this._getHighlights(block.meta || block) : null;
+    const sideItems = [];
+    if (highlights) highlights.forEach(h => sideItems.push({ text: h, type: 'ai' }));
+    userNotes.forEach((n, i) => sideItems.push({ quote: n.quote, text: n.text, type: 'user', idx: i }));
+
+    let sideEl = document.getElementById(`side-${blockId}`);
     const article = document.getElementById(`b-${blockId}`);
-    const existing = article?.querySelector('.block-note-display');
-    if (text && !existing) {
-      const div = document.createElement('div');
-      div.className = 'block-note-display';
-      div.innerHTML = `<span class="note-icon">&#128221;</span><span>${this.escHtml(text)}</span><button class="note-edit" onclick="app.editNote('${blockId}')">edit</button>`;
-      article?.querySelector('.block-footer')?.before(div);
-    } else if (existing) {
-      if (text) existing.querySelector('span:last-of-type').textContent = text;
-      else existing.remove();
+    if (!article) return;
+
+    if (!sideItems.length) {
+      if (sideEl) sideEl.remove();
+      return;
+    }
+
+    let html = '';
+    sideItems.forEach(n => html += this._renderSideNote(blockId, n));
+
+    if (sideEl) {
+      sideEl.innerHTML = html;
+    } else {
+      const wrapper = article.querySelector('.block-with-side');
+      if (wrapper) {
+        sideEl = document.createElement('div');
+        sideEl.className = 'block-side';
+        sideEl.id = `side-${blockId}`;
+        sideEl.innerHTML = html;
+        wrapper.appendChild(sideEl);
+      }
     }
   }
 
@@ -1060,38 +1156,58 @@ class PBook {
 
   escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+  // ===== TEXT HIGHLIGHT & NOTE =====
   highlightSelection() {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed) return;
+    // Determine blockId from selection anchor before modifying DOM
+    const article = sel.anchorNode?.parentElement?.closest('.block-article');
+    const blockId = article?.id?.replace('b-', '');
+    const text = sel.toString();
     try {
       const range = sel.getRangeAt(0);
-      const mark = document.createElement('mark');
-      mark.className = 'user-highlight';
-      range.surroundContents(mark);
-      // Find which block this is in
-      const article = mark.closest('.block-article');
-      const blockId = article?.id?.replace('b-', '');
-      if (blockId) {
-        this._saveHighlight(blockId, sel.toString());
-        this.rc.sendRating(blockId, 0.8); // highlight = strong positive signal
+      try {
+        // Simple case: selection within one element
+        const mark = document.createElement('mark');
+        mark.className = 'user-highlight';
+        range.surroundContents(mark);
+      } catch (e) {
+        // Complex case: selection spans multiple elements — use CSS highlight via extractContents
+        const fragment = range.extractContents();
+        const mark = document.createElement('mark');
+        mark.className = 'user-highlight';
+        mark.appendChild(fragment);
+        range.insertNode(mark);
       }
-    } catch (e) { /* selection spans elements */ }
+    } catch (e) { /* final fallback: do nothing visually */ }
+    if (blockId) {
+      this._saveHighlight(blockId, text);
+      this.rc.sendRating(blockId, 0.8);
+      if (this._f('gamification')) { this.user.addXP(1); this.user.save(); this.showXPToast('+1 XP highlighted'); this.updateXPBadge(); }
+    }
     sel.removeAllRanges();
     document.getElementById('highlightPopup').style.display = 'none';
   }
 
   highlightAndNote() {
     const sel = window.getSelection();
-    const text = sel?.toString() || '';
+    if (!sel || sel.isCollapsed) return;
+    const quote = sel.toString().trim();
+    // Determine blockId from the selection BEFORE highlightSelection clears it
+    const anchor = sel.anchorNode?.parentElement?.closest('.block-article');
+    const blockId = anchor?.id?.replace('b-', '');
     this.highlightSelection();
-    // Find the block and open note with pre-filled highlight
-    const mark = document.querySelector('.user-highlight:last-of-type');
-    const article = mark?.closest('.block-article');
-    const blockId = article?.id?.replace('b-', '');
     if (blockId) {
-      this.toggleNote(blockId);
-      const textarea = document.getElementById(`note-text-${blockId}`);
-      if (textarea && !textarea.value) textarea.value = `"${text}" — `;
+      const ed = document.getElementById(`note-${blockId}`);
+      if (ed) {
+        ed.style.display = 'block';
+        const textarea = document.getElementById(`note-text-${blockId}`);
+        const quotePreview = document.getElementById(`note-quote-${blockId}`);
+        const idxInput = document.getElementById(`note-edit-idx-${blockId}`);
+        if (idxInput) idxInput.value = '-1';
+        if (quotePreview && quote) { quotePreview.style.display = 'block'; quotePreview.textContent = `"${quote.substring(0, 200)}"`; }
+        if (textarea) { textarea.value = ''; textarea.focus(); }
+      }
     }
   }
 
@@ -1102,6 +1218,51 @@ class PBook {
       hl[blockId].push({ text: text.substring(0, 200), ts: Date.now() });
       localStorage.setItem('pbook-highlights', JSON.stringify(hl));
     } catch (e) {}
+  }
+
+  scrollToHighlight(blockId, searchText) {
+    if (!searchText) return;
+    const article = document.getElementById(`b-${blockId}`);
+    if (!article) return;
+    const body = article.querySelector('.spine-body');
+    if (!body) return;
+
+    // 1. Try to find an existing <mark> that contains this text
+    const marks = body.querySelectorAll('mark.user-highlight');
+    for (const mark of marks) {
+      if (mark.textContent.includes(searchText.substring(0, 30))) {
+        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        mark.classList.add('highlight-flash');
+        setTimeout(() => mark.classList.remove('highlight-flash'), 1500);
+        return;
+      }
+    }
+
+    // 2. Fallback: find text in body via TreeWalker and wrap it temporarily
+    const needle = searchText.substring(0, 60).toLowerCase();
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const idx = node.textContent.toLowerCase().indexOf(needle);
+      if (idx === -1) continue;
+      // Wrap the matched portion in a temporary highlight
+      const range = document.createRange();
+      range.setStart(node, idx);
+      range.setEnd(node, Math.min(idx + searchText.length, node.textContent.length));
+      const mark = document.createElement('mark');
+      mark.className = 'user-highlight highlight-flash';
+      try {
+        range.surroundContents(mark);
+        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Remove the temporary mark after the flash
+        setTimeout(() => {
+          const parent = mark.parentNode;
+          parent.replaceChild(document.createTextNode(mark.textContent), mark);
+          parent.normalize();
+        }, 2000);
+      } catch(e) { /* range spans elements */ }
+      return;
+    }
   }
 
   // ===== MINI-GAMES (data-driven from games/*.json) =====
@@ -1427,93 +1588,7 @@ class PBook {
     setTimeout(() => document.getElementById(`rn-${blockId}`)?.classList.add('rn-visible'), 50);
   }
 
-  renderChapterNav(idx) {
-    const prev = idx > 0 ? this.book.chapters[idx - 1] : null;
-    const next = idx < this.book.chapters.length - 1 ? this.book.chapters[idx + 1] : null;
-    return `<div class="ch-nav"><button class="ch-nav-btn ${prev ? '' : 'disabled'}" onclick="${prev ? `app.goChapter(${idx - 1})` : ''}"><span class="nl">&larr; Previous</span>${prev ? `${prev.number}. ${prev.title}` : ''}</button><button class="ch-nav-btn ${next ? '' : 'disabled'}" onclick="${next ? `app.goChapter(${idx + 1})` : ''}"><span class="nl">Next &rarr;</span>${next ? `${next.number}. ${next.title}` : ''}</button></div>`;
-  }
 
-  renderContext(ch, idx) {
-    this._ctxChapter = ch;
-    this._ctxIdx = idx;
-    this.updateContext();
-  }
-
-  async updateContext(currentBlockId) {
-    const ch = this._ctxChapter;
-    if (!ch) return;
-
-    const show = (id, html) => { const el = document.getElementById(id); if (el) { el.innerHTML = html; el.style.display = 'block'; }};
-    const hide = (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
-
-    // 1. Current block metadata
-    const currentBlock = currentBlockId ? ch.blocks.find(b => b.id === currentBlockId) : ch.blocks.find(b => b.type === 'spine');
-    if (currentBlock) {
-      const topics = (this.blockTopics[currentBlock.id] || []).slice(0, 4);
-      const sig = this.user.getBlockSignals(currentBlock.id);
-      const depthCards = ch.blocks.filter(b => b.type === 'depth' && b.parent === currentBlock.id);
-      const sidebarCards = ch.blocks.filter(b => b.type === 'sidebar' && b.parent === currentBlock.id);
-
-      let meta = `<h4>Current section</h4>`;
-      meta += `<div class="ctx-current-title">${currentBlock.title}</div>`;
-      meta += `<div class="ctx-meta-row"><span>Ch${ch.number}</span><span>${currentBlock.readingTime || 3} min</span>`;
-      if (sig.dwellMs > 1000) meta += `<span>&#9201; ${Math.round(sig.dwellMs/1000)}s read</span>`;
-      meta += `</div>`;
-      if (topics.length) meta += `<div class="ctx-topics">${topics.map(t => `<span class="ctx-topic" onclick="app.showTopic('${t}')">${t}</span>`).join('')}</div>`;
-      if (depthCards.length) meta += `<div class="ctx-depths"><span class="ctx-depths-label">Deep dives:</span>${depthCards.map(d => `<span class="ctx-depth-badge ${d.voice}">${CONFIG.voices[d.voice]?.label || d.voice}</span>`).join('')}</div>`;
-      show('ctxMeta', meta);
-    }
-
-    // 2. Up next
-    const nextBlock = this.getContinueBlock();
-    if (nextBlock) {
-      show('ctxNext', `<h4>Up next</h4><div class="ctx-next" onclick="app.openBlock('${nextBlock.id}')"><span class="ctx-next-label">Continue</span><span>${nextBlock.title}</span></div>`);
-    } else hide('ctxNext');
-
-    // 3. Related (Recombee scenario: context-related)
-    let related = [];
-    if (currentBlock && this.rc.enabled) {
-      const relRecs = await this.rc.getRecsForItem(currentBlock.id, 4, this.rc.reql({ type: 'spine' }), 'context-related');
-      if (relRecs?.recomms?.length) related = relRecs.recomms.map(r => { const b = this.findBlock(r.id); return b ? b : null; }).filter(Boolean);
-    }
-    if (related.length < 3) {
-      const pool = this.allBlocks.filter(b => b._chapter !== ch.id && b.meta.type === 'spine');
-      const unread = pool.filter(b => !this.user.readBlocks.has(b.meta.id));
-      related = (unread.length >= 4 ? unread : [...unread, ...pool]).sort(() => Math.random() - 0.5).slice(0, 4);
-    }
-    show('ctxRelated', `<h4>Related</h4>${related.map(b => {
-      const meta = b.meta || b;
-      return `<div class="ctx-item" onclick="app.openBlock('${meta.id}')"><span>Ch${meta._chapterNum}: ${meta.title}</span></div>`;
-    }
-    ).join('')}`);
-
-    // 4. Quiz / comprehension check
-    if (currentBlock) {
-      const quiz = this._generateQuiz(currentBlock);
-      if (quiz) show('ctxQuiz', quiz);
-      else hide('ctxQuiz');
-    }
-
-    // 5. Chat with suggested questions
-    const ctxChat = document.getElementById('ctxChat');
-    if (ctxChat) {
-      const suggested = currentBlock ? this.tutor.getSuggestedQuestions({ meta: currentBlock, body: currentBlock.body || this.findBlock(currentBlock.id)?.body }) : [];
-      const sugHtml = suggested.length ? suggested.map(q =>
-        `<button class="tutor-suggest-btn" style="font-size:.7rem;padding:.25em .5em" onclick="document.getElementById('chatInput').value='${q.replace(/'/g,"\\'")}';app.sendChat()">${q}</button>`
-      ).join('') : '';
-      ctxChat.style.display = 'block';
-      if (!ctxChat.dataset.init) {
-        ctxChat.dataset.init = '1';
-        ctxChat.innerHTML = `<h4>&#129302; Ask the tutor</h4>
-          <div class="ctx-chat-messages" id="chatMessages"><div class="chat-msg bot" style="font-size:.75rem">Ask me anything about what you're reading!</div></div>
-          ${sugHtml ? `<div class="tutor-suggestions" style="padding:0 0 .3em">${sugHtml}</div>` : ''}
-          <div class="ctx-chat-input">
-            <input type="text" id="chatInput" placeholder="Ask about this section..." onkeydown="if(event.key==='Enter')app.sendChat()">
-            <button onclick="app.sendChat()">&#10148;</button>
-          </div>`;
-      }
-    }
-  }
 
   _generateQuiz(block) {
     const body = (block.body || '').toLowerCase();
@@ -1936,251 +2011,61 @@ class PBook {
   }
 
   _getNoteCount() {
-    try { return Object.keys(JSON.parse(localStorage.getItem('pbook-notes') || '{}')).length; } catch(e) { return 0; }
+    try {
+      const store = JSON.parse(localStorage.getItem('pbook-notes') || '{}');
+      let count = 0;
+      for (const val of Object.values(store)) {
+        count += Array.isArray(val) ? val.length : (val ? 1 : 0);
+      }
+      return count;
+    } catch(e) { return 0; }
   }
 
   _renderNotesList() {
-    let notes = {};
-    try { notes = JSON.parse(localStorage.getItem('pbook-notes') || '{}'); } catch(e) {}
-    const entries = Object.entries(notes);
+    let store = {};
+    try { store = JSON.parse(localStorage.getItem('pbook-notes') || '{}'); } catch(e) {}
 
-    if (!entries.length) {
+    // Flatten all notes across blocks into a list
+    const allNotes = [];
+    for (const [blockId, val] of Object.entries(store)) {
+      const arr = typeof val === 'string' ? [{ text: val, quote: '', ts: 0 }] : (Array.isArray(val) ? val : []);
+      arr.forEach((n, idx) => allNotes.push({ blockId, ...n, idx }));
+    }
+    // Sort newest first
+    allNotes.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+    if (!allNotes.length) {
       return `<div style="text-align:center;padding:2em;color:var(--text-3);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
         <p style="font-size:1.5rem;margin-bottom:.3em">&#128221;</p>
         <p style="font-size:.85rem;font-weight:600">No notes yet</p>
-        <p style="font-size:.78rem;color:var(--text-3);margin-top:.2em">Tap the note icon on any section, or select text and tap "Highlight + Note".</p>
+        <p style="font-size:.78rem;color:var(--text-3);margin-top:.2em">Select text and tap "Highlight + Note", or tap the note icon on any section.</p>
       </div>`;
     }
 
-    let html = `<div style="font-size:.82rem;color:var(--text-2);margin-bottom:.8em">${entries.length} note${entries.length !== 1 ? 's' : ''}</div>`;
+    let html = `<div style="font-size:.82rem;color:var(--text-2);margin-bottom:.8em">${allNotes.length} note${allNotes.length !== 1 ? 's' : ''}</div>`;
     html += '<div class="map-blocks">';
-    entries.reverse().forEach(([blockId, text]) => {
-      const block = this.findBlock(blockId);
-      const title = block?.meta?.title || blockId;
+    allNotes.forEach(n => {
+      const block = this.findBlock(n.blockId);
+      const title = block?.meta?.title || n.blockId;
       const ch = block?.meta?._chapterNum || '?';
-      html += `<div class="map-block" style="flex-direction:column;align-items:stretch;gap:.3em;cursor:pointer" onclick="app.openBlock('${blockId}')">
+      const quoteHtml = n.quote ? `<div style="font-size:.72rem;color:var(--accent);font-style:italic;padding-left:1.6em;line-height:1.3;margin-bottom:.15em">"${this.escHtml(n.quote.substring(0, 120))}${n.quote.length > 120 ? '...' : ''}"</div>` : '';
+      const textHtml = n.text ? `<div style="font-size:.78rem;color:var(--text-2);padding-left:1.6em;line-height:1.35">${this.escHtml(n.text.substring(0, 150))}${n.text.length > 150 ? '...' : ''}</div>` : '';
+      html += `<div class="map-block" style="flex-direction:column;align-items:stretch;gap:.2em;cursor:pointer" onclick="app.openBlock('${n.blockId}')">
         <div style="display:flex;align-items:center;gap:.4em">
-          <div class="map-dot ${this.user.readBlocks.has(blockId) ? 'done' : ''}"></div>
+          <div class="map-dot ${this.user.readBlocks.has(n.blockId) ? 'done' : ''}"></div>
           <span class="map-block-title">${title}</span>
           <span style="font-size:.65rem;color:var(--text-3)">Ch${ch}</span>
-          <button class="saved-remove-btn" onclick="event.stopPropagation();app.deleteNote('${blockId}')" title="Delete note">&times;</button>
+          <button class="saved-remove-btn" onclick="event.stopPropagation();app.deleteUserNote('${n.blockId}',${n.idx});app.renderMap()" title="Delete note">&times;</button>
         </div>
-        <div style="font-size:.78rem;color:var(--text-2);font-style:italic;padding-left:1.6em;line-height:1.35">"${this.escHtml(text.substring(0, 150))}${text.length > 150 ? '...' : ''}"</div>
+        ${quoteHtml}${textHtml}
       </div>`;
     });
     html += '</div>';
     return html;
   }
 
-  deleteNote(blockId) {
-    try {
-      const notes = JSON.parse(localStorage.getItem('pbook-notes') || '{}');
-      delete notes[blockId];
-      localStorage.setItem('pbook-notes', JSON.stringify(notes));
-    } catch(e) {}
-    this.renderMap();
-  }
 
-  // ===== READING PATHS =====
-  getReadingPaths() {
-    return [
-      {
-        id: 'youtube',
-        title: 'How YouTube Works',
-        desc: 'Understand how YouTube picks videos for your homepage',
-        icon: '\u{1F3AC}',
-        keywords: ['youtube', 'recommend', 'collaborative', 'pipeline', 'popular', 'a/b test'],
-        blocks: [] // auto-populated
-      },
-      {
-        id: 'privacy',
-        title: 'Privacy & Your Data',
-        desc: 'What apps know about you and how to protect yourself',
-        icon: '\u{1F512}',
-        keywords: ['privacy', 'data', 'footprint', 'cookie', 'tracker', 'gdpr', 'incognito'],
-        blocks: []
-      },
-      {
-        id: 'builder',
-        title: 'Build Your Own RecSys',
-        desc: 'Step-by-step: create a recommendation system from scratch',
-        icon: '\u{1F527}',
-        keywords: ['build', 'collect', 'survey', 'rating', 'similar', 'predict', 'improve', 'spreadsheet', 'code'],
-        blocks: []
-      },
-      {
-        id: 'fairness',
-        title: 'Fairness & Filter Bubbles',
-        desc: 'Why recommendations can be unfair and how to fix it',
-        icon: '\u{2696}',
-        keywords: ['fair', 'bubble', 'echo chamber', 'bias', 'diversity', 'ethical', 'addictive'],
-        blocks: []
-      },
-      {
-        id: 'algorithms',
-        title: 'How Algorithms Learn',
-        desc: 'The methods behind smart recommendations',
-        icon: '\u{1F9E0}',
-        keywords: ['collaborative filter', 'content-based', 'popular', 'pipeline', 'cold start', 'pattern'],
-        blocks: []
-      }
-    ];
-  }
 
-  renderReadingPaths() {
-    const paths = this.getReadingPaths();
-    // Auto-populate blocks by matching keywords to content
-    paths.forEach(path => {
-      const matched = new Set();
-      this.allBlocks.forEach(b => {
-        const text = ((b.meta.title || '') + ' ' + (b.body || '')).toLowerCase();
-        if (path.keywords.some(kw => text.includes(kw)) && b.meta.type === 'spine') {
-          matched.add(b.meta.id);
-        }
-      });
-      path.blocks = [...matched].slice(0, 8);
-    });
-
-    const activePath = this.user.activePath;
-    let html = '<div class="paths-section">';
-    html += '<h3 style="margin:1em 0 .5em;font-size:.95rem">Choose your reading adventure</h3>';
-    html += '<p style="font-size:.8rem;color:var(--text-2);margin-bottom:1em">Pick a goal and follow a curated path through the book!</p>';
-
-    paths.forEach(path => {
-      const readCount = path.blocks.filter(id => this.user.readBlocks.has(id)).length;
-      const total = path.blocks.length;
-      const pct = Math.round((readCount / Math.max(total, 1)) * 100);
-      const isActive = activePath === path.id;
-      const isComplete = pct === 100 && total > 0;
-
-      html += `<div class="path-card ${isActive ? 'path-active' : ''} ${isComplete ? 'path-complete' : ''}" onclick="app.selectPath('${path.id}')">
-        <div class="path-icon">${path.icon}</div>
-        <div class="path-info">
-          <div class="path-title">${path.title}</div>
-          <div class="path-desc">${path.desc}</div>
-          <div class="path-progress">
-            <div class="path-progress-bar"><div class="path-progress-fill" style="width:${pct}%"></div></div>
-            <span class="path-progress-text">${readCount}/${total} ${isComplete ? '-- Complete!' : ''}</span>
-          </div>
-        </div>
-        ${isActive ? '<span class="path-badge">Active</span>' : ''}
-      </div>`;
-    });
-
-    // Show active path detail
-    if (activePath) {
-      const path = paths.find(p => p.id === activePath);
-      if (path && path.blocks.length) {
-        html += '<div class="path-detail">';
-        html += `<h4>${path.icon} ${path.title} — Your reading list</h4>`;
-        path.blocks.forEach((blockId, i) => {
-          const block = this.findBlock(blockId);
-          if (!block) return;
-          const isRead = this.user.readBlocks.has(blockId);
-          html += `<div class="path-step ${isRead ? 'path-step-done' : ''}" onclick="app.openBlock('${blockId}')">
-            <span class="path-step-num">${isRead ? '\u2713' : i + 1}</span>
-            <span class="path-step-title">${block.meta.title}</span>
-            <span class="path-step-ch">Ch${block.meta._chapterNum}</span>
-          </div>`;
-        });
-        html += '</div>';
-      }
-    }
-
-    html += '</div>';
-    return html;
-  }
-
-  selectPath(pathId) {
-    this.user.activePath = this.user.activePath === pathId ? null : pathId;
-    this.user.save();
-    this.renderMap();
-    if (this.user.activePath) {
-      this.showXPToast('Path selected! Follow the steps to complete it.', 'info');
-    }
-  }
-
-  _signalIcons(sig) {
-    if (!sig || Object.keys(sig).length === 0) return '';
-    const icons = [];
-    if (sig.read) icons.push('<span class="sig-icon sig-read" title="Read">&#10003;</span>');
-    else if (sig.seen) icons.push('<span class="sig-icon sig-seen" title="Seen">&#128065;</span>');
-    if (sig.dwellMs > 5000) icons.push(`<span class="sig-icon sig-dwell" title="Dwell ${Math.round(sig.dwellMs/1000)}s">${Math.round(sig.dwellMs/1000)}s</span>`);
-    if (sig.rated !== undefined) icons.push(sig.rated >= 0.7 ? '<span class="sig-icon sig-liked" title="Liked">&#128293;</span>' : '<span class="sig-icon sig-meh" title="Rated">&#128164;</span>');
-    if (sig.saved) icons.push('<span class="sig-icon sig-saved" title="Saved">&#128278;</span>');
-    if (sig.expanded) icons.push('<span class="sig-icon sig-exp" title="Expanded">&#128295;</span>');
-    if (sig.noted) icons.push('<span class="sig-icon sig-note" title="Note">&#128221;</span>');
-    return icons.join('');
-  }
-
-  // Show item detail inspector in map (clicked block)
-  showItemDetail(blockId) {
-    const block = this.findBlock(blockId);
-    if (!block) return;
-    const b = block.meta;
-    const sig = this.user.getBlockSignals(blockId);
-    const note = this.getNote(blockId);
-    const isRead = this.user.readBlocks.has(blockId);
-    const isSeen = this.user.seenBlocks.has(blockId);
-    const isSaved = this.user.savedBlocks.has(blockId);
-    const rating = this.user.ratings.get(blockId);
-
-    const detail = document.getElementById('vmapDetail');
-    if (!detail) return;
-
-    // Build signal table
-    const rows = [];
-    rows.push(tr('Item ID', `<code>${blockId}</code>`));
-    rows.push(tr('Type', badge(b.type, b.type === 'depth' ? b.voice : b.type)));
-    rows.push(tr('Chapter', `${b._chapterNum}. ${b._chapterTitle}`));
-    if (b.voice && b.voice !== 'universal') rows.push(tr('Voice', `<span class="cl-voice" style="background:var(--${b.voice})">${b.voice}</span>`));
-    rows.push(tr('Reading time', `${b.readingTime || 3} min`));
-
-    // Engagement signals
-    rows.push(trHead('Collected Signals'));
-    rows.push(tr('Status', isRead ? '<span style="color:var(--product);font-weight:600">&#10003; Read</span>' : isSeen ? '<span style="color:#fbbf24;font-weight:600">&#128065; Seen</span>' : '<span style="color:var(--text-3)">Not visited</span>'));
-    rows.push(tr('Dwell time', sig.dwellMs ? `${Math.round(sig.dwellMs/1000)}s` : '—'));
-    rows.push(tr('First seen', sig.seenAt ? new Date(sig.seenAt).toLocaleString() : '—'));
-    rows.push(tr('Scroll portion', sig.portion ? `${Math.round((sig.portion||0)*100)}%` : '—'));
-    rows.push(tr('Rating', rating !== undefined ? (rating >= 0.7 ? '&#128293; Great' : rating >= 0.4 ? '&#128161; Useful' : '&#128164; Known') : '—'));
-    rows.push(tr('Saved', isSaved ? '&#128278; Yes' : '—'));
-    rows.push(tr('Depth expanded', sig.expanded ? '&#128295; Yes' : '—'));
-    rows.push(tr('Personal note', note ? `"${this.escHtml(note.substring(0,80))}${note.length>80?'...':''}"` : '—'));
-
-    // Recombee signals
-    rows.push(trHead('Sent to Recombee'));
-    const rcSent = this.rc.interactions.filter(i => i.itemId === blockId);
-    if (rcSent.length) {
-      rcSent.forEach(i => {
-        rows.push(tr(i.type, `${new Date(i.ts).toLocaleTimeString()}${i.duration ? ' ('+i.duration+'s)' : ''}`));
-      });
-    } else {
-      rows.push(tr('—', 'No interactions sent yet'));
-    }
-
-    detail.innerHTML = `
-      <div class="item-detail fade-up">
-        <div class="id-head">
-          <h3>${b.title}</h3>
-          <button onclick="app.openBlock('${blockId}')" class="id-read-btn">Read this &rarr;</button>
-        </div>
-        <div class="id-teaser">${b.teaser || ''}</div>
-        <table class="id-table">${rows.join('')}</table>
-        <div class="id-actions">
-          <button onclick="app.openBlock('${blockId}')">Open in reader</button>
-          <button onclick="document.getElementById('vmapDetail').innerHTML=''">Close</button>
-        </div>
-      </div>`;
-
-    detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    function tr(label, value) { return `<tr><td class="id-label">${label}</td><td class="id-value">${value}</td></tr>`; }
-    function trHead(text) { return `<tr><td colspan="2" class="id-section">${text}</td></tr>`; }
-    function badge(type, sub) {
-      const colors = { spine: 'var(--text-3)', engineer: 'var(--engineer)', product: 'var(--product)', business: 'var(--business)', sidebar: 'var(--sidebar-color)' };
-      return `<span style="background:${colors[sub]||colors[type]||'var(--text-3)'};color:#fff;padding:.1em .4em;border-radius:3px;font-size:.65rem;font-weight:600">${type}${sub !== type ? ' / '+sub : ''}</span>`;
-    }
-  }
 
   // ===== VISUAL RPG MAP =====
   renderVisualMap(visibleVoices) {
@@ -2321,6 +2206,40 @@ class PBook {
     const u = this.user;
 
     let h = '';
+
+    // ---- Account / Sync section ----
+    const auth = this._getAuth();
+    h += '<div class="profile-section">';
+    if (auth) {
+      h += `<div class="auth-card auth-logged-in">
+        <div class="auth-avatar">${(auth.displayName || auth.email)[0].toUpperCase()}</div>
+        <div class="auth-info">
+          <div class="auth-name">${this.escHtml(auth.displayName || 'Reader')}</div>
+          <div class="auth-email">${this.escHtml(auth.email)}</div>
+        </div>
+        <div class="auth-actions">
+          <button class="auth-sync-btn" onclick="app.syncProfile()" id="syncBtn">Sync now</button>
+          <button class="auth-logout-btn" onclick="app.logout()">Log out</button>
+        </div>
+      </div>`;
+      if (this._lastSyncTime) h += `<div style="font-size:.65rem;color:var(--text-3);margin-top:.3em">Last synced: ${new Date(this._lastSyncTime).toLocaleString()}</div>`;
+    } else {
+      h += `<div class="auth-card">
+        <h3>Save your progress</h3>
+        <p style="font-size:.8rem;color:var(--text-2);margin:.3em 0 .8em">Create an account to access your reading progress, notes, and achievements from any device.</p>
+        <div id="authForm">
+          <input type="text" id="authName" class="auth-input" placeholder="Your name" maxlength="60">
+          <input type="email" id="authEmail" class="auth-input" placeholder="Email" maxlength="120">
+          <input type="password" id="authPassword" class="auth-input" placeholder="Password (4+ characters)" maxlength="100">
+          <div class="auth-btns">
+            <button class="auth-primary-btn" onclick="app.register()">Create account</button>
+            <button class="auth-secondary-btn" onclick="app.login()">I have an account</button>
+          </div>
+          <div id="authError" class="auth-error"></div>
+        </div>
+      </div>`;
+    }
+    h += '</div>';
 
     // Level & XP hero card (gamification only)
     if (!this._f('gamification')) {
@@ -2498,9 +2417,11 @@ class PBook {
     const certReady = coreRead >= coreTotal && coreTotal > 0;
     h += '<div class="profile-section"><h3>Certificate</h3>';
     if (certReady) {
+      const savedName = localStorage.getItem('pbook-cert-name') || '';
       h += `<div class="cert-ready">
         <p style="font-size:.85rem;margin-bottom:.6em">You've read all <strong>${coreTotal} core sections</strong>. You've earned your certificate!</p>
-        <button class="cert-btn" onclick="app.generateCertificate()">Download Certificate</button>
+        <button class="cert-btn" onclick="app.showCertificateModal()">Get Your Certificate</button>
+        ${savedName ? `<p style="font-size:.75rem;color:var(--text-3);margin-top:.4em">Certificate issued to: ${this.escHtml(savedName)}</p>` : ''}
       </div>`;
     } else {
       h += `<div class="cert-locked">
@@ -2523,78 +2444,182 @@ class PBook {
     el.innerHTML = h;
   }
 
+  // ===== ACCOUNT & SYNC =====
+  _authEndpoint() {
+    // Detect Netlify vs Vercel
+    if (location.hostname.includes('netlify')) return '/.netlify/functions/auth';
+    return '/api/auth';
+  }
+
+  _getAuth() {
+    try {
+      const s = localStorage.getItem('pbook-auth');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  }
+
+  _setAuth(auth) {
+    if (auth) localStorage.setItem('pbook-auth', JSON.stringify(auth));
+    else localStorage.removeItem('pbook-auth');
+  }
+
+  async _authRequest(body) {
+    const res = await fetch(this._authEndpoint(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res.json();
+  }
+
+  _collectProfileData() {
+    // Gather all localStorage keys that should sync
+    const data = {};
+    const keys = ['pbook-user', 'pbook-notes', 'pbook-highlights', 'pbook-interactions',
+                  'pbook-uid', 'pbook-tour-done', 'pbook-cert-name', 'pbook-cert-email',
+                  'pbook-content-statuses', 'pbook-flags'];
+    keys.forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v) data[k] = v;
+    });
+    // Feature toggles
+    ['sGamification', 'sPersonalization', 'sSpaceRepetition', 'sMissions', 'sGames', 'sHighlights'].forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v !== null) data[k] = v;
+    });
+    return data;
+  }
+
+  _restoreProfileData(data) {
+    if (!data || typeof data !== 'object') return;
+    Object.entries(data).forEach(([k, v]) => {
+      if (v !== null && v !== undefined) localStorage.setItem(k, v);
+    });
+    // Reload user model from restored localStorage
+    this.user.load();
+  }
+
+  async register() {
+    const name = document.getElementById('authName')?.value?.trim();
+    const email = document.getElementById('authEmail')?.value?.trim();
+    const password = document.getElementById('authPassword')?.value;
+    const errEl = document.getElementById('authError');
+
+    if (!email || !password) { errEl.textContent = 'Email and password are required.'; return; }
+    if (password.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; return; }
+    errEl.textContent = 'Creating account...';
+
+    const result = await this._authRequest({
+      action: 'register', email, password,
+      displayName: name || undefined,
+      profileData: this._collectProfileData(),
+    });
+
+    if (result.error) { errEl.textContent = result.error; return; }
+
+    this._setAuth({ email, token: result.token, displayName: result.displayName || name });
+    if (name) localStorage.setItem('pbook-cert-name', name);
+    this._lastSyncTime = Date.now();
+    this.showXPToast('Account created! Your progress is now synced.', 'info');
+    this.renderProfile();
+  }
+
+  async login() {
+    const email = document.getElementById('authEmail')?.value?.trim();
+    const password = document.getElementById('authPassword')?.value;
+    const errEl = document.getElementById('authError');
+
+    if (!email || !password) { errEl.textContent = 'Email and password are required.'; return; }
+    errEl.textContent = 'Logging in...';
+
+    const result = await this._authRequest({ action: 'login', email, password });
+    if (result.error) { errEl.textContent = result.error; return; }
+
+    this._setAuth({ email, token: result.token, displayName: result.displayName });
+
+    // Merge cloud profile with local — cloud wins for reading progress (union of sets)
+    if (result.profileData && Object.keys(result.profileData).length > 0) {
+      const cloudData = result.profileData;
+      // Merge user model: take union of read/seen/saved blocks
+      try {
+        const localUser = JSON.parse(localStorage.getItem('pbook-user') || '{}');
+        const cloudUser = JSON.parse(cloudData['pbook-user'] || '{}');
+        if (cloudUser.readBlocks) {
+          const merged = new Set([...(localUser.readBlocks || []), ...cloudUser.readBlocks]);
+          cloudUser.readBlocks = [...merged];
+        }
+        if (cloudUser.seenBlocks) {
+          const merged = new Set([...(localUser.seenBlocks || []), ...cloudUser.seenBlocks]);
+          cloudUser.seenBlocks = [...merged];
+        }
+        if (cloudUser.savedBlocks) {
+          const merged = new Set([...(localUser.savedBlocks || []), ...cloudUser.savedBlocks]);
+          cloudUser.savedBlocks = [...merged];
+        }
+        // Keep higher XP
+        cloudUser.xp = Math.max(cloudUser.xp || 0, localUser.xp || 0);
+        cloudUser.level = Math.max(cloudUser.level || 1, localUser.level || 1);
+        // Merge achievements (union by id)
+        const achMap = new Map();
+        (localUser.achievements || []).forEach(a => achMap.set(a.id, a));
+        (cloudUser.achievements || []).forEach(a => achMap.set(a.id, a));
+        cloudUser.achievements = [...achMap.values()];
+        cloudData['pbook-user'] = JSON.stringify(cloudUser);
+      } catch(e) {}
+      // Merge notes (union by blockId, cloud notes added to local)
+      try {
+        const localNotes = JSON.parse(localStorage.getItem('pbook-notes') || '{}');
+        const cloudNotes = JSON.parse(cloudData['pbook-notes'] || '{}');
+        for (const [blockId, val] of Object.entries(cloudNotes)) {
+          if (!localNotes[blockId]) localNotes[blockId] = val;
+          else if (Array.isArray(val) && Array.isArray(localNotes[blockId])) {
+            // Merge by timestamp dedup
+            const existing = new Set(localNotes[blockId].map(n => n.ts));
+            val.forEach(n => { if (!existing.has(n.ts)) localNotes[blockId].push(n); });
+          }
+        }
+        cloudData['pbook-notes'] = JSON.stringify(localNotes);
+      } catch(e) {}
+
+      this._restoreProfileData(cloudData);
+    }
+
+    this._lastSyncTime = Date.now();
+    this.showXPToast(`Welcome back, ${result.displayName || 'reader'}!`, 'info');
+    this.renderProfile();
+  }
+
+  async syncProfile() {
+    const auth = this._getAuth();
+    if (!auth) return;
+    const btn = document.getElementById('syncBtn');
+    if (btn) btn.textContent = 'Syncing...';
+
+    const result = await this._authRequest({
+      action: 'save',
+      email: auth.email,
+      token: auth.token,
+      profileData: this._collectProfileData(),
+    });
+
+    if (result.error) {
+      this.showXPToast(result.error, 'info');
+      if (btn) btn.textContent = 'Sync now';
+      if (result.error.includes('expired')) this._setAuth(null);
+      return;
+    }
+    this._lastSyncTime = Date.now();
+    if (btn) { btn.textContent = 'Synced!'; setTimeout(() => { if (btn) btn.textContent = 'Sync now'; }, 2000); }
+  }
+
+  logout() {
+    this._setAuth(null);
+    this._lastSyncTime = null;
+    this.renderProfile();
+  }
+
   // ===== LINEAR DFS NAVIGATION =====
-  // Build flat DFS order: Ch1 spine→depth→sidebar, Ch2 spine→depth→sidebar, ...
-  getDFSOrder() {
-    if (this._dfsOrder) return this._dfsOrder;
-    const order = [];
-    // Chapter sequence: 1, 2, 3, 4, 5, 6, 7
-    for (let ci = 0; ci < this.book.chapters.length; ci++) {
-      const ch = this.chapters[ci];
-      if (!ch) continue;
-      const spines = ch.blocks.filter(b => b.type === 'spine');
-      const questions = ch.blocks.filter(b => b.type === 'question');
-      spines.forEach(spine => {
-        order.push({ id: spine.id, chIdx: ci, type: 'spine', title: spine.title, ch: ch.number });
-      });
-      // Questions at end of chapter
-      questions.forEach(q => {
-        order.push({ id: q.id, chIdx: ci, type: 'question', title: q.title, ch: ch.number });
-      });
-    }
-    this._dfsOrder = order;
-    return order;
-  }
-
-  getCurrentDFSIndex() {
-    const order = this.getDFSOrder();
-    const current = this.user.currentBlock;
-    if (!current) return 0;
-    const idx = order.findIndex(n => n.id === current);
-    return idx >= 0 ? idx : 0;
-  }
-
-  linearPrev() {
-    const order = this.getDFSOrder();
-    let idx = this.getCurrentDFSIndex() - 1;
-    if (idx < 0) idx = 0;
-    const node = order[idx];
-    this.user.currentBlock = node.id;
-    this.user.save();
-    // Navigate to the block (spine directly, depth/sidebar via parent)
-    const targetId = node.parent || node.id;
-    this.openBlock(targetId);
-  }
-
-  linearNext() {
-    const order = this.getDFSOrder();
-    let idx = this.getCurrentDFSIndex() + 1;
-    if (idx >= order.length) idx = order.length - 1;
-    const node = order[idx];
-    this.user.currentBlock = node.id;
-    this.user.save();
-    const targetId = node.parent || node.id;
-    this.openBlock(targetId);
-  }
-
-  updateLinearNav() {
-    const nav = document.getElementById('linearNav');
-    if (!nav) return;
-    const order = this.getDFSOrder();
-    const idx = this.getCurrentDFSIndex();
-    const current = order[idx];
-    const prev = order[idx - 1];
-    const next = order[idx + 1];
-
-    document.getElementById('lnPrev').disabled = !prev;
-    document.getElementById('lnNext').disabled = !next;
-
-    const pct = Math.round(((idx + 1) / order.length) * 100);
-    const info = document.getElementById('lnInfo');
-    if (info) {
-      info.innerHTML = `<span style="color:var(--accent);font-weight:600">${idx + 1}</span>/${order.length} &middot; Ch${current?.ch || '?'}: ${(current?.title || '').substring(0, 40)}`;
-    }
-  }
+  // linearNav, DFS order removed — navigation is now per-block
 
   // ===== CHAT (full view) =====
   initChatView() {
@@ -2793,10 +2818,6 @@ class PBook {
     return { read, total: mission.core.length, pct: Math.round((read / Math.max(mission.core.length, 1)) * 100) };
   }
 
-  _isMissionComplete(mission) {
-    const p = this._getMissionProgress(mission);
-    return p.read >= mission.core.length; // core blocks must all be read
-  }
 
   _isMissionLocked(mission) {
     if (!mission.prerequisite) return false;
@@ -3120,39 +3141,7 @@ class PBook {
     this.switchView('glossary');
   }
 
-  // ===== CHAT =====
-  toggleMobileChat() {
-    const panel = document.getElementById('chatPanelMobile');
-    if (!panel) return;
-    panel.classList.toggle('open');
-    if (panel.classList.contains('open')) document.getElementById('chatInputMobile')?.focus();
-  }
 
-  sendMobileChat() {
-    const input = document.getElementById('chatInputMobile');
-    const msg = input?.value?.trim();
-    if (!msg) return;
-    input.value = '';
-    const messages = document.getElementById('chatMessagesMobile');
-    if (!messages) return;
-    messages.innerHTML += `<div class="chat-msg user">${this.escHtml(msg)}</div>`;
-    const response = this.generateChatResponse(msg);
-    setTimeout(() => { messages.innerHTML += `<div class="chat-msg bot">${response}</div>`; messages.scrollTop = messages.scrollHeight; }, 300);
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  sendChat() {
-    const input = document.getElementById('chatInput');
-    const msg = input?.value?.trim();
-    if (!msg) return;
-    input.value = '';
-    const messages = document.getElementById('chatMessages');
-    if (!messages) return;
-    messages.innerHTML += `<div class="chat-msg user">${this.escHtml(msg)}</div>`;
-    const response = this.generateChatResponse(msg);
-    setTimeout(() => { messages.innerHTML += `<div class="chat-msg bot">${response}</div>`; messages.scrollTop = messages.scrollHeight; }, 300);
-    messages.scrollTop = messages.scrollHeight;
-  }
 
   generateChatResponse(query, targetEl) {
     const context = {
@@ -3370,10 +3359,6 @@ class PBook {
     }
   }
 
-  feedBlock(blockId, rating) {
-    this.rc.sendRating(blockId, rating);
-    this.user.trackRating(blockId, rating);
-  }
 
   saveBlock(blockId) {
     this.user.trackSave(blockId);
@@ -3383,14 +3368,6 @@ class PBook {
     if (btn) btn.classList.add('active');
   }
 
-  saveCurrent() { if (this.user.currentBlock) this.saveBlock(this.user.currentBlock); }
-  rateCurrent(r) { if (this.user.currentBlock) this.feedBlock(this.user.currentBlock, r); }
-
-  revealVoice(voice, chapterIdx) {
-    this.user.voiceScores[voice] = Math.max(this.user.voiceScores[voice], 1);
-    this.user.save();
-    this.renderRead(chapterIdx);
-  }
 
   openBlock(blockId, source) {
     const block = this.findBlock(blockId);
@@ -3511,44 +3488,6 @@ class PBook {
     }
   }
 
-  _updateFeedIndicator(ch, idx) {
-    const el = document.getElementById('feedIndicator');
-    if (!el) return;
-    const prog = this.user.getProgress(this.allBlocks);
-    const isPersonalized = this._f('personalization') && this.rc.enabled;
-    const hasHistory = this._navHistory && this._navHistory.length > 0;
-    el.innerHTML = `
-      ${hasHistory ? '<button class="fi-back" onclick="app.goBack()" title="Go back">&#8592;</button>' : ''}
-      <span class="fi-chapter">Ch${ch.number}: ${ch.title}</span>
-      <span class="fi-sep">&middot;</span>
-      <span class="fi-mode">${isPersonalized ? '\u2728 Personalized feed' : '\u{1F4D6} Sequential'}</span>
-      <span class="fi-progress">${prog.read}/${prog.total} read</span>
-    `;
-
-    // Update indicator on scroll to detect chapter changes
-    if (!this._feedScrollBound) {
-      this._feedScrollBound = true;
-      let lastCh = idx;
-      window.addEventListener('scroll', () => {
-        if (this.currentView !== 'read') return;
-        // Find which chapter header is currently visible
-        const heads = document.querySelectorAll('.ch-head');
-        let currentCh = lastCh;
-        heads.forEach(h => {
-          const rect = h.getBoundingClientRect();
-          if (rect.top < 120) {
-            const match = h.id?.match(/ch-head-(\d+)/);
-            if (match) currentCh = parseInt(match[1]);
-          }
-        });
-        if (currentCh !== lastCh) {
-          lastCh = currentCh;
-          const c = this.chapters[currentCh];
-          if (c && el) el.querySelector('.fi-chapter').textContent = 'Ch' + c.number + ': ' + c.title;
-        }
-      }, { passive: true });
-    }
-  }
 
   _scrollToBlock(parentId, meta) {
     setTimeout(() => {
@@ -3635,17 +3574,6 @@ class PBook {
     this.updateXPBadge();
   }
 
-  cycleVoice() {
-    const voices = ['universal', ...Object.keys(CONFIG.voices)];
-    const current = this.user.preferredVoice || 'universal';
-    const next = voices[(voices.indexOf(current) + 1) % voices.length];
-    this.user.setVoice(next);
-    if (this.rc.enabled) this.rc.setUserProperties({ voice: next });
-    this.updateVoiceBadge();
-    // Re-render current view to reflect voice change
-    if (this.currentView === 'read') this.renderRead();
-    else if (this.currentView === 'home') this.renderHome();
-  }
 
   // Level rewards — cosmetic unlocks
   getLevelRewards() {
@@ -3718,65 +3646,58 @@ class PBook {
     el.className = `voice-badge ${v}`;
   }
 
-  exportProfile() {
-    const profile = this.user.getProfile(this.allBlocks);
-    const interactions = this.rc.interactions;
-    const notes = JSON.parse(localStorage.getItem('pbook-notes') || '{}');
 
-    // Analytics summary for research
-    const modeCounts = {};
-    const modeBlocks = {};
-    const modeTime = {};
-    interactions.forEach(i => {
-      const m = i.mode || 'unknown';
-      if (i.type === 'detailview') {
-        modeCounts[m] = (modeCounts[m] || 0) + 1;
-        if (!modeBlocks[m]) modeBlocks[m] = new Set();
-        modeBlocks[m].add(i.itemId);
-        if (i.duration) modeTime[m] = (modeTime[m] || 0) + i.duration;
-      }
-    });
-    const modeSwitches = interactions.filter(i => i.event === 'mode_switch');
-    const analytics = {
-      totalInteractions: interactions.length,
-      detailviews: interactions.filter(i => i.type === 'detailview').length,
-      ratings: interactions.filter(i => i.type === 'rating').length,
-      bookmarks: interactions.filter(i => i.type === 'bookmark').length,
-      modeSwitches: modeSwitches.length,
-      byMode: Object.fromEntries(Object.entries(modeCounts).map(([m, c]) => [m, {
-        views: c,
-        uniqueBlocks: modeBlocks[m]?.size || 0,
-        totalDurationSec: modeTime[m] || 0
-      }])),
-      modeSequence: modeSwitches.map(s => ({ mode: s.mode, ts: s.ts })),
-    };
-
-    const data = { profile, analytics, interactions, notes, exportedAt: new Date().toISOString() };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `pbook-analytics-${profile.userId.substring(0, 8)}.json`;
-    a.click();
+  showCertificateModal() {
+    const savedName = localStorage.getItem('pbook-cert-name') || '';
+    const savedEmail = localStorage.getItem('pbook-cert-email') || '';
+    const overlay = document.createElement('div');
+    overlay.className = 'cert-overlay';
+    overlay.innerHTML = `
+      <div class="cert-modal">
+        <button class="cert-close" onclick="this.closest('.cert-overlay').remove()">&times;</button>
+        <h2>Your Certificate</h2>
+        <p style="font-size:.82rem;color:var(--text-2);margin-bottom:1em">Congratulations on completing the book! Fill in your details to personalize your certificate.</p>
+        <label class="cert-label">Your name <span style="color:var(--accent)">*</span></label>
+        <input type="text" id="certName" class="cert-input" placeholder="e.g. Maya Johnson" value="${this.escHtml(savedName)}" maxlength="60">
+        <label class="cert-label">What did you think of the book? <span style="font-weight:400;color:var(--text-3)">(optional)</span></label>
+        <textarea id="certComment" class="cert-input" rows="3" placeholder="I learned that recommendations work by..." maxlength="500"></textarea>
+        <label class="cert-label">Would you recommend this book? <span style="font-weight:400;color:var(--text-3)">(optional)</span></label>
+        <div class="cert-stars" id="certStars">
+          ${[1,2,3,4,5].map(i => `<button class="cert-star" data-val="${i}" onclick="app._setCertStars(${i})">${i <= 0 ? '\u2606' : '\u2606'}</button>`).join('')}
+        </div>
+        <label class="cert-label">Email <span style="font-weight:400;color:var(--text-3)">(optional — we'll let you know about new books)</span></label>
+        <input type="email" id="certEmail" class="cert-input" placeholder="your@email.com" value="${this.escHtml(savedEmail)}" maxlength="120">
+        <div class="cert-actions">
+          <button class="cert-btn cert-btn-primary" onclick="app.generateCertificate()">Download Certificate</button>
+          <button class="cert-btn cert-btn-share" onclick="app.shareCertificate()">Share</button>
+        </div>
+        <div id="certPreview" style="margin-top:1em"></div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.getElementById('certName').focus();
   }
 
-  generateCertificate() {
+  _setCertStars(n) {
+    this._certStars = n;
+    document.querySelectorAll('.cert-star').forEach(btn => {
+      btn.textContent = parseInt(btn.dataset.val) <= n ? '\u2605' : '\u2606';
+      btn.classList.toggle('active', parseInt(btn.dataset.val) <= n);
+    });
+  }
+
+  _buildCertSVG(name) {
     const u = this.user;
     const p = u.getProfile(this.allBlocks);
     const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const uid = (localStorage.getItem('pbook-uid') || 'reader').substring(0, 12);
-
-    // Award certificate achievement
-    if (!u.achievements.find(a => a.id === 'certified')) {
-      u.achievements.push({ id: 'certified', name: 'Certified!', icon: '\u{1F393}', desc: 'Earned your certificate', earnedAt: Date.now() });
-      u.addXP(50);
-      u.save();
-      this.showXPToast('+50 XP \u{1F393} Certificate earned!', 'achievement');
-    }
-
-    // Generate SVG certificate
     const topVoice = u.getTopVoice();
     const voiceLabel = CONFIG.voices[topVoice]?.label || 'Universal';
-    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const displayName = esc(name || 'Anonymous Reader');
+    // Adjust font size for long names
+    const nameSize = displayName.length > 25 ? 18 : displayName.length > 18 ? 21 : 24;
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 566" width="800" height="566">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -3798,26 +3719,26 @@ class PBook {
 
   <!-- This certifies -->
   <text x="400" y="210" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#6B7280">This certifies that</text>
-  <text x="400" y="245" text-anchor="middle" font-family="Georgia,serif" font-size="24" fill="#1C1917">Reader ${uid}</text>
-  <line x1="250" y1="255" x2="550" y2="255" stroke="#D4B5FD" stroke-width="1"/>
+  <text x="400" y="248" text-anchor="middle" font-family="Georgia,serif" font-size="${nameSize}" fill="#1C1917" font-weight="bold">${displayName}</text>
+  <line x1="250" y1="260" x2="550" y2="260" stroke="#D4B5FD" stroke-width="1"/>
 
   <!-- Achievement stats -->
-  <text x="400" y="290" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#6B7280">has successfully completed the study of Modern Recommender Systems</text>
+  <text x="400" y="295" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#6B7280">has successfully completed the study of Modern Recommender Systems</text>
 
-  <text x="200" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">${p.progress.read} sections read</text>
-  <text x="400" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">Level ${u.level} \u2022 ${u.xp} XP</text>
-  <text x="600" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">${u.achievements.length} badges earned</text>
+  <text x="200" y="335" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">${p.progress.read} sections read</text>
+  <text x="400" y="335" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">Level ${u.level} \u2022 ${u.xp} XP</text>
+  <text x="600" y="335" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#7C3AED" font-weight="600">${u.achievements.length} badges earned</text>
 
-  <text x="200" y="355" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${p.progress.pct}% complete</text>
-  <text x="400" y="355" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${voiceLabel} path</text>
-  <text x="600" y="355" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${p.readingTimeMin} min reading</text>
+  <text x="200" y="358" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${p.progress.pct}% complete</text>
+  <text x="400" y="358" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${voiceLabel} path</text>
+  <text x="600" y="358" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">${p.readingTimeMin} min reading</text>
 
   <!-- Specialization -->
-  <rect x="280" y="375" width="240" height="30" rx="15" fill="#7C3AED" opacity=".1"/>
-  <text x="400" y="395" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#7C3AED" font-weight="600">Specialization: ${voiceLabel}</text>
+  <rect x="280" y="378" width="240" height="30" rx="15" fill="#7C3AED" opacity=".1"/>
+  <text x="400" y="398" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#7C3AED" font-weight="600">Specialization: ${voiceLabel}</text>
 
   <!-- Topics -->
-  <text x="400" y="435" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">Key topics: ${(p.topTopics || []).slice(0, 4).join(' \u2022 ') || 'Recommender Systems'}</text>
+  <text x="400" y="438" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#9CA3AF">Key topics: ${(p.topTopics || []).slice(0, 4).join(' \u2022 ') || 'Recommender Systems'}</text>
 
   <!-- Footer -->
   <line x1="150" y1="470" x2="350" y2="470" stroke="#D4B5FD" stroke-width="1"/>
@@ -3832,14 +3753,119 @@ class PBook {
   <circle cx="400" cy="490" r="22" fill="#7C3AED" opacity=".15"/>
   <text x="400" y="496" text-anchor="middle" font-size="20">\u{1F393}</text>
 </svg>`;
+  }
 
-    // Download as SVG (can be opened/printed from browser)
+  generateCertificate() {
+    const nameInput = document.getElementById('certName');
+    const name = nameInput?.value?.trim();
+    if (!name) { nameInput?.classList.add('cert-error'); nameInput?.focus(); return; }
+    nameInput?.classList.remove('cert-error');
+
+    const comment = document.getElementById('certComment')?.value?.trim() || '';
+    const email = document.getElementById('certEmail')?.value?.trim() || '';
+    const stars = this._certStars || 0;
+
+    // Save locally
+    localStorage.setItem('pbook-cert-name', name);
+    if (email) localStorage.setItem('pbook-cert-email', email);
+
+    const u = this.user;
+    const p = u.getProfile(this.allBlocks);
+
+    // Award certificate achievement
+    if (!u.achievements.find(a => a.id === 'certified')) {
+      u.achievements.push({ id: 'certified', name: 'Certified!', icon: '\u{1F393}', desc: 'Earned your certificate', earnedAt: Date.now() });
+      u.addXP(50);
+      u.save();
+      this.showXPToast('+50 XP \u{1F393} Certificate earned!', 'achievement');
+    }
+
+    // Store to Supabase
+    this.rc._sendToLog({
+      type: 'certificate',
+      userId: localStorage.getItem('pbook-uid') || 'unknown',
+      event: 'certificate_issued',
+      data: {
+        name,
+        comment: comment.substring(0, 500),
+        email: email.substring(0, 120),
+        stars,
+        level: u.level,
+        xp: u.xp,
+        sectionsRead: p.progress.read,
+        totalSections: p.progress.total,
+        pct: p.progress.pct,
+        voice: u.getTopVoice(),
+        readingTimeMin: p.readingTimeMin,
+        achievements: u.achievements.length,
+        completedMissions: (u.completedMissions || []).length,
+      }
+    });
+
+    // Generate and download SVG
+    const svg = this._buildCertSVG(name);
     const blob = new Blob([svg], { type: 'image/svg+xml' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `recsys-certificate-${uid}.svg`;
+    a.download = `recsys-certificate-${name.replace(/[^a-zA-Z0-9]/g, '-')}.svg`;
     a.click();
     URL.revokeObjectURL(a.href);
+
+    // Show preview in modal
+    const preview = document.getElementById('certPreview');
+    if (preview) {
+      preview.innerHTML = `<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:.5em">${svg.replace('<?xml version="1.0" encoding="UTF-8"?>', '')}</div>
+        <p style="font-size:.75rem;color:var(--product);font-weight:600">Certificate downloaded! You can also share it below.</p>`;
+    }
+  }
+
+  async shareCertificate() {
+    const name = document.getElementById('certName')?.value?.trim();
+    if (!name) { document.getElementById('certName')?.focus(); return; }
+
+    const svg = this._buildCertSVG(name);
+
+    // Convert SVG to PNG for sharing via canvas
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 800; canvas.height = 566;
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = url;
+      });
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+
+      const pngBlob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+
+      // Try Web Share API (mobile-friendly)
+      if (navigator.share && navigator.canShare?.({ files: [new File([pngBlob], 'certificate.png', { type: 'image/png' })] })) {
+        await navigator.share({
+          title: 'I completed "How Recommendations Work"!',
+          text: `I just finished the p-book "How Recommendations Work" by Pavel Kordik and earned my certificate!`,
+          files: [new File([pngBlob], 'recsys-certificate.png', { type: 'image/png' })]
+        });
+      } else {
+        // Fallback: copy PNG to clipboard
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+        this.showXPToast('Certificate copied to clipboard! Paste it anywhere to share.', 'info');
+      }
+    } catch (e) {
+      // Final fallback: download the SVG
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `recsys-certificate-${name.replace(/[^a-zA-Z0-9]/g, '-')}.svg`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      this.showXPToast('Certificate saved! Share it with your friends.', 'info');
+    }
   }
 
   resetAll() {
@@ -3887,6 +3913,22 @@ document.addEventListener('mouseup', () => {
   popup.style.display = 'flex';
   popup.style.top = (rect.top + window.scrollY - 40) + 'px';
   popup.style.left = (rect.left + rect.width / 2 - 40) + 'px';
+});
+
+// Click on highlight to remove it
+document.addEventListener('click', (e) => {
+  const mark = e.target.closest('mark.user-highlight');
+  if (!mark) return;
+  // Don't remove if user is selecting text (mouseup fires click too)
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed) return;
+  // Don't remove during flash animation
+  if (mark.classList.contains('highlight-flash')) return;
+  // Unwrap: replace <mark> with its text content
+  const parent = mark.parentNode;
+  while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+  parent.removeChild(mark);
+  parent.normalize();
 });
 
 // Keyboard: arrows for chapter nav in read view

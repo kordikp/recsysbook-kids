@@ -133,7 +133,34 @@ async function handleLog(req, res) {
   } catch(e) { res.writeHead(500, { ...CORS, 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
 }
 
+// --- Auth proxy (delegates to the same logic as api/auth.js) ---
+async function handleAuth(req, res) {
+  let body = ''; for await (const c of req) body += c;
+  const authHandler = require('./api/auth.js');
+  // Simulate Vercel req/res
+  const fakeReq = { method: req.method, body: JSON.parse(body || '{}') };
+  const fakeRes = {
+    _status: 200, _headers: {}, _body: '',
+    setHeader(k, v) { this._headers[k] = v; },
+    status(s) { this._status = s; return this; },
+    json(d) { this._body = JSON.stringify(d); this._done(); },
+    end() { this._done(); },
+    _done() {
+      res.writeHead(this._status, { ...CORS, 'Content-Type': 'application/json' });
+      res.end(this._body);
+    }
+  };
+  try { await authHandler(fakeReq, fakeRes); }
+  catch(e) { res.writeHead(500, { ...CORS, 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); }
+}
+
 const server = http.createServer(async (req, res) => {
+  // Auth endpoint
+  if (req.url === '/.netlify/functions/auth' || req.url === '/api/auth') {
+    if (req.method === 'OPTIONS') { res.writeHead(200, CORS); res.end(); return; }
+    await handleAuth(req, res); return;
+  }
+
   // Interaction log
   if (req.url === '/.netlify/functions/log' || req.url === '/api/log') {
     if (req.method === 'OPTIONS') { res.writeHead(200, CORS); res.end(); return; }
