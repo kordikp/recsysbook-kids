@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://recsysbook-kids.vercel.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/admin</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/content/book.json</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/pbook.json</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <!-- Chapter 1: What Are Recommendations? -->
+  <url><loc>https://recsysbook-kids.vercel.app/#ch1-noticed</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch1-everywhere</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch1-not-magic</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch1-three-jobs</loc><priority>0.9</priority></url>
+  <!-- Chapter 2: How They Learn About You -->
+  <url><loc>https://recsysbook-kids.vercel.app/#ch2-footprints</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch2-clues</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch2-privacy</loc><priority>0.9</priority></url>
+  <!-- Chapter 3: Different Ways to Recommend -->
+  <url><loc>https://recsysbook-kids.vercel.app/#ch3-friends</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch3-content</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch3-bandits</loc><priority>0.8</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch3-deep-similarity</loc><priority>0.8</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch3-pipeline</loc><priority>0.9</priority></url>
+  <!-- Chapter 4: Making Recommendations Better -->
+  <url><loc>https://recsysbook-kids.vercel.app/#ch4-bubbles</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch4-fairness</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch4-objectives</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch4-explainability</loc><priority>0.8</priority></url>
+  <!-- Chapter 5: Build Your Own! -->
+  <url><loc>https://recsysbook-kids.vercel.app/#ch5-start</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch5-collect</loc><priority>0.8</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch5-similar</loc><priority>0.8</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch5-recommend</loc><priority>0.8</priority></url>
+  <!-- Chapter 6: Ethics and You -->
+  <url><loc>https://recsysbook-kids.vercel.app/#ch6-who-decides</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch6-addictive</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch6-privacy-real</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch6-ai-future</loc><priority>0.9</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/#ch6-conversational</loc><priority>0.8</priority></url>
+  <!-- Raw content (for bots that parse markdown directly) -->
+  <url><loc>https://recsysbook-kids.vercel.app/content/ch1-what-are-recommendations/01-spine-have-you-noticed.md</loc><priority>0.6</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/content/ch2-how-they-learn/01-spine-digital-footprints.md</loc><priority>0.6</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/content/ch3-different-ways-to-recommend/01-spine-ask-your-friends.md</loc><priority>0.6</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/content/ch4-making-them-better/01-spine-filter-bubbles.md</loc><priority>0.6</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/content/ch5-build-your-own/01-spine-you-can-do-it.md</loc><priority>0.6</priority></url>
+  <url><loc>https://recsysbook-kids.vercel.app/content/ch6-ethics-and-you/01-spine-who-decides.md</loc><priority>0.6</priority></url>
+</urlset>

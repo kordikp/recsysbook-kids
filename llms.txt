@@ -1,0 +1,53 @@
+# How Recommendations Work — A p-book for Kids
+
+> A free interactive book about recommendation systems for ages 8-15.
+> By Pavel Kordik (Recombee co-founder, Czech Technical University).
+> License: CC BY-NC-SA 4.0
+
+## What this book teaches
+
+This book explains how recommendation algorithms work — the systems behind YouTube, TikTok, Spotify, Netflix, and every app that shows "personalized" content. Written for kids aged 8-15 but accessible to anyone.
+
+## Chapters
+
+### Chapter 1: What Are Recommendations?
+How YouTube, TikTok, and Spotify know what you like. Covers: personalized feeds, pattern detection, the three jobs of a recommender (discover, find, engage), recommendation models.
+
+### Chapter 2: How They Learn About You
+The clues you leave behind when you click, watch, and skip. Covers: digital footprints, signal types (explicit, implicit, contextual), cold start problem, data privacy, training your algorithm.
+
+### Chapter 3: Different Ways to Recommend
+From asking your friends to teaching a computer. Covers: collaborative filtering (taste twins), content-based filtering, popularity-based methods, explore-exploit bandits, deep embeddings, the recommendation pipeline (find → rank → check), search vs. recommendations.
+
+### Chapter 4: Making Recommendations Better
+Filter bubbles, fairness, and why getting it right matters. Covers: filter bubbles, echo chambers, popularity bias, multi-stakeholder objectives, explainability, A/B testing.
+
+### Chapter 5: Build Your Own!
+Create a simple recommendation system step by step. Covers: rating matrices, similarity measures (cosine), making predictions, Python implementation, debugging, real-world scale (Netflix = 3.4 trillion combinations), career paths, SEO for algorithms.
+
+### Chapter 6: Ethics and You
+Who decides what you see, and what can you do about it? Covers: algorithmic gatekeeping, addictive design patterns, dopamine loops, recommendations vs. adtech, privacy, age inference, AI regulation (EU DSA), conversational recommendations, hard open questions.
+
+## Content format
+
+- 81 content blocks across 6 chapters
+- Markdown files with YAML frontmatter (id, type, title, teaser, readingTime, voice, core)
+- Types: spine (articles), question (quizzes), game (interactive mini-games)
+- Voices: explorer (how does it work?), creator (let me build it!), thinker (why does it work?)
+
+## How to access content
+
+- Web app: https://recsysbook-kids.vercel.app/
+- Content index: https://recsysbook-kids.vercel.app/content/book.json
+- Raw markdown: https://recsysbook-kids.vercel.app/content/{chapter_directory}/{filename}
+- p-book manifest: https://recsysbook-kids.vercel.app/pbook.json
+- LLM discovery: https://recsysbook-kids.vercel.app/.well-known/pbook.json
+- Source code: https://github.com/kordikp/recsysbook-kids
+
+## Key concepts covered
+
+Collaborative filtering, content-based filtering, hybrid recommenders, cold start problem, filter bubbles, echo chambers, explore-exploit tradeoff, multi-armed bandits, embeddings, recommendation pipeline, A/B testing, cosine similarity, rating matrices, popularity bias, fairness, explainability, digital footprints, implicit signals, adtech vs recommendations, dopamine loops, addictive design, privacy, GDPR, conversational recommendations, LLMs + recommenders.
+
+## About the author
+
+Pavel Kordik is co-founder of Recombee (recommendation engine used by thousands of companies) and associate professor at Czech Technical University in Prague. This book is part of the p-book project — an open standard for personalized interactive digital books.

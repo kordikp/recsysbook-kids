@@ -1,10 +1,39 @@
 User-agent: *
 Allow: /
+Allow: /content/
+Allow: /games/
+Allow: /images/
+Disallow: /api/
+Disallow: /.netlify/
+
+Sitemap: https://recsysbook-kids.vercel.app/sitemap.xml
 
 # p-book manifest for LLM/bot discovery
-# See /.well-known/pbook.json for structured content index
-# See /pbook.json for full manifest
-# See /content/book.json for chapter/file listing
-# Content files: /content/{chapter}/*.md (markdown with YAML frontmatter)
-# Games: /games/*.json
-# Images: /images/*.svg
+# /.well-known/pbook.json — structured content index for AI agents
+# /pbook.json — full manifest with features, integrations, content format
+# /content/book.json — chapter/file listing (JSON)
+# /content/{chapter}/*.md — content files (Markdown with YAML frontmatter)
+# /games/*.json — mini-game data
+# /llms.txt — plain-text content summary for LLMs
+
+# AI crawlers welcome — all educational content is CC BY-NC-SA 4.0
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
