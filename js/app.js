@@ -233,13 +233,13 @@ class PBook {
   // ===== ONBOARDING TOUR =====
   startTour() {
     this._tourSteps = [
-      { target: '.tab[data-view="home"]', text: 'This is your homepage — personalized shelves with recommended content.', pos: 'top' },
-      { target: '.tab[data-view="read"]', text: 'Feed mode — read sections one by one with infinite scroll. The algorithm picks what comes next.', pos: 'top' },
-      { target: '.tab[data-view="glossary"]', text: 'Missions — story-driven quests. Each has a goal, steps, and a final boss quiz!', pos: 'top' },
-      { target: '.tab[data-view="map"]', text: 'Map — see all chapters, your saved items, and notes in one place.', pos: 'top' },
-      { target: '.tab[data-view="chat"]', text: "Tutor — the author's AI assistant. Ask any question about the book!", pos: 'top' },
-      { target: '#xpBadge', text: 'Your level and XP. Read, play games, and complete missions to earn rewards and unlock themes!', pos: 'bottom' },
-      { target: null, text: "You're ready! Pick any reading mode to start. If you get lost, tap the p-book logo to return here. Have fun! \u{1F680}", pos: 'center' },
+      { target: '.tab[data-view="home"]', text: "\u{1F3E0} This is your Home! It's like Netflix but for learning. Scroll through and pick whatever looks cool.", pos: 'top' },
+      { target: '.tab[data-view="read"]', text: "\u{1F4F1} The Feed! Just keep scrolling — the app figures out what to show you next. Like TikTok, but you actually learn stuff.", pos: 'top' },
+      { target: '.tab[data-view="glossary"]', text: "\u{1F3AF} Missions! Each one is a quest with a story and a final boss quiz at the end. Beat the boss = earn a title!", pos: 'top' },
+      { target: '.tab[data-view="map"]', text: "\u{1F5FA} The Map! See everything in the book, plus your saved stuff and notes. Tap any chapter to jump there.", pos: 'top' },
+      { target: '.tab[data-view="chat"]', text: "\u{1F916} The Tutor! Got a question? Ask it here — it knows the whole book. It's like having a super-smart friend.", pos: 'top' },
+      { target: '#xpBadge', text: "\u{1F31F} This is your level! You get XP for reading, playing mini-games, and finishing missions. Level up to unlock cool themes!", pos: 'bottom' },
+      { target: null, text: "You're all set! Just tap anything that looks interesting. There's no wrong way to read this book. If you ever get lost, tap \"p-book\" up top to come back here. GO! \u{1F680}", pos: 'center' },
     ];
     this._tourIdx = 0;
     this._showTourStep();
