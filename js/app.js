@@ -3935,20 +3935,25 @@ const app = new PBook();
 window.app = app;
 app.init();
 
-// Text highlight on selection
-document.addEventListener('mouseup', () => {
+// Text highlight on selection (desktop + mobile)
+function _showHighlightPopup() {
   const popup = document.getElementById('highlightPopup');
   if (!popup) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed || !sel.toString().trim()) { popup.style.display = 'none'; return; }
-  // Only in read view, inside spine-body
   const anchor = sel.anchorNode?.parentElement?.closest('.spine-body, .d-content, .sb-block');
   if (!anchor) { popup.style.display = 'none'; return; }
   const range = sel.getRangeAt(0);
   const rect = range.getBoundingClientRect();
   popup.style.display = 'flex';
   popup.style.top = (rect.top + window.scrollY - 40) + 'px';
-  popup.style.left = (rect.left + rect.width / 2 - 40) + 'px';
+  popup.style.left = Math.max(8, Math.min(rect.left + rect.width / 2 - 40, window.innerWidth - 90)) + 'px';
+}
+document.addEventListener('mouseup', _showHighlightPopup);
+// Mobile: selectionchange fires when user adjusts selection handles
+document.addEventListener('selectionchange', () => {
+  clearTimeout(window._hlDebounce);
+  window._hlDebounce = setTimeout(_showHighlightPopup, 300);
 });
 
 // Click on highlight to remove it
