@@ -657,7 +657,7 @@ class PBook {
             pane.insertAdjacentHTML('beforeend', `<div class="feed-ch-divider fade-up"><span>Ch${ch.number}: ${ch.title}</span></div>`);
             this._lastFeedChapter = ch.id;
           }
-          const html = await this.renderSpine(block.meta);
+          const html = block.meta.type === 'game' ? this.renderGame(block.meta) : await this.renderSpine(block.meta);
           pane.insertAdjacentHTML('beforeend', html);
           // Observe for dwell tracking
           if (ch) {
