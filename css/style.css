@@ -401,6 +401,7 @@ button { font-family: var(--font-ui); cursor: pointer; border: none; background:
 .bnav-ch:hover { text-decoration: underline; }
 .bnav-sep { color: var(--border); }
 .bnav-progress { color: var(--text-3); }
+.bnav-core { font-size: .55rem; font-weight: 700; color: var(--accent); background: var(--accent-bg); padding: .1em .35em; border-radius: 3px; }
 .block-nav .block-status { margin-left: auto; }
 
 /* Feed chapter divider */

@@ -847,6 +847,7 @@ class PBook {
         <span class="bnav-ch" onclick="app.goToMapChapter(${block._chapterIdx})">Ch${chNum}</span>
         <span class="bnav-sep">&middot;</span>
         <span class="bnav-progress">${posInCh}/${totalInCh}</span>
+        ${block.core ? '<span class="bnav-core">CORE</span>' : ''}
         <div class="block-status ${isRead ? 'read' : ''}"></div>
       </div>
       <div class="block-header">
