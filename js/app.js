@@ -2070,7 +2070,6 @@ class PBook {
     const medCards = Object.entries(u.recall).filter(([_, c]) => c.ease >= 1.8 && c.ease < 2.5);
     const easyCards = Object.entries(u.recall).filter(([_, c]) => c.ease >= 2.5);
     const totalReps = Object.values(u.recall).reduce((s, c) => s + c.reps, 0);
-    const quizStreak = parseInt(localStorage.getItem('pbook-quiz-streak') || '0');
 
     // ── Active mode: due cards shelf (answerable inline) ──
     if (due.length > 0) {
@@ -2268,18 +2267,12 @@ class PBook {
     const el = document.getElementById('quizContent');
     if (!el) return;
 
-    // Done — show summary with streak + rewards
+    // Done — show summary + rewards
     if (idx >= q.length) {
       this._quizSessionActive = false;
       const s = this._recallScore;
       const pct = Math.round(s.correct / Math.max(s.total, 1) * 100);
       const perfect = pct === 100 && s.total >= 3;
-      // Update streak
-      let streak = parseInt(localStorage.getItem('pbook-quiz-streak') || '0');
-      const lastQuizDay = localStorage.getItem('pbook-quiz-day');
-      const today = new Date().toISOString().slice(0, 10);
-      if (lastQuizDay !== today) { streak++; localStorage.setItem('pbook-quiz-streak', streak); localStorage.setItem('pbook-quiz-day', today); }
-      // Bonus XP for completion
       let bonusXP = 0;
       if (this._f('gamification')) {
         bonusXP = perfect ? 15 : pct >= 70 ? 8 : 3;
@@ -2291,11 +2284,10 @@ class PBook {
         <h2>${perfect ? 'Perfect score!' : pct >= 70 ? 'Great job!' : 'Keep going!'}</h2>
         <p style="font-size:1.1rem;font-weight:700;margin:.3em 0">${s.correct} / ${s.total} correct (${pct}%)</p>
         <div class="recall-summary-bar"><div style="width:${pct}%;background:${pct >= 70 ? 'var(--product)' : 'var(--warn)'};height:100%;border-radius:4px"></div></div>
-        ${bonusXP ? `<p style="color:var(--accent);font-weight:600;margin-top:.5em">+${bonusXP} XP ${perfect ? 'perfect bonus!' : 'quiz bonus'}</p>` : ''}
-        ${streak > 1 ? `<p style="font-size:.82rem;color:var(--warn);font-weight:600">\u{1F525} ${streak}-day quiz streak!</p>` : ''}
+        ${bonusXP ? `<p style="color:var(--accent);font-weight:600;margin-top:.5em">+${bonusXP} XP quiz bonus</p>` : ''}
         <div style="display:flex;flex-direction:column;gap:.5em;margin-top:1em;align-items:center">
-          <button class="btn-primary" style="width:100%;max-width:280px" onclick="app.startPractice()">Test more cards</button>
-          ${unread.length > 0 ? `<button class="btn-ghost" style="border:1px solid var(--accent);border-radius:8px;padding:.5em 1em;font-size:.82rem;color:var(--accent);width:100%;max-width:280px" onclick="app.switchView('home')">\u{1F4D6} Read new sections (${unread.length} left)</button>` : ''}
+          ${unread.length > 0 ? `<button class="btn-primary" style="width:100%;max-width:280px" onclick="app.switchView('home')">\u{1F4D6} Read new sections (${unread.length} left)</button>` : ''}
+          <button class="btn-ghost" style="border:1px solid var(--accent);border-radius:8px;padding:.5em 1em;font-size:.82rem;color:var(--accent);width:100%;max-width:280px" onclick="app.startPractice()">Test more cards</button>
           <button style="font-size:.72rem;color:var(--text-3);margin-top:.3em;cursor:pointer" onclick="app._quizSessionActive=false;app._recallQueue=null;app.renderQuiz()">Back to quiz overview</button>
         </div>
       </div>`;
@@ -4349,12 +4341,6 @@ class PBook {
     const svgW = weeks * (cellSize + gap) + 20;
     const svgH = 7 * rowH + 20;
 
-    // Calculate streak
-    let streak = 0;
-    for (let i = days.length - 1; i >= 0; i--) {
-      if (days[i].count > 0) streak++;
-      else break;
-    }
     const totalActive = days.filter(d => d.count > 0).length;
     const totalInteractions = days.reduce((s, d) => s + d.count, 0);
 
@@ -4378,7 +4364,6 @@ class PBook {
 
     let h = '<div class="profile-section"><h3>Your Activity</h3>';
     h += `<div style="display:flex;gap:1em;margin-bottom:.6em;font-size:.78rem">`;
-    if (streak > 0) h += `<span style="color:var(--accent);font-weight:600">${streak} day streak</span>`;
     h += `<span style="color:var(--text-3)">${totalActive} active days</span>`;
     h += `<span style="color:var(--text-3)">${totalInteractions} interactions</span>`;
     h += `</div>`;
