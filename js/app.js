@@ -1084,6 +1084,7 @@ class PBook {
         <div class="block-actions">
           <button class="act-btn tutor-btn" onclick="app.askAboutBlock('${block.id}')" title="Ask the tutor">&#10067;</button>
           <button class="act-btn" onclick="app.toggleNote('${block.id}')" title="Add note">&#128221;</button>
+          ${this.user.recall[block.id] ? `<button class="act-btn" onclick="app.showBlockRecall('${block.id}')" title="Test your memory">&#129504;</button>` : ''}
           <button class="act-btn ${this.user.savedBlocks.has(block.id)?'active':''}" onclick="app.saveBlock('${block.id}')" title="Save for later">&#128278;</button>
           <button class="act-btn share-btn" onclick="app.shareBlock('${block.id}')" title="Share">&#128279;</button>
           <button class="act-btn flag-btn" onclick="app.flagBlock('${block.id}')" title="Suggest edit to author">&#9873;</button>
@@ -1700,6 +1701,34 @@ class PBook {
   }
 
 
+
+  showBlockRecall(blockId) {
+    // Toggle recall card inline below this block
+    const existing = document.getElementById(`block-recall-${blockId}`);
+    if (existing) { existing.remove(); return; }
+    const block = this.findBlock(blockId);
+    if (!block) return;
+    const quiz = this._getRecallQuestion(block);
+    if (!quiz) return;
+    const article = document.getElementById(`b-${blockId}`);
+    if (!article) return;
+    const html = `<div class="inline-recall fade-up" id="block-recall-${blockId}">
+      <div class="ir-header"><span class="ir-icon">\u{1F9E0}</span> Test your memory</div>
+      <div class="ir-question">${quiz.q}</div>
+      <div class="ir-answer" id="br-a-${blockId}" style="display:none">
+        <div class="ir-answer-text">${quiz.a}</div>
+        ${this.user.recall[blockId] ? `<div class="recall-buttons">
+          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${blockId}',0);document.getElementById('block-recall-${blockId}').remove()">Forgot</button>
+          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${blockId}',1);document.getElementById('block-recall-${blockId}').remove()">Hard</button>
+          <button class="recall-btn recall-good" onclick="app.scoreRecall('${blockId}',2);document.getElementById('block-recall-${blockId}').remove()">Good</button>
+          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${blockId}',3);document.getElementById('block-recall-${blockId}').remove()">Easy!</button>
+        </div>` : `<button class="recall-reveal" onclick="document.getElementById('block-recall-${blockId}').remove()">Got it!</button>`}
+      </div>
+      <button class="recall-reveal" onclick="document.getElementById('br-a-${blockId}').style.display='block';this.style.display='none'">Show answer</button>
+    </div>`;
+    article.insertAdjacentHTML('afterend', html);
+    document.getElementById(`block-recall-${blockId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 
   _insertInlineRecall(justReadId) {
     if (!this._f('spaceRepetition')) return;
