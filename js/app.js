@@ -476,7 +476,8 @@ class PBook {
     // 2. Recommended for you (Recombee scenario: homepage-personal)
     const forYou = await this.rc.getRecsForUser('homepage-personal', 8, this.rc.reql({ type: 'spine' }), this.rc.reqlBoost(this.user));
     if (forYou?.recomms?.length) {
-      html += this.shelf('Picked for you', forYou.recomms.map(r => this.cardFromRec(r)));
+      const forYouCards = forYou.recomms.map(r => this.cardFromRec(r)).filter(Boolean);
+      if (forYouCards.length) html += this.shelf('Picked for you', forYouCards);
     }
 
     // 3. Matching your interest (Recombee scenario: homepage-voice)
@@ -484,8 +485,9 @@ class PBook {
     if (topVoice) {
       const voiceLabel = CONFIG.voices[topVoice]?.label || topVoice;
       const voiceRecs = await this.rc.getRecsForUser('homepage-voice', 8, this.rc.reql({ voice: [topVoice] }));
-      if (voiceRecs?.recomms?.length) {
-        html += this.shelf(`${voiceLabel} picks`, voiceRecs.recomms.map(r => this.cardFromRec(r)));
+      const voiceCards = voiceRecs?.recomms?.length ? voiceRecs.recomms.map(r => this.cardFromRec(r)).filter(Boolean) : [];
+      if (voiceCards.length) {
+        html += this.shelf(`${voiceLabel} picks`, voiceCards);
       } else {
         const voiceBlocks = this.allBlocks.filter(b => b.meta.voice === topVoice && b.meta.type === 'spine' && !this.user.readBlocks.has(b.meta.id)).slice(0, 10);
         if (voiceBlocks.length) html += this.shelf(`${voiceLabel} picks`, voiceBlocks.map(b => this.cardHtml(b.meta)));
@@ -645,8 +647,7 @@ class PBook {
   cardFromRec(rec) {
     const block = this.findBlock(rec.id);
     if (block) return this.cardHtml(block.meta);
-    const v = rec.values || {};
-    return `<div class="card" onclick="app.openBlock('${rec.id}')"><div class="card-title">${v.title || rec.id}</div><div class="card-meta"><span class="card-time">${v.readingTime || 3} min</span></div></div>`;
+    return ''; // skip items that don't exist in the current book
   }
 
   getContinueBlock() {
