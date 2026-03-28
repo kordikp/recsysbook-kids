@@ -497,11 +497,16 @@ class PBook {
       html += this.shelf('Continue reading', [this.cardHtml(continueBlock, true)]);
     }
 
-    // Recall cards — only show shelf when cards are actually due
+    // Recall cards — show due + almost due (within 30 min)
     if (this._f('spaceRepetition')) {
-      const dueRecalls = this.user.getDueRecalls();
-      if (dueRecalls.length > 0) {
-        const recallCards = dueRecalls.slice(0, 8).map(r => this._recallCardHtml(r)).filter(Boolean);
+      const now = Date.now();
+      const soonThreshold = 30 * 60 * 1000; // 30 minutes
+      const dueAndSoon = Object.entries(this.user.recall)
+        .filter(([_, c]) => c.nextReview <= now + soonThreshold)
+        .sort((a, b) => a[1].nextReview - b[1].nextReview)
+        .map(([blockId, card]) => ({ blockId, ...card }));
+      if (dueAndSoon.length > 0) {
+        const recallCards = dueAndSoon.slice(0, 8).map(r => this._recallCardHtml(r)).filter(Boolean);
         if (recallCards.length) html += this.shelf(`\u{1F9E0} Do you remember? (${recallCards.length})`, recallCards);
       }
     }
@@ -1745,8 +1750,13 @@ class PBook {
 
   _insertInlineRecall(justReadId) {
     if (!this._f('spaceRepetition')) return;
-    // Find a due recall for a DIFFERENT block (not the one just read)
-    const due = this.user.getDueRecalls().filter(r => r.blockId !== justReadId);
+    // Find a due or almost-due recall for a DIFFERENT block
+    const now = Date.now();
+    const soonThreshold = 30 * 60 * 1000;
+    const due = Object.entries(this.user.recall)
+      .filter(([id, c]) => id !== justReadId && c.nextReview <= now + soonThreshold)
+      .sort((a, b) => a[1].nextReview - b[1].nextReview)
+      .map(([blockId, card]) => ({ blockId, ...card }));
     if (!due.length) return;
     const r = due[0];
     const block = this.findBlock(r.blockId);
@@ -2210,6 +2220,25 @@ class PBook {
       </details>
     </div>`;
 
+    // ── Upcoming schedule ──
+    const upcoming = Object.entries(u.recall)
+      .filter(([_, c]) => c.nextReview > Date.now())
+      .sort((a, b) => a[1].nextReview - b[1].nextReview)
+      .slice(0, 5);
+    if (upcoming.length > 0) {
+      h += `<div style="padding:.5em 1em">
+        <div style="font-size:.7rem;font-weight:600;color:var(--text-3);margin-bottom:.3em">Upcoming reviews</div>
+        ${upcoming.map(([id, c]) => {
+          const b = this.findBlock(id);
+          const title = b?.meta?.title || id;
+          return `<div style="display:flex;align-items:center;gap:.4em;font-size:.68rem;padding:.2em 0;color:var(--text-2)">
+            <span style="color:var(--warn);font-weight:600;min-width:3.5em">${this._timeUntil(c.nextReview)}</span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${this.escHtml(title)}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
     // ── Bottom actions ──
     const unread = this.allBlocks.filter(b => b.meta.core && b.meta.type === 'spine' && !u.readBlocks.has(b.meta.id));
     h += `<div style="padding:.8em 1em;display:flex;flex-direction:column;gap:.5em;align-items:center">`;
@@ -2227,21 +2256,32 @@ class PBook {
     el.innerHTML = h;
   }
 
+  _timeUntil(ts) {
+    const diff = ts - Date.now();
+    if (diff <= 0) return 'Due now';
+    const min = Math.round(diff / 60000);
+    if (min < 60) return `in ${min}m`;
+    const hrs = Math.round(min / 60);
+    if (hrs < 24) return `in ${hrs}h`;
+    const days = Math.round(hrs / 24);
+    return `in ${days}d`;
+  }
+
   _quizPreviewCard(blockId, card, color, label) {
     const block = this.findBlock(blockId);
     if (!block) return '';
     const quiz = this._getRecallQuestion(block);
     if (!quiz) return '';
-    const nextReview = card.nextReview ? new Date(card.nextReview) : null;
-    const nextLabel = !nextReview ? '' : nextReview <= new Date() ? 'Due' : nextReview.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+    const isDue = card.nextReview && card.nextReview <= Date.now();
+    const timeLabel = card.nextReview ? (isDue ? 'Due now' : this._timeUntil(card.nextReview)) : '';
     const uid = blockId.replace(/[^a-z0-9]/g, '');
     return `<div class="card" style="border-top:3px solid ${color};flex:0 0 260px;cursor:pointer" onclick="var a=document.getElementById('qp-${uid}');if(a)a.style.display=a.style.display==='none'?'block':'none'">
       <div style="display:flex;justify-content:space-between;margin-bottom:.2em">
         <span style="font-size:.6rem;font-weight:700;color:${color}">${label}</span>
-        <span style="font-size:.55rem;color:var(--text-3)">${card.reps}x${nextLabel ? ' · ' + nextLabel : ''}</span>
+        <span style="font-size:.55rem;color:${isDue ? 'var(--warn)' : 'var(--text-3)'};font-weight:${isDue ? '600' : '400'}">${card.reps ? card.reps + 'x · ' : ''}${timeLabel}</span>
       </div>
       <div class="card-title" style="font-size:.82rem;line-height:1.3">${quiz.q}</div>
-      <div style="font-size:.62rem;color:var(--text-3);margin-top:.2em">Ch${block.meta._chapterNum} · Tap to reveal</div>
+      <div style="font-size:.62rem;color:var(--text-3);margin-top:.2em">Ch${block.meta._chapterNum}: ${block.meta.title}</div>
       <div id="qp-${uid}" style="display:none;margin-top:.4em;padding-top:.4em;border-top:1px solid var(--border)">
         <div style="font-size:.78rem;color:var(--text-2);line-height:1.4;margin-bottom:.4em">${quiz.a}</div>
         <div class="recall-buttons" onclick="event.stopPropagation()">
