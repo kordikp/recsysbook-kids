@@ -2109,20 +2109,27 @@ class PBook {
     const recallSet = new Set(Object.keys(u.recall));
     const newCards = [...u.readBlocks].filter(id => !recallSet.has(id)); // read but no recall yet
 
-    // ── Confidence funnel (visual) ──
-    const totalAll = hardCards.length + medCards.length + easyCards.length + newCards.length + unreadBlocks.length;
-    if (totalAll > 0) {
-      const seg = (n, c) => n > 0 ? `<div style="width:${Math.round(n/totalAll*100)}%;background:${c};min-width:${n>0?'2px':'0'}"></div>` : '';
+    // ── Confidence map: each card is a small colored cell, hover shows title ──
+    // Build ordered list: struggling → new → learning → confident → unread
+    const allCards = [
+      ...hardCards.map(([id, c]) => ({ id, color: '#dc2626', label: 'Struggling', q: this._getRecallQuestion(this.findBlock(id))?.q || id })),
+      ...newCards.map(id => ({ id, color: 'var(--accent)', label: 'New', q: this._getRecallQuestion(this.findBlock(id))?.q || id })),
+      ...medCards.map(([id, c]) => ({ id, color: 'var(--warn)', label: 'Learning', q: this._getRecallQuestion(this.findBlock(id))?.q || id })),
+      ...easyCards.map(([id, c]) => ({ id, color: 'var(--product)', label: 'Confident', q: this._getRecallQuestion(this.findBlock(id))?.q || id })),
+      ...unreadBlocks.map(b => ({ id: b.meta.id, color: 'var(--border)', label: 'Unread', q: b.meta.title })),
+    ];
+    if (allCards.length > 0) {
+      const cellW = Math.max(4, Math.min(12, Math.floor((window.innerWidth - 32) / allCards.length)));
       h += `<div style="padding:.5em 1em .6em">
-        <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--border)">
-          ${seg(unreadBlocks.length, 'var(--text-3)')}${seg(hardCards.length, '#dc2626')}${seg(newCards.length, 'var(--accent)')}${seg(medCards.length, 'var(--warn)')}${seg(easyCards.length, 'var(--product)')}
+        <div style="display:flex;flex-wrap:wrap;gap:2px" id="quizMap">
+          ${allCards.map(c => `<div style="width:${cellW}px;height:${cellW}px;border-radius:2px;background:${c.color};cursor:pointer;transition:transform .1s" title="${this.escHtml(c.label + ': ' + c.q)}" onclick="app.${c.label === 'Unread' ? "openBlock('" + c.id + "')" : "showBlockRecall('" + c.id + "')"}"></div>`).join('')}
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:.3em .8em;font-size:.58rem;color:var(--text-3);margin-top:.25em">
-          ${unreadBlocks.length ? `<span>\u{26AA} ${unreadBlocks.length} unread</span>` : ''}
-          ${hardCards.length ? `<span style="color:#dc2626">\u{1F534} ${hardCards.length} struggling</span>` : ''}
-          ${newCards.length ? `<span style="color:var(--accent)">\u{1F7E3} ${newCards.length} new</span>` : ''}
-          ${medCards.length ? `<span style="color:var(--warn)">\u{1F7E1} ${medCards.length} learning</span>` : ''}
-          ${easyCards.length ? `<span style="color:var(--product)">\u{1F7E2} ${easyCards.length} confident</span>` : ''}
+        <div style="display:flex;gap:.8em;font-size:.58rem;color:var(--text-3);margin-top:.4em">
+          ${hardCards.length ? `<span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#dc2626;vertical-align:middle"></span> ${hardCards.length} struggling</span>` : ''}
+          ${newCards.length ? `<span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--accent);vertical-align:middle"></span> ${newCards.length} new</span>` : ''}
+          ${medCards.length ? `<span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--warn);vertical-align:middle"></span> ${medCards.length} learning</span>` : ''}
+          ${easyCards.length ? `<span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--product);vertical-align:middle"></span> ${easyCards.length} confident</span>` : ''}
+          ${unreadBlocks.length ? `<span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--border);vertical-align:middle"></span> ${unreadBlocks.length} unread</span>` : ''}
         </div>
       </div>`;
     }

@@ -389,6 +389,9 @@ textarea.cert-input { resize: vertical; line-height: 1.4; }
 .recall-btn:hover { opacity: .85; transform: translateY(-1px); }
 
 /* Full-page recall session */
+/* Quiz map cells */
+#quizMap > div:hover { transform: scale(1.8); z-index: 2; box-shadow: 0 0 0 1px var(--surface); }
+
 .recall-session { max-width: 480px; margin: 0 auto; padding: 1em; text-align: center; }
 .recall-session h2 { font-size: 1.2rem; margin-bottom: .5em; }
 .recall-summary-icon { font-size: 2.5rem; margin: .3em 0; }
