@@ -82,6 +82,10 @@ class PBook {
         this.updateXPBadge();
         this.switchView('glossary');
         this.showMission(missionId);
+      } else if (hash === 'quiz') {
+        document.getElementById('onboarding').classList.add('hidden');
+        this.updateXPBadge();
+        this.switchView('quiz');
       } else if (hash.startsWith('quiz-')) {
         // Quiz deep link
         const blockId = hash.replace('quiz-', '');
@@ -2004,50 +2008,148 @@ class PBook {
       return;
     }
 
-    // Landing page
-    let h = '<div style="max-width:500px;margin:0 auto;padding:1em">';
-    h += '<h2 style="font-family:var(--font-ui);font-size:1.3rem;font-weight:800;text-align:center;margin-bottom:.3em">\u{1F9E0} Test Your Knowledge</h2>';
-    h += '<p style="font-size:.82rem;color:var(--text-2);text-align:center;margin-bottom:1.2em">How well do you remember what you\'ve read?</p>';
+    let h = '';
+
+    // ── Header + share ──
+    h += `<div style="display:flex;align-items:center;justify-content:space-between;padding:.8em 1em .3em">
+      <h2 style="font-family:var(--font-ui);font-size:1.15rem;font-weight:800">\u{1F9E0} Test Your Knowledge</h2>
+      <button style="font-size:.72rem;color:var(--text-3);border:1px solid var(--border);border-radius:6px;padding:.25em .6em" onclick="app._shareQuizPage()">Share</button>
+    </div>`;
 
     if (totalRead === 0) {
-      h += '<div style="text-align:center;padding:2em;color:var(--text-3)"><p>Read some sections first, then come back to test yourself!</p>';
-      h += '<button class="btn-primary" style="margin-top:1em" onclick="app.switchView(\'home\')">Start reading</button></div>';
-    } else {
-      // Stats
-      const hardCount = Object.values(u.recall).filter(c => c.ease < 1.8).length;
-      const medCount = Object.values(u.recall).filter(c => c.ease >= 1.8 && c.ease < 2.5).length;
-      const easyCount = Object.values(u.recall).filter(c => c.ease >= 2.5).length;
-      const newCount = totalRead - totalRecall;
-
-      h += `<div class="gami-stats" style="margin-bottom:1em">
-        <div class="gami-stat"><span class="gs-num">${due.length}</span><span class="gs-label">Due now</span></div>
-        <div class="gami-stat"><span class="gs-num">${totalRecall}</span><span class="gs-label">Tracked</span></div>
-        <div class="gami-stat"><span class="gs-num">${totalRead}</span><span class="gs-label">Read</span></div>
+      h += `<div style="text-align:center;padding:3em 1em;color:var(--text-3)">
+        <p style="font-size:2rem;margin-bottom:.3em">\u{1F4DA}</p>
+        <p style="font-size:.9rem;font-weight:600">Read some sections first!</p>
+        <p style="font-size:.78rem;margin:.3em 0 1em">Memory cards are created automatically as you read.</p>
+        <button class="btn-primary" onclick="app.switchView('home')">Start reading</button>
       </div>`;
-
-      // Difficulty breakdown
-      if (totalRecall > 0) {
-        h += '<div style="display:flex;gap:.3em;justify-content:center;margin-bottom:1em;font-size:.72rem">';
-        if (hardCount) h += `<span style="color:#dc2626;font-weight:600">${hardCount} hard</span>`;
-        if (medCount) h += `<span style="color:var(--warn);font-weight:600">${medCount} medium</span>`;
-        if (easyCount) h += `<span style="color:var(--product);font-weight:600">${easyCount} easy</span>`;
-        if (newCount > 0) h += `<span style="color:var(--text-3)">${newCount} new</span>`;
-        h += '</div>';
-      }
-
-      // Action buttons
-      h += '<div style="display:flex;flex-direction:column;gap:.5em;align-items:center">';
-      if (due.length > 0) {
-        h += `<button class="recall-reveal-big" onclick="app.startPractice(true)">Review ${due.length} due card${due.length > 1 ? 's' : ''}</button>`;
-      }
-      h += `<button class="btn-primary" style="width:100%;max-width:300px" onclick="app.startPractice()">Test all ${totalRead} cards</button>`;
-      if (hardCount > 0) {
-        h += `<button class="btn-ghost" style="border:1px solid #dc2626;color:#dc2626;border-radius:8px;padding:.4em 1em;font-size:.78rem;width:100%;max-width:300px" onclick="app._startHardMode()">Focus on ${hardCount} hard cards</button>`;
-      }
-      h += '</div>';
+      el.innerHTML = h;
+      return;
     }
-    h += '</div>';
+
+    // ── Stats row ──
+    const hardCards = Object.entries(u.recall).filter(([_, c]) => c.ease < 1.8);
+    const medCards = Object.entries(u.recall).filter(([_, c]) => c.ease >= 1.8 && c.ease < 2.5);
+    const easyCards = Object.entries(u.recall).filter(([_, c]) => c.ease >= 2.5);
+    const totalReps = Object.values(u.recall).reduce((s, c) => s + c.reps, 0);
+    const quizStreak = parseInt(localStorage.getItem('pbook-quiz-streak') || '0');
+
+    h += `<div class="gami-stats" style="margin:0 1em .8em">
+      <div class="gami-stat"><span class="gs-num" style="${due.length ? 'color:var(--warn)' : ''}">${due.length}</span><span class="gs-label">Due</span></div>
+      <div class="gami-stat"><span class="gs-num">${totalRead}</span><span class="gs-label">Cards</span></div>
+      <div class="gami-stat"><span class="gs-num">${totalReps}</span><span class="gs-label">Reviews</span></div>
+      ${quizStreak > 0 ? `<div class="gami-stat"><span class="gs-num" style="color:var(--accent)">${quizStreak}</span><span class="gs-label">Streak</span></div>` : ''}
+    </div>`;
+
+    // ── Active mode: due cards shelf (answerable inline) ──
+    if (due.length > 0) {
+      const dueCards = due.slice(0, 10).map(r => {
+        const block = this.findBlock(r.blockId);
+        if (!block) return '';
+        const quiz = this._getRecallQuestion(block);
+        if (!quiz) return '';
+        const card = u.recall[r.blockId];
+        const overdue = Math.round((Date.now() - card.nextReview) / 3600000);
+        const reason = overdue > 24 ? `${Math.round(overdue/24)}d overdue` : overdue > 0 ? `${overdue}h overdue` : 'Due now';
+        return `<div class="card recall-card" style="border-top:3px solid var(--warn);flex:0 0 280px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3em">
+            <span style="color:var(--warn);font-weight:700;font-size:.7rem">Due</span>
+            <span style="color:var(--text-3);font-size:.6rem">${reason}</span>
+          </div>
+          <div class="card-title" style="font-size:.85rem;line-height:1.4">${quiz.q}</div>
+          <div id="qd-a-${r.blockId}" style="display:none">
+            <div style="font-size:.78rem;color:var(--text-2);margin:.4em 0;padding-top:.4em;border-top:1px solid var(--border)">${quiz.a}</div>
+            <div style="font-size:.6rem;color:var(--text-3);margin-bottom:.3em">From: ${block.meta.title}</div>
+            <div class="recall-buttons">
+              <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${r.blockId}',0);this.closest('.card').remove()">Forgot</button>
+              <button class="recall-btn recall-hard" onclick="app.scoreRecall('${r.blockId}',1);this.closest('.card').remove()">Hard</button>
+              <button class="recall-btn recall-good" onclick="app.scoreRecall('${r.blockId}',2);this.closest('.card').remove()">Good</button>
+              <button class="recall-btn recall-easy" onclick="app.scoreRecall('${r.blockId}',3);this.closest('.card').remove()">Easy!</button>
+            </div>
+          </div>
+          <button class="recall-reveal" onclick="document.getElementById('qd-a-${r.blockId}').style.display='block';this.style.display='none'" style="margin-top:.3em">Show answer</button>
+        </div>`;
+      }).filter(Boolean);
+      if (dueCards.length) h += this.shelf(`\u{1F525} Due now (${due.length})`, dueCards);
+    }
+
+    // ── Practice modes ──
+    h += `<div style="padding:.5em 1em"><div style="display:flex;gap:.4em;flex-wrap:wrap">`;
+    h += `<button class="btn-primary" style="flex:1;min-width:140px;font-size:.78rem;padding:.5em" onclick="app.startPractice()">Test all ${totalRead} cards</button>`;
+    if (hardCards.length > 0) {
+      h += `<button class="btn-ghost" style="flex:1;min-width:120px;border:1.5px solid #dc2626;color:#dc2626;border-radius:8px;padding:.5em;font-size:.78rem" onclick="app._startHardMode()">Hard mode (${hardCards.length})</button>`;
+    }
+    h += `</div></div>`;
+
+    // ── Hard cards shelf ──
+    if (hardCards.length > 0) {
+      const hCards = hardCards.slice(0, 8).map(([blockId, card]) => this._quizPreviewCard(blockId, card, '#dc2626', 'Hard')).filter(Boolean);
+      if (hCards.length) h += this.shelf('\u{1F4A2} Needs work', hCards);
+    }
+
+    // ── Medium cards shelf ──
+    if (medCards.length > 0) {
+      const mCards = medCards.slice(0, 8).map(([blockId, card]) => this._quizPreviewCard(blockId, card, 'var(--warn)', 'Medium')).filter(Boolean);
+      if (mCards.length) h += this.shelf('\u{1F4AD} Getting there', mCards);
+    }
+
+    // ── Easy / mastered shelf ──
+    if (easyCards.length > 0) {
+      const eCards = easyCards.slice(0, 8).map(([blockId, card]) => this._quizPreviewCard(blockId, card, 'var(--product)', 'Mastered')).filter(Boolean);
+      if (eCards.length) h += this.shelf('\u{2705} Mastered', eCards);
+    }
+
+    // ── How it works ──
+    h += `<div style="padding:.8em 1em;margin-top:.5em">
+      <details style="font-size:.75rem;color:var(--text-2)">
+        <summary style="cursor:pointer;font-weight:600;color:var(--text-3);font-size:.72rem">How does the smart reminder work?</summary>
+        <div style="margin-top:.5em;line-height:1.5">
+          <p>This uses <strong>spaced repetition</strong> (SM-2 algorithm) — the same science behind Anki and Duolingo:</p>
+          <ul style="padding-left:1.2em;margin:.4em 0">
+            <li><strong>New cards</strong> appear 2 hours after you read a section</li>
+            <li>Answer <strong>Easy</strong> → next review in days. <strong>Good</strong> → shorter interval. <strong>Hard/Forgot</strong> → review again soon.</li>
+            <li>Each card has a <strong>difficulty score</strong> (ease factor). Cards you keep forgetting get shown more often.</li>
+            <li>Cards you master get intervals up to <strong>30 days</strong> — you only review what you need to.</li>
+          </ul>
+          <p style="margin-top:.3em"><strong>Hard</strong> (ease &lt; 1.8) = you often forget. <strong>Medium</strong> (1.8-2.5) = sometimes tricky. <strong>Easy</strong> (2.5+) = you know it well.</p>
+        </div>
+      </details>
+    </div>`;
+
+    // ── Reading nudge ──
+    const unread = this.allBlocks.filter(b => b.meta.core && b.meta.type === 'spine' && !u.readBlocks.has(b.meta.id));
+    if (unread.length > 0) {
+      h += `<div style="padding:.8em 1em;text-align:center">
+        <p style="font-size:.78rem;color:var(--text-3);margin-bottom:.4em">${unread.length} core sections still unread — reading creates new cards!</p>
+        <button class="btn-ghost" style="border:1px solid var(--accent);border-radius:8px;padding:.4em 1em;font-size:.78rem;color:var(--accent)" onclick="app.switchView('home')">Continue reading \u{1F4D6}</button>
+      </div>`;
+    }
+
     el.innerHTML = h;
+  }
+
+  _quizPreviewCard(blockId, card, color, label) {
+    const block = this.findBlock(blockId);
+    if (!block) return '';
+    const quiz = this._getRecallQuestion(block);
+    if (!quiz) return '';
+    const nextReview = card.nextReview ? new Date(card.nextReview) : null;
+    const nextLabel = !nextReview ? '' : nextReview <= new Date() ? 'Now' : nextReview.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+    return `<div class="card" style="border-top:3px solid ${color};flex:0 0 240px;cursor:pointer" onclick="app.showBlockRecall('${blockId}')">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.2em">
+        <span style="font-size:.6rem;font-weight:700;color:${color}">${label}</span>
+        <span style="font-size:.55rem;color:var(--text-3)">${card.reps} reviews${nextLabel ? ' · next: ' + nextLabel : ''}</span>
+      </div>
+      <div class="card-title" style="font-size:.82rem;line-height:1.3">${quiz.q}</div>
+      <div class="card-meta"><span style="font-size:.65rem;color:var(--text-3)">Ch${block.meta._chapterNum}: ${block.meta.title}</span></div>
+    </div>`;
+  }
+
+  _shareQuizPage() {
+    const url = window.location.origin + window.location.pathname + '#quiz';
+    const text = 'Test your knowledge about recommendation algorithms!';
+    if (navigator.share) navigator.share({ title: 'Test Your Knowledge', text, url }).catch(() => {});
+    else navigator.clipboard.writeText(url).then(() => this.showXPToast('Link copied!', 'info'));
   }
 
   _startHardMode() {
@@ -2068,16 +2170,35 @@ class PBook {
     const el = document.getElementById('quizContent');
     if (!el) return;
 
-    // Done — show summary
+    // Done — show summary with streak + rewards
     if (idx >= q.length) {
       const s = this._recallScore;
+      const pct = Math.round(s.correct / Math.max(s.total, 1) * 100);
+      const perfect = pct === 100 && s.total >= 3;
+      // Update streak
+      let streak = parseInt(localStorage.getItem('pbook-quiz-streak') || '0');
+      const lastQuizDay = localStorage.getItem('pbook-quiz-day');
+      const today = new Date().toISOString().slice(0, 10);
+      if (lastQuizDay !== today) { streak++; localStorage.setItem('pbook-quiz-streak', streak); localStorage.setItem('pbook-quiz-day', today); }
+      // Bonus XP for completion
+      let bonusXP = 0;
+      if (this._f('gamification')) {
+        bonusXP = perfect ? 15 : pct >= 70 ? 8 : 3;
+        this.user.addXP(bonusXP); this.user.save(); this.updateXPBadge();
+      }
+      const unread = this.allBlocks.filter(b => b.meta.core && b.meta.type === 'spine' && !this.user.readBlocks.has(b.meta.id));
       el.innerHTML = `<div class="recall-session">
-        <h2>Review complete!</h2>
-        <div class="recall-summary-icon">${s.correct >= s.total * 0.7 ? '\u{1F389}' : '\u{1F4AA}'}</div>
-        <p>${s.correct} of ${s.total} correct</p>
-        <div class="recall-summary-bar"><div style="width:${Math.round(s.correct/Math.max(s.total,1)*100)}%;background:var(--product);height:100%;border-radius:4px"></div></div>
-        <button class="btn-primary" style="margin-top:1em" onclick="app.switchView('home')">Back to reading</button>
-        <button class="btn-ghost" style="margin-top:.5em" onclick="app.startPractice()">Test more</button>
+        <div class="recall-summary-icon">${perfect ? '\u{1F31F}' : pct >= 70 ? '\u{1F389}' : '\u{1F4AA}'}</div>
+        <h2>${perfect ? 'Perfect score!' : pct >= 70 ? 'Great job!' : 'Keep going!'}</h2>
+        <p style="font-size:1.1rem;font-weight:700;margin:.3em 0">${s.correct} / ${s.total} correct (${pct}%)</p>
+        <div class="recall-summary-bar"><div style="width:${pct}%;background:${pct >= 70 ? 'var(--product)' : 'var(--warn)'};height:100%;border-radius:4px"></div></div>
+        ${bonusXP ? `<p style="color:var(--accent);font-weight:600;margin-top:.5em">+${bonusXP} XP ${perfect ? 'perfect bonus!' : 'quiz bonus'}</p>` : ''}
+        ${streak > 1 ? `<p style="font-size:.82rem;color:var(--warn);font-weight:600">\u{1F525} ${streak}-day quiz streak!</p>` : ''}
+        <div style="display:flex;flex-direction:column;gap:.5em;margin-top:1em;align-items:center">
+          <button class="btn-primary" style="width:100%;max-width:280px" onclick="app.startPractice()">Test more cards</button>
+          ${unread.length > 0 ? `<button class="btn-ghost" style="border:1px solid var(--accent);border-radius:8px;padding:.5em 1em;font-size:.82rem;color:var(--accent);width:100%;max-width:280px" onclick="app.switchView('home')">\u{1F4D6} Read new sections (${unread.length} left)</button>` : ''}
+          <button style="font-size:.72rem;color:var(--text-3);margin-top:.3em;cursor:pointer" onclick="app.renderQuiz()">Back to quiz overview</button>
+        </div>
       </div>`;
       return;
     }
@@ -4227,6 +4348,12 @@ class PBook {
     el.textContent = (reward?.icon || '') + ' Lv.' + this.user.level + ' · ' + this.user.xp + 'XP';
     // Apply cosmetic theme
     this._applyLevelTheme();
+    // Update quiz tab badge
+    const quizTab = document.querySelector('.tab[data-view="quiz"] .tab-label');
+    if (quizTab && this._f('spaceRepetition')) {
+      const dueCount = this.user.getDueRecalls().length;
+      quizTab.textContent = dueCount > 0 ? `Quiz (${dueCount})` : 'Quiz';
+    }
   }
 
   _applyLevelTheme() {
