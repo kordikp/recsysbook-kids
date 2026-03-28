@@ -82,6 +82,20 @@ class PBook {
         this.updateXPBadge();
         this.switchView('glossary');
         this.showMission(missionId);
+      } else if (hash.startsWith('quiz-')) {
+        // Quiz deep link
+        const blockId = hash.replace('quiz-', '');
+        const block = this.findBlock(blockId);
+        if (block) {
+          document.getElementById('onboarding').classList.add('hidden');
+          this.updateXPBadge();
+          this._inPracticeMode = true;
+          this._recallQueue = [{ blockId, isDue: false }];
+          this._recallIdx = 0;
+          this._recallScore = { total: 1, correct: 0 };
+          this.switchView('home', true);
+          this._renderRecallCard();
+        }
       } else if (this.findBlock(hash)) {
         // Block deep link
         document.getElementById('onboarding').classList.add('hidden');
@@ -1952,16 +1966,23 @@ class PBook {
 
   startPractice(dueOnly) {
     if (!this._f('spaceRepetition')) return;
-    // Full-page recall review mode
     const due = this.user.getDueRecalls();
     let blocks;
     if (dueOnly && due.length > 0) {
+      // Due only — all due cards, sorted by most overdue first
       blocks = due.map(r => ({ blockId: r.blockId, isDue: true }));
     } else {
-      // Mix due + random read blocks
-      const readIds = [...this.user.readBlocks].filter(id => !due.find(d => d.blockId === id));
-      const random = readIds.sort(() => Math.random() - 0.5).slice(0, Math.max(3, 8 - due.length));
-      blocks = [...due.map(r => ({ blockId: r.blockId, isDue: true })), ...random.map(id => ({ blockId: id, isDue: false }))];
+      // Smart ordering: due first, then by difficulty (low ease = harder = practice more)
+      const dueSet = new Set(due.map(d => d.blockId));
+      const allRecall = Object.entries(this.user.recall)
+        .sort((a, b) => a[1].ease - b[1].ease) // lowest ease (hardest) first
+        .map(([blockId, card]) => ({ blockId, isDue: dueSet.has(blockId), ease: card.ease, reps: card.reps }));
+      // Also include read blocks with no recall yet
+      const recallSet = new Set(allRecall.map(r => r.blockId));
+      const unscheduled = [...this.user.readBlocks]
+        .filter(id => !recallSet.has(id))
+        .map(id => ({ blockId: id, isDue: false, ease: 2.5, reps: 0 }));
+      blocks = [...allRecall, ...unscheduled];
     }
     if (blocks.length === 0) return;
 
@@ -1997,18 +2018,29 @@ class PBook {
     if (!block) { this._recallIdx++; this._renderRecallCard(); return; }
     const quiz = this._getRecallQuestion(block);
 
+    const card = this.user.recall[item.blockId];
+    const reps = card ? card.reps : 0;
+    const ease = card ? card.ease.toFixed(1) : '—';
+    const diffLabel = !card ? 'New' : card.ease >= 2.5 ? 'Easy' : card.ease >= 1.8 ? 'Medium' : 'Hard';
+    const diffColor = !card ? 'var(--text-3)' : card.ease >= 2.5 ? 'var(--product)' : card.ease >= 1.8 ? 'var(--warn)' : '#dc2626';
+
     const el = document.getElementById('homeContent') || document.getElementById('glossaryContent');
     el.innerHTML = `<div class="recall-session">
       <div class="recall-progress-row">
         <span class="recall-progress-label">${idx + 1} / ${q.length}</span>
         <div class="recall-progress-bar"><div style="width:${Math.round((idx/q.length)*100)}%;background:var(--accent);height:100%;border-radius:4px;transition:width .3s"></div></div>
-        ${item.isDue ? '<span class="recall-due-badge">Due</span>' : '<span class="recall-practice-badge">Bonus</span>'}
+        ${item.isDue ? '<span class="recall-due-badge">Due</span>' : ''}
+        <span style="font-size:.6rem;color:${diffColor};font-weight:600">${diffLabel}</span>
       </div>
       <div class="recall-card-big">
         <div class="recall-card-q">${quiz.q}</div>
         <div class="recall-card-a" id="recallAnswer" style="display:none">
           <div class="recall-card-answer">${quiz.a}</div>
-          <div class="recall-card-source"><a href="#" onclick="event.preventDefault();app.openBlock('${item.blockId}')" style="color:var(--accent)">From: ${block.meta.title} (Ch${block.meta._chapterNum}) &rarr;</a></div>
+          <div class="recall-card-source">
+            <a href="#" onclick="event.preventDefault();app.openBlock('${item.blockId}')" style="color:var(--accent)">From: ${block.meta.title} (Ch${block.meta._chapterNum}) &rarr;</a>
+            <button style="margin-left:.5em;font-size:.7rem;color:var(--text-3);border:1px solid var(--border);border-radius:4px;padding:.15em .4em;cursor:pointer" onclick="app.shareQuestion('${item.blockId}')">Share</button>
+          </div>
+          <div style="font-size:.6rem;color:var(--text-3);margin-bottom:.4em">${reps} reviews &middot; difficulty: ${ease}</div>
           <div class="recall-buttons">
             <button class="recall-btn recall-forgot" onclick="app._answerRecall('${item.blockId}',0)">Forgot</button>
             <button class="recall-btn recall-hard" onclick="app._answerRecall('${item.blockId}',1)">Hard</button>
@@ -2018,9 +2050,32 @@ class PBook {
         </div>
         <button class="recall-reveal-big" id="recallRevealBtn" onclick="document.getElementById('recallAnswer').style.display='block';this.style.display='none'">Show answer</button>
       </div>
+      <div style="display:flex;justify-content:center;margin-top:.8em">
+        <button style="font-size:.72rem;color:var(--text-3);border:1px solid var(--border);border-radius:6px;padding:.3em .8em;cursor:pointer" onclick="app._endPractice()">Stop here (${this._recallScore.correct}/${idx} so far)</button>
+      </div>
     </div>`;
     if (this.currentView !== 'home') this.switchView('home', true);
     window.scrollTo(0, 0);
+  }
+
+  _endPractice() {
+    // End early — show summary with current progress
+    this._recallQueue.length = this._recallIdx; // truncate
+    this._renderRecallCard(); // triggers summary
+  }
+
+  shareQuestion(blockId) {
+    const block = this.findBlock(blockId);
+    if (!block) return;
+    const quiz = this._getRecallQuestion(block);
+    if (!quiz) return;
+    const url = window.location.origin + window.location.pathname + '#quiz-' + blockId;
+    const text = `Can you answer this? "${quiz.q}" — from "How Recommendations Work"`;
+    if (navigator.share) {
+      navigator.share({ title: quiz.q, text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => this.showXPToast('Link copied!', 'info'));
+    }
   }
 
   _answerRecall(blockId, quality) {
