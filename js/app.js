@@ -483,20 +483,13 @@ class PBook {
       html += this.shelf('Continue reading', [this.cardHtml(continueBlock, true)]);
     }
 
-    // Recall cards if due (guarded by spaceRepetition toggle)
-    const dueRecalls = this._f('spaceRepetition') ? this.user.getDueRecalls() : [];
-    if (dueRecalls.length > 0) {
-      const recallCards = dueRecalls.slice(0, 8).map(r => this._recallCardHtml(r)).filter(Boolean);
-      if (recallCards.length) html += this.shelf(`Do you remember? (${recallCards.length} due)`, recallCards);
-    }
-    // Practice button if user has any tracked recalls
-    if (this._f('spaceRepetition') && Object.keys(this.user.recall).length > 0) {
-      const allCount = Object.keys(this.user.recall).length;
-      const dueCount = dueRecalls.length;
-      html += `<div style="text-align:center;margin:.5em 0 1em">
-        <button class="recall-reveal" style="background:var(--accent)" onclick="app.startPractice()">\u{1F9E0} Practice all ${allCount} cards</button>
-        ${dueCount === 0 ? '<div style="font-size:.7rem;color:var(--text-3);margin-top:.3em">No cards due yet — practice anyway to strengthen your memory!</div>' : ''}
-      </div>`;
+    // Recall cards — only show shelf when cards are actually due
+    if (this._f('spaceRepetition')) {
+      const dueRecalls = this.user.getDueRecalls();
+      if (dueRecalls.length > 0) {
+        const recallCards = dueRecalls.slice(0, 8).map(r => this._recallCardHtml(r)).filter(Boolean);
+        if (recallCards.length) html += this.shelf(`\u{1F9E0} Do you remember? (${recallCards.length})`, recallCards);
+      }
     }
 
     // Active missions (guarded)
