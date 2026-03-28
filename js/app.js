@@ -108,6 +108,9 @@ class PBook {
       }
     }
 
+    // Customize welcome screen for returning users
+    this._customizeWelcome();
+
     // Auto-sync for logged-in users: save every 2 minutes
     setInterval(() => {
       if (this._getAuth()) this.syncProfile().catch(() => {});
@@ -239,6 +242,56 @@ class PBook {
     const overlay = document.getElementById('onboarding');
     overlay.classList.remove('hidden');
     this.showStep(0);
+    this._customizeWelcome();
+  }
+
+  _customizeWelcome() {
+    const u = this.user;
+    const prog = u.getProgress(this.allBlocks);
+    const isReturning = prog.read > 0;
+    const auth = this._getAuth();
+    const dueRecalls = this._f('spaceRepetition') ? u.getDueRecalls() : [];
+
+    // Find the main CTA button
+    const ctaBtn = document.querySelector('.step[data-step="0"] .btn-primary.btn-large');
+    if (!ctaBtn) return;
+
+    if (!isReturning) return; // cold start — keep default "Start reading"
+
+    // Returning user — change CTA
+    const continueBlock = this.getContinueBlock();
+    ctaBtn.textContent = 'Continue reading \u{1F4D6}';
+    ctaBtn.onclick = () => this.startWithVoiceAndGo('home');
+
+    // Add extra buttons below CTA
+    let extras = document.getElementById('welcomeExtras');
+    if (!extras) {
+      extras = document.createElement('div');
+      extras.id = 'welcomeExtras';
+      extras.style.cssText = 'display:flex;flex-wrap:wrap;gap:.4em;justify-content:center;margin-top:.6em';
+      ctaBtn.after(extras);
+    }
+
+    let html = '';
+
+    // Memory cards button
+    if (dueRecalls.length > 0) {
+      html += `<button class="btn-secondary" style="font-size:.78rem;padding:.4em .8em;border-radius:8px;border:1.5px solid var(--warn);color:var(--warn);background:var(--warn-bg)" onclick="app.startAndGo('home');setTimeout(()=>app.startPractice(true),500)">\u{1F9E0} ${dueRecalls.length} cards due</button>`;
+    } else if (Object.keys(u.recall).length > 0) {
+      html += `<button class="btn-secondary" style="font-size:.78rem;padding:.4em .8em;border-radius:8px;border:1.5px solid var(--accent);color:var(--accent)" onclick="app.startAndGo('home');setTimeout(()=>app.startPractice(),500)">\u{1F9E0} Practice memory</button>`;
+    }
+
+    // Profile link
+    if (auth) {
+      html += `<button class="btn-secondary" style="font-size:.78rem;padding:.4em .8em;border-radius:8px;border:1.5px solid var(--border);color:var(--text-2)" onclick="app.startAndGo('profile')">${this.getLevelIcon()} ${this.escHtml(auth.displayName || 'Profile')}</button>`;
+    } else {
+      html += `<button class="btn-secondary" style="font-size:.78rem;padding:.4em .8em;border-radius:8px;border:1.5px solid var(--border);color:var(--text-2)" onclick="app.startAndGo('profile')">Your profile (${prog.pct}%)</button>`;
+    }
+
+    // Progress summary
+    html += `<div style="width:100%;font-size:.7rem;color:var(--text-3);text-align:center;margin-top:.2em">${prog.read}/${prog.total} sections &middot; ${u.xp} XP &middot; Lv.${u.level}</div>`;
+
+    extras.innerHTML = html;
   }
 
   startApp() {
