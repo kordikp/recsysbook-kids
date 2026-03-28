@@ -2405,6 +2405,9 @@ class PBook {
       h += '</div>';
     }
 
+    // Activity heatmap (last 8 weeks, GitHub-style, inline SVG)
+    h += this._renderActivityHeatmap();
+
     // Knowledge cloud — extract terms from read blocks
     const termCounts = {};
     const CLOUD_TERMS = {
@@ -3781,6 +3784,101 @@ class PBook {
 
 
   // Level rewards — cosmetic unlocks
+  _renderActivityHeatmap() {
+    // Build day → count map from interactions + read blocks
+    const dayCounts = {};
+    // From interactions (timestamps)
+    this.rc.interactions.forEach(i => {
+      if (!i.ts) return;
+      const day = new Date(i.ts).toISOString().slice(0, 10);
+      dayCounts[day] = (dayCounts[day] || 0) + 1;
+    });
+    // From block signals (dwell timestamps)
+    Object.values(this.user.signals).forEach(sig => {
+      if (sig.seenAt) { const d = new Date(sig.seenAt).toISOString().slice(0, 10); dayCounts[d] = (dayCounts[d] || 0) + 1; }
+    });
+
+    if (Object.keys(dayCounts).length === 0) return '';
+
+    // Last 56 days (8 weeks)
+    const today = new Date();
+    const days = [];
+    for (let i = 55; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ key, count: dayCounts[key] || 0, dow: d.getDay() });
+    }
+
+    const maxCount = Math.max(...days.map(d => d.count), 1);
+    const cellSize = 13, gap = 2, rowH = cellSize + gap;
+    const weeks = Math.ceil(days.length / 7);
+    const svgW = weeks * (cellSize + gap) + 20;
+    const svgH = 7 * rowH + 20;
+
+    // Calculate streak
+    let streak = 0;
+    for (let i = days.length - 1; i >= 0; i--) {
+      if (days[i].count > 0) streak++;
+      else break;
+    }
+    const totalActive = days.filter(d => d.count > 0).length;
+    const totalInteractions = days.reduce((s, d) => s + d.count, 0);
+
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}" style="display:block;max-width:100%">`;
+    // Day labels
+    const labels = ['', 'M', '', 'W', '', 'F', ''];
+    labels.forEach((l, i) => {
+      if (l) svg += `<text x="0" y="${i * rowH + cellSize + 2}" font-size="8" fill="var(--text-3)" font-family="var(--font-ui)">${l}</text>`;
+    });
+    // Cells
+    days.forEach((d, i) => {
+      const week = Math.floor(i / 7);
+      const dow = i % 7;
+      const x = 16 + week * (cellSize + gap);
+      const y = 2 + dow * rowH;
+      const intensity = d.count > 0 ? Math.max(0.2, d.count / maxCount) : 0;
+      const fill = d.count === 0 ? 'var(--border-light)' : `rgba(124,58,237,${intensity})`;
+      svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" rx="2" fill="${fill}"><title>${d.key}: ${d.count} interactions</title></rect>`;
+    });
+    svg += '</svg>';
+
+    let h = '<div class="profile-section"><h3>Your Activity</h3>';
+    h += `<div style="display:flex;gap:1em;margin-bottom:.6em;font-size:.78rem">`;
+    if (streak > 0) h += `<span style="color:var(--accent);font-weight:600">${streak} day streak</span>`;
+    h += `<span style="color:var(--text-3)">${totalActive} active days</span>`;
+    h += `<span style="color:var(--text-3)">${totalInteractions} interactions</span>`;
+    h += `</div>`;
+    h += svg;
+    // Chapter breakdown bars
+    const chCounts = {};
+    this.rc.interactions.forEach(i => {
+      if (i.type !== 'detailview' || !i.itemId) return;
+      const block = this.findBlock(i.itemId);
+      if (!block) return;
+      const ch = block.meta._chapterNum || '?';
+      chCounts[ch] = (chCounts[ch] || 0) + 1;
+    });
+    const chEntries = Object.entries(chCounts).sort((a, b) => a[0] - b[0]);
+    if (chEntries.length > 1) {
+      const chMax = Math.max(...chEntries.map(([_, c]) => c), 1);
+      h += '<div style="margin-top:.8em;font-size:.72rem;color:var(--text-3)">Reading by chapter</div>';
+      h += '<div style="display:flex;flex-direction:column;gap:.2em;margin-top:.3em">';
+      chEntries.forEach(([ch, count]) => {
+        const pct = Math.round((count / chMax) * 100);
+        const chTitle = this.book.chapters[ch - 1]?.title || `Chapter ${ch}`;
+        h += `<div style="display:flex;align-items:center;gap:.4em;font-size:.72rem">
+          <span style="width:1.5em;text-align:right;color:var(--text-3);font-weight:600">${ch}</span>
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px"><div style="width:${pct}%;height:100%;background:var(--accent);border-radius:3px"></div></div>
+          <span style="width:2em;color:var(--text-3)">${count}</span>
+        </div>`;
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
   getLevelIcon() {
     const rewards = this.getLevelRewards();
     const reward = rewards.filter(r => r.level <= this.user.level).pop();
