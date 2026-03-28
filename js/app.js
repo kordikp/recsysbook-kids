@@ -177,6 +177,7 @@ class PBook {
       spaceRepetition: get('optRecall'),
       missions: get('optMissions'),
       games: get('optGames'),
+      highlights: get('optHighlights'),
     };
     localStorage.setItem('pbook-features', JSON.stringify(features));
     Object.assign(CONFIG.features, features);
@@ -2266,7 +2267,7 @@ class PBook {
 
     let h = '';
 
-    // ---- Account / Sync section ----
+    // ---- Account indicator (compact — full login form is in Settings) ----
     const auth = this._getAuth();
     h += '<div class="profile-section">';
     if (auth) {
@@ -2274,28 +2275,18 @@ class PBook {
         <div class="auth-avatar">${(auth.displayName || auth.email)[0].toUpperCase()}</div>
         <div class="auth-info">
           <div class="auth-name">${this.escHtml(auth.displayName || 'Reader')}</div>
-          <div class="auth-email">${this.escHtml(auth.email)}</div>
+          <div class="auth-email"><span style="color:var(--product)">&#9679;</span> Synced &middot; ${this.escHtml(auth.email)}</div>
         </div>
-        <div class="auth-actions">
-          <button class="auth-sync-btn" onclick="app.syncProfile()" id="syncBtn">Sync now</button>
-          <button class="auth-logout-btn" onclick="app.logout()">Log out</button>
-        </div>
+        <button class="auth-sync-btn" onclick="app.syncProfile()" id="syncBtn">Sync</button>
       </div>`;
-      if (this._lastSyncTime) h += `<div style="font-size:.65rem;color:var(--text-3);margin-top:.3em">Last synced: ${new Date(this._lastSyncTime).toLocaleString()}</div>`;
     } else {
-      h += `<div class="auth-card">
-        <h3>Save your progress</h3>
-        <p style="font-size:.8rem;color:var(--text-2);margin:.3em 0 .8em">Create an account to access your reading progress, notes, and achievements from any device.</p>
-        <div id="authForm">
-          <input type="text" id="authName" class="auth-input" placeholder="Your name" maxlength="60">
-          <input type="email" id="authEmail" class="auth-input" placeholder="Email" maxlength="120">
-          <input type="password" id="authPassword" class="auth-input" placeholder="Password (4+ characters)" maxlength="100">
-          <div class="auth-btns">
-            <button class="auth-primary-btn" onclick="app.register()">Create account</button>
-            <button class="auth-secondary-btn" onclick="app.login()">I have an account</button>
-          </div>
-          <div id="authError" class="auth-error"></div>
+      h += `<div class="auth-card" style="display:flex;align-items:center;gap:.8em">
+        <span style="color:var(--text-3);font-size:1.2rem">&#9888;</span>
+        <div style="flex:1">
+          <div style="font-size:.82rem;font-weight:600">Not logged in</div>
+          <div style="font-size:.72rem;color:var(--text-3)">Your progress is saved locally only.</div>
         </div>
+        <button class="auth-primary-btn" style="flex:0 0 auto;padding:.4em .8em;font-size:.75rem" onclick="app.toggleSettings()">Log in</button>
       </div>`;
     }
     h += '</div>';
@@ -2384,21 +2375,6 @@ class PBook {
     h += '<span style="font-weight:600;color:#F59E0B">+2-8 XP</span><span>Recall review (depends on how well you remember)</span>';
     h += '</div></div>';
 
-    // Cosmetic rewards
-    const rewards = this.getLevelRewards();
-    const activeCosmetic = localStorage.getItem('pbook-cosmetic') || null;
-    h += '<div class="profile-section"><h3>\u{1F3A8} Themes (Level Rewards)</h3>';
-    h += '<div class="cosmetic-grid">';
-    rewards.forEach(r => {
-      const unlocked = u.level >= r.level;
-      const active = (r.theme || null) === activeCosmetic;
-      h += `<button class="cosmetic-item ${unlocked ? '' : 'cosmetic-locked'} ${active ? 'cosmetic-active' : ''}" ${unlocked ? `onclick="app.setCosmetic(${r.theme ? "'" + r.theme + "'" : 'null'});app.renderProfile()"` : ''}>
-        <span class="cosmetic-icon">${unlocked ? r.icon : '\u{1F512}'}</span>
-        <span class="cosmetic-name">${r.name}</span>
-        <span class="cosmetic-level">${unlocked ? '\u2713' : 'Lv.' + r.level}</span>
-      </button>`;
-    });
-    h += '</div></div>';
 
     // Voice preference
     const voices = Object.keys(CONFIG.voices);
@@ -2494,10 +2470,9 @@ class PBook {
     h += '</div>';
     } // end gamification guard
 
-    // Reset
-    h += '<div class="profile-section">';
-    h += '<button class="btn-ghost" style="border:1px solid var(--accent);border-radius:6px;padding:.3em .8em;font-size:.75rem;color:var(--accent);margin-right:.5em" onclick="localStorage.removeItem(\'pbook-tour-done\');app.startTour()">Replay tour</button>';
-    h += '<button class="btn-ghost" style="border:1px solid #dc2626;border-radius:6px;padding:.3em .8em;font-size:.75rem;color:#dc2626" onclick="app.resetAll()">Reset everything</button>';
+    // Settings link
+    h += '<div class="profile-section" style="text-align:center">';
+    h += '<button class="btn-ghost" style="border:1px solid var(--border);border-radius:6px;padding:.4em 1em;font-size:.78rem;color:var(--text-2)" onclick="app.toggleSettings()">&#9881; Settings &amp; data</button>';
     h += '</div>';
 
     el.innerHTML = h;
@@ -3609,7 +3584,86 @@ class PBook {
 
   // ===== SETTINGS =====
   toggleSettings() {
-    document.getElementById('settingsDrawer').classList.toggle('open');
+    const drawer = document.getElementById('settingsDrawer');
+    drawer.classList.toggle('open');
+    if (drawer.classList.contains('open')) {
+      this._renderSettingsAccount();
+      this._renderSettingsThemes();
+    }
+  }
+
+  _renderSettingsAccount() {
+    const el = document.getElementById('settingsAccount');
+    if (!el) return;
+    const auth = this._getAuth();
+    if (auth) {
+      el.innerHTML = `<label>Account</label>
+        <div class="auth-card auth-logged-in" style="margin-top:.3em">
+          <div class="auth-avatar" style="width:32px;height:32px;font-size:.9rem">${(auth.displayName || auth.email)[0].toUpperCase()}</div>
+          <div class="auth-info">
+            <div class="auth-name" style="font-size:.8rem">${this.escHtml(auth.displayName || 'Reader')}</div>
+            <div class="auth-email" style="font-size:.65rem"><span style="color:var(--product)">&#9679;</span> ${this.escHtml(auth.email)}</div>
+          </div>
+          <button class="auth-logout-btn" onclick="app.logout();app._renderSettingsAccount()">Log out</button>
+        </div>`;
+    } else {
+      el.innerHTML = `<label>Account</label>
+        <div style="margin-top:.3em">
+          <input type="text" id="authName" class="auth-input" placeholder="Your name" maxlength="60" style="font-size:.78rem;padding:.4em .6em">
+          <input type="email" id="authEmail" class="auth-input" placeholder="Email" maxlength="120" style="font-size:.78rem;padding:.4em .6em">
+          <input type="password" id="authPassword" class="auth-input" placeholder="Password (4+ chars)" maxlength="100" style="font-size:.78rem;padding:.4em .6em">
+          <div class="auth-btns">
+            <button class="auth-primary-btn" style="font-size:.75rem;padding:.4em" onclick="app.register()">Create account</button>
+            <button class="auth-secondary-btn" style="font-size:.75rem;padding:.4em" onclick="app.login()">Log in</button>
+          </div>
+          <div id="authError" class="auth-error"></div>
+        </div>`;
+    }
+  }
+
+  _renderSettingsThemes() {
+    const el = document.getElementById('settingsThemes');
+    if (!el) return;
+    const rewards = this.getLevelRewards();
+    const activeCosmetic = localStorage.getItem('pbook-cosmetic') || null;
+    const u = this.user;
+    let h = '<div class="cosmetic-grid" style="margin-top:.2em">';
+    rewards.forEach(r => {
+      if (!r.theme) return; // skip "Default" — handled by Light/Dark/Sepia
+      const unlocked = u.level >= r.level;
+      const active = r.theme === activeCosmetic;
+      h += `<button class="cosmetic-item ${unlocked ? '' : 'cosmetic-locked'} ${active ? 'cosmetic-active' : ''}" ${unlocked ? `onclick="app.setCosmetic('${r.theme}');app._renderSettingsThemes()"` : ''}>
+        <span class="cosmetic-icon">${unlocked ? r.icon : '\u{1F512}'}</span>
+        <span class="cosmetic-name">${r.name}</span>
+        <span class="cosmetic-level">${unlocked ? '\u2713' : 'Lv.' + r.level}</span>
+      </button>`;
+    });
+    h += '</div>';
+    if (activeCosmetic) {
+      h += `<button style="font-size:.68rem;color:var(--text-3);margin-top:.3em" onclick="app.setCosmetic(null);app._renderSettingsThemes()">Reset to default</button>`;
+    }
+    el.innerHTML = h;
+  }
+
+  exportData() {
+    const u = this.user;
+    const p = u.getProfile(this.allBlocks);
+    const data = {
+      exportedAt: new Date().toISOString(),
+      profile: p,
+      user: JSON.parse(localStorage.getItem('pbook-user') || '{}'),
+      notes: JSON.parse(localStorage.getItem('pbook-notes') || '{}'),
+      highlights: JSON.parse(localStorage.getItem('pbook-highlights') || '{}'),
+      interactions: this.rc.interactions,
+      features: JSON.parse(localStorage.getItem('pbook-features') || '{}'),
+      account: this._getAuth() ? { email: this._getAuth().email, displayName: this._getAuth().displayName } : null,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `pbook-data-${(p.userId || 'reader').substring(0, 8)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   setTheme(theme) {
@@ -3619,7 +3673,7 @@ class PBook {
   }
 
   setFontSize(size) {
-    const map = { small: '1rem', medium: '1.125rem', large: '1.25rem' };
+    const map = { small: '0.95rem', medium: '1.1rem', large: '1.3rem' };
     document.documentElement.style.setProperty('--fs', map[size]);
     localStorage.setItem('pbook-fs', size);
     this.updateSettingsUI();
@@ -3629,7 +3683,7 @@ class PBook {
     const theme = localStorage.getItem('pbook-theme');
     if (theme && theme !== 'light') document.documentElement.setAttribute('data-theme', theme);
     const fs = localStorage.getItem('pbook-fs');
-    if (fs) { const map = { small: '1rem', medium: '1.125rem', large: '1.25rem' }; document.documentElement.style.setProperty('--fs', map[fs]); }
+    if (fs) { const map = { small: '0.95rem', medium: '1.1rem', large: '1.3rem' }; document.documentElement.style.setProperty('--fs', map[fs]); }
     this._applyLevelTheme();
     this.updateSettingsUI();
   }

@@ -54,7 +54,7 @@
 </script>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-<link rel="stylesheet" href="css/style.css?v=2.0.0">
+<link rel="stylesheet" href="css/style.css?v=2.2.0">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 </head>
 <body>
@@ -139,6 +139,10 @@
           <label class="intro-toggle">
             <input type="checkbox" id="optGames" checked>
             <div><b>Mini-games</b><br><span class="toggle-desc">8 interactive games with a 60s timer. Without it, game blocks are hidden.</span></div>
+          </label>
+          <label class="intro-toggle">
+            <input type="checkbox" id="optHighlights" checked>
+            <div><b>AI takeaways</b><br><span class="toggle-desc">Key points shown as side notes next to each section. Helps you remember the essentials.</span></div>
           </label>
         </div>
         <p style="font-size:.68rem;color:var(--text-3);margin-top:.3em">More details in the <a href="https://github.com/kordikp/recsysbook-kids#readme" target="_blank" rel="noopener">project README</a>.</p>
@@ -285,36 +289,47 @@
       <h3>Settings</h3>
       <button onclick="app.toggleSettings()">&#10005;</button>
     </div>
+    <!-- Account -->
+    <div class="sg" id="settingsAccount"></div>
+    <!-- Theme -->
     <div class="sg"><label>Theme</label>
       <div class="sg-row">
         <button class="sg-opt active" data-theme="light" onclick="app.setTheme('light')">Light</button>
         <button class="sg-opt" data-theme="dark" onclick="app.setTheme('dark')">Dark</button>
         <button class="sg-opt" data-theme="sepia" onclick="app.setTheme('sepia')">Sepia</button>
       </div>
+      <div id="settingsThemes" style="margin-top:.5em"></div>
     </div>
+    <!-- Font size -->
     <div class="sg"><label>Font size</label>
       <div class="sg-row">
-        <button class="sg-opt" data-fs="small" onclick="app.setFontSize('small')">S</button>
-        <button class="sg-opt active" data-fs="medium" onclick="app.setFontSize('medium')">M</button>
-        <button class="sg-opt" data-fs="large" onclick="app.setFontSize('large')">L</button>
+        <button class="sg-opt" data-fs="small" onclick="app.setFontSize('small')">Small</button>
+        <button class="sg-opt active" data-fs="medium" onclick="app.setFontSize('medium')">Medium</button>
+        <button class="sg-opt" data-fs="large" onclick="app.setFontSize('large')">Large</button>
       </div>
     </div>
+    <!-- Features -->
     <div class="sg"><label>Features</label>
       <div style="display:flex;flex-direction:column;gap:.3em;font-size:.75rem">
-        <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sGamification" onchange="app.updateSettingsFeature()"> Gamification</label>
-        <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sPersonalization" onchange="app.updateSettingsFeature()"> Personalization</label>
+        <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sGamification" onchange="app.updateSettingsFeature()"> Gamification (XP, levels, badges)</label>
+        <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sPersonalization" onchange="app.updateSettingsFeature()"> Personalization (Recombee)</label>
         <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sRecall" onchange="app.updateSettingsFeature()"> Spaced repetition</label>
         <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sMissions" onchange="app.updateSettingsFeature()"> Missions</label>
         <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sGames" onchange="app.updateSettingsFeature()"> Mini-games</label>
-        <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sHighlights" onchange="app.updateSettingsFeature()"> AI takeaways</label>
+        <label style="display:flex;align-items:center;gap:.4em"><input type="checkbox" id="sHighlights" onchange="app.updateSettingsFeature()"> AI takeaways (side notes)</label>
       </div>
     </div>
-    <div class="sg"><label>Reset</label>
-      <button class="btn-ghost" onclick="app.resetAll()">Clear all data &amp; start fresh</button>
+    <!-- Data -->
+    <div class="sg"><label>Your data</label>
+      <div style="display:flex;gap:.4em;flex-wrap:wrap">
+        <button class="btn-ghost" style="border:1px solid var(--accent);border-radius:6px;padding:.3em .8em;font-size:.72rem;color:var(--accent)" onclick="app.exportData()">Download all data</button>
+        <button class="btn-ghost" style="border:1px solid var(--accent);border-radius:6px;padding:.3em .8em;font-size:.72rem;color:var(--accent)" onclick="localStorage.removeItem('pbook-tour-done');app.startTour()">Replay tour</button>
+        <button class="btn-ghost" style="border:1px solid #dc2626;border-radius:6px;padding:.3em .8em;font-size:.72rem;color:#dc2626" onclick="app.resetAll()">Reset everything</button>
+      </div>
     </div>
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=2.1.0"></script>
+<script type="module" src="js/app.js?v=2.2.0"></script>
 </body>
 </html>
