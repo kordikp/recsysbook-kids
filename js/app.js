@@ -471,6 +471,8 @@ class PBook {
 
     // Update tab highlights
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+    // Clear hash to prevent deep-link re-triggering on tab click
+    if (!auto && window.location.hash) history.replaceState(null, '', window.location.pathname);
 
     // Linear nav only in read view
 
@@ -1968,16 +1970,25 @@ class PBook {
     if (dueOnly && due.length > 0) {
       blocks = due.map(r => ({ blockId: r.blockId, isDue: true }));
     } else {
-      // Smart ordering: due first, then hardest (low ease), then new
+      // Smart ordering: due → learning (middle) → struggling → new → confident (sample)
       const dueSet = new Set(due.map(d => d.blockId));
-      const allRecall = Object.entries(this.user.recall)
-        .sort((a, b) => a[1].ease - b[1].ease)
-        .map(([blockId, card]) => ({ blockId, isDue: dueSet.has(blockId), ease: card.ease, reps: card.reps }));
-      const recallSet = new Set(allRecall.map(r => r.blockId));
-      const unscheduled = [...this.user.readBlocks]
+      const hard = [], med = [], easy = [];
+      Object.entries(this.user.recall).forEach(([blockId, card]) => {
+        const item = { blockId, isDue: dueSet.has(blockId), ease: card.ease, reps: card.reps };
+        if (card.ease < 1.8) hard.push(item);
+        else if (card.ease < 2.5) med.push(item);
+        else easy.push(item);
+      });
+      // Shuffle within groups for variety
+      const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+      // Unscheduled read blocks (never reviewed)
+      const recallSet = new Set(Object.keys(this.user.recall));
+      const newItems = [...this.user.readBlocks]
         .filter(id => !recallSet.has(id))
         .map(id => ({ blockId: id, isDue: false, ease: 2.5, reps: 0 }));
-      blocks = [...allRecall, ...unscheduled];
+      // Order: due first, then learning (most useful), struggling, new, then sample of confident
+      const confidentSample = shuffle(easy).slice(0, Math.max(2, Math.ceil(easy.length * 0.3)));
+      blocks = [...shuffle(med), ...shuffle(hard), ...shuffle(newItems), ...confidentSample];
     }
     if (blocks.length === 0) return;
 
@@ -2111,53 +2122,102 @@ class PBook {
     }
     h += `</div></div>`;
 
+    // ── Unread blocks (haven't read yet = "Don't know") ──
+    const allSpines = this.allBlocks.filter(b => b.meta.type === 'spine');
+    const unreadBlocks = allSpines.filter(b => !u.readBlocks.has(b.meta.id));
+    const recallSet = new Set(Object.keys(u.recall));
+    const newCards = [...u.readBlocks].filter(id => !recallSet.has(id)); // read but no recall yet
+
     // ── Confidence funnel (visual) ──
-    if (totalRecall > 0) {
-      const hPct = Math.round(hardCards.length / totalRecall * 100);
-      const mPct = Math.round(medCards.length / totalRecall * 100);
-      const ePct = Math.round(easyCards.length / totalRecall * 100);
-      h += `<div style="padding:.5em 1em .8em">
-        <div style="font-size:.72rem;font-weight:600;color:var(--text-3);margin-bottom:.3em">Your confidence</div>
+    const totalAll = hardCards.length + medCards.length + easyCards.length + newCards.length + unreadBlocks.length;
+    if (totalAll > 0) {
+      const seg = (n, c) => n > 0 ? `<div style="width:${Math.round(n/totalAll*100)}%;background:${c};min-width:${n>0?'2px':'0'}"></div>` : '';
+      h += `<div style="padding:.5em 1em .6em">
         <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--border)">
-          ${hPct > 0 ? `<div style="width:${hPct}%;background:#dc2626" title="${hardCards.length} struggling"></div>` : ''}
-          ${mPct > 0 ? `<div style="width:${mPct}%;background:var(--warn)" title="${medCards.length} learning"></div>` : ''}
-          ${ePct > 0 ? `<div style="width:${ePct}%;background:var(--product)" title="${easyCards.length} confident"></div>` : ''}
+          ${seg(unreadBlocks.length, 'var(--text-3)')}${seg(hardCards.length, '#dc2626')}${seg(newCards.length, 'var(--accent)')}${seg(medCards.length, 'var(--warn)')}${seg(easyCards.length, 'var(--product)')}
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--text-3);margin-top:.2em">
-          <span style="color:#dc2626">${hardCards.length} struggling</span>
-          <span style="color:var(--warn)">${medCards.length} learning</span>
-          <span style="color:var(--product)">${easyCards.length} confident</span>
+        <div style="display:flex;flex-wrap:wrap;gap:.3em .8em;font-size:.58rem;color:var(--text-3);margin-top:.25em">
+          ${unreadBlocks.length ? `<span>\u{26AA} ${unreadBlocks.length} unread</span>` : ''}
+          ${hardCards.length ? `<span style="color:#dc2626">\u{1F534} ${hardCards.length} struggling</span>` : ''}
+          ${newCards.length ? `<span style="color:var(--accent)">\u{1F7E3} ${newCards.length} new</span>` : ''}
+          ${medCards.length ? `<span style="color:var(--warn)">\u{1F7E1} ${medCards.length} learning</span>` : ''}
+          ${easyCards.length ? `<span style="color:var(--product)">\u{1F7E2} ${easyCards.length} confident</span>` : ''}
         </div>
       </div>`;
     }
 
-    // ── Card shelves by confidence (lowest first) ──
+    // ── Card swimlanes — answering moves cards between lanes ──
+
+    // Due now (top priority)
+    if (due.length > 0) {
+      const dueCards = due.slice(0, 12).map(r => {
+        const block = this.findBlock(r.blockId);
+        if (!block) return '';
+        const quiz = this._getRecallQuestion(block);
+        if (!quiz) return '';
+        const card = u.recall[r.blockId];
+        const overdue = Math.round((Date.now() - card.nextReview) / 3600000);
+        const reason = overdue > 24 ? `${Math.round(overdue/24)}d overdue` : overdue > 0 ? `${overdue}h overdue` : 'Due';
+        return this._quizPreviewCard(r.blockId, card, 'var(--warn)', reason);
+      }).filter(Boolean);
+      if (dueCards.length) h += this.shelf(`\u{1F525} Review now (${due.length})`, dueCards);
+    }
+
+    // Struggling (ease < 1.8) — shown first, these need the most work
     if (hardCards.length > 0) {
-      const hCards = hardCards.slice(0, 10).map(([blockId, card]) => this._quizPreviewCard(blockId, card, '#dc2626', 'Struggling')).filter(Boolean);
-      if (hCards.length) h += this.shelf(`\u{1F4A2} Struggling (${hardCards.length})`, hCards);
+      const hCards = hardCards.sort((a,b) => a[1].ease - b[1].ease).slice(0, 12).map(([id, c]) => this._quizPreviewCard(id, c, '#dc2626', 'Struggling')).filter(Boolean);
+      if (hCards.length) h += this.shelf(`\u{1F534} Struggling (${hardCards.length})`, hCards);
     }
+
+    // New (read but never reviewed) — important to start reviewing
+    if (newCards.length > 0) {
+      const nCards = newCards.slice(0, 10).map(id => {
+        const block = this.findBlock(id);
+        if (!block) return '';
+        const quiz = this._getRecallQuestion(block);
+        if (!quiz) return '';
+        return this._quizPreviewCard(id, { ease: 2.5, reps: 0, nextReview: Date.now() }, 'var(--accent)', 'New');
+      }).filter(Boolean);
+      if (nCards.length) h += this.shelf(`\u{1F7E3} New — never tested (${newCards.length})`, nCards);
+    }
+
+    // Learning (ease 1.8-2.5) — the sweet spot for practice
     if (medCards.length > 0) {
-      const mCards = medCards.slice(0, 10).map(([blockId, card]) => this._quizPreviewCard(blockId, card, 'var(--warn)', 'Learning')).filter(Boolean);
-      if (mCards.length) h += this.shelf(`\u{1F4AD} Learning (${medCards.length})`, mCards);
+      const mCards = medCards.sort((a,b) => a[1].ease - b[1].ease).slice(0, 12).map(([id, c]) => this._quizPreviewCard(id, c, 'var(--warn)', 'Learning')).filter(Boolean);
+      if (mCards.length) h += this.shelf(`\u{1F7E1} Learning (${medCards.length})`, mCards);
     }
+
+    // Confident (ease >= 2.5) — still shown, tested occasionally
     if (easyCards.length > 0) {
-      const eCards = easyCards.slice(0, 10).map(([blockId, card]) => this._quizPreviewCard(blockId, card, 'var(--product)', 'Confident')).filter(Boolean);
-      if (eCards.length) h += this.shelf(`\u{1F4AA} Confident (${easyCards.length})`, eCards);
+      const eCards = easyCards.sort((a,b) => b[1].ease - a[1].ease).slice(0, 10).map(([id, c]) => this._quizPreviewCard(id, c, 'var(--product)', 'Confident')).filter(Boolean);
+      if (eCards.length) h += this.shelf(`\u{1F7E2} Confident (${easyCards.length})`, eCards);
+    }
+
+    // Unread — motivate reading
+    if (unreadBlocks.length > 0) {
+      const uCards = unreadBlocks.slice(0, 8).map(b => {
+        return `<div class="card" style="border-top:3px solid var(--border);flex:0 0 240px;opacity:.7;cursor:pointer" onclick="app.openBlock('${b.meta.id}')">
+          <div style="font-size:.6rem;font-weight:700;color:var(--text-3);margin-bottom:.2em">\u{1F512} Not read yet</div>
+          <div class="card-title" style="font-size:.82rem;line-height:1.3">${b.meta.title}</div>
+          <div style="font-size:.62rem;color:var(--text-3);margin-top:.2em">Ch${b.meta._chapterNum} · Read to unlock card</div>
+        </div>`;
+      });
+      h += this.shelf(`\u{26AA} Haven't read yet (${unreadBlocks.length})`, uCards);
     }
 
     // ── How it works ──
-    h += `<div style="padding:.8em 1em;margin-top:.3em">
+    h += `<div style="padding:.6em 1em">
       <details style="font-size:.75rem;color:var(--text-2)">
-        <summary style="cursor:pointer;font-weight:600;color:var(--text-3);font-size:.72rem">How does the smart reminder work?</summary>
+        <summary style="cursor:pointer;font-weight:600;color:var(--text-3);font-size:.7rem">How does smart review work?</summary>
         <div style="margin-top:.5em;line-height:1.5">
-          <p>This uses <strong>spaced repetition</strong> (SM-2) — the same science behind Anki &amp; Duolingo:</p>
+          <p>Cards move between lanes based on your answers:</p>
           <ul style="padding-left:1.2em;margin:.4em 0">
-            <li><strong>New cards</strong> appear 2h after reading</li>
-            <li><strong>Easy</strong> → longer interval. <strong>Forgot</strong> → review again soon.</li>
-            <li>Cards you struggle with get shown more often — the system adapts to you.</li>
-            <li>Even "confident" cards come back periodically — knowledge fades without review.</li>
+            <li><strong>Forgot</strong> → card moves to Struggling, reviewed again soon</li>
+            <li><strong>Hard</strong> → stays in current lane, shorter interval</li>
+            <li><strong>Good</strong> → moves toward Confident, normal interval</li>
+            <li><strong>Easy</strong> → moves to Confident, longer interval</li>
           </ul>
-          <p style="margin-top:.3em">\u{1F534} Struggling = ease &lt; 1.8 &nbsp; \u{1F7E1} Learning = 1.8-2.5 &nbsp; \u{1F7E2} Confident = 2.5+</p>
+          <p>Even Confident cards come back — knowledge fades without review. The algorithm tests middle-difficulty cards most often (that's where you learn the most).</p>
         </div>
       </details>
     </div>`;
@@ -2336,17 +2396,10 @@ class PBook {
 
   scoreRecall(blockId, quality) {
     const xpEarned = this.user.processRecall(blockId, quality);
-    const labels = ['Forgot — we\'ll try again soon!', 'Hard — keep at it!', 'Good — nice memory!', 'Easy — you\'re a pro!'];
-    this.showXPToast(`+${xpEarned} XP — ${labels[quality]}`, quality >= 2 ? 'xp' : 'info');
+    const labels = ['Forgot — reviewing soon!', 'Hard — keep at it!', 'Good — nice!', 'Easy — nailed it!'];
+    this.showXPToast(`+${xpEarned} XP ${labels[quality]}`, quality >= 2 ? 'xp' : 'info');
     this.checkGamificationEvents();
-    // Remove the card from view
-    const card = document.getElementById(`recall-a-${blockId}`)?.closest('.card');
-    if (card) {
-      card.style.transition = 'opacity 0.3s, transform 0.3s';
-      card.style.opacity = '0';
-      card.style.transform = 'scale(0.9)';
-      setTimeout(() => card.remove(), 300);
-    }
+    this.updateXPBadge();
   }
 
   renderMath(el) {
