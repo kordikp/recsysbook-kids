@@ -1736,10 +1736,10 @@ class PBook {
       <div class="ir-answer" id="br-a-${blockId}" style="display:none">
         <div class="ir-answer-text">${quiz.a}</div>
         ${this.user.recall[blockId] ? `<div class="recall-buttons">
-          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${blockId}',0);document.getElementById('block-recall-${blockId}').remove()">Forgot</button>
-          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${blockId}',1);document.getElementById('block-recall-${blockId}').remove()">Hard</button>
-          <button class="recall-btn recall-good" onclick="app.scoreRecall('${blockId}',2);document.getElementById('block-recall-${blockId}').remove()">Good</button>
-          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${blockId}',3);document.getElementById('block-recall-${blockId}').remove()">Easy!</button>
+          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${blockId}',0,this)">Forgot</button>
+          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${blockId}',1,this)">Hard</button>
+          <button class="recall-btn recall-good" onclick="app.scoreRecall('${blockId}',2,this)">Good</button>
+          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${blockId}',3,this)">Easy!</button>
         </div>` : `<button class="recall-reveal" onclick="document.getElementById('block-recall-${blockId}').remove()">Got it!</button>`}
       </div>
       <button class="recall-reveal" onclick="document.getElementById('br-a-${blockId}').style.display='block';this.style.display='none'">Show answer</button>
@@ -1777,10 +1777,10 @@ class PBook {
         <div class="ir-answer-text">${quiz.a}</div>
         <div class="ir-from">From: ${block.meta.title}</div>
         <div class="recall-buttons">
-          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${r.blockId}',0);document.getElementById('inline-recall-${r.blockId}').remove()">Forgot</button>
-          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${r.blockId}',1);document.getElementById('inline-recall-${r.blockId}').remove()">Hard</button>
-          <button class="recall-btn recall-good" onclick="app.scoreRecall('${r.blockId}',2);document.getElementById('inline-recall-${r.blockId}').remove()">Good</button>
-          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${r.blockId}',3);document.getElementById('inline-recall-${r.blockId}').remove()">Easy!</button>
+          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${r.blockId}',0,this)">Forgot</button>
+          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${r.blockId}',1,this)">Hard</button>
+          <button class="recall-btn recall-good" onclick="app.scoreRecall('${r.blockId}',2,this)">Good</button>
+          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${r.blockId}',3,this)">Easy!</button>
         </div>
       </div>
       <button class="recall-reveal" onclick="document.getElementById('ir-a-${r.blockId}').style.display='block';this.style.display='none'">Hmm... Show answer!</button>
@@ -1800,10 +1800,10 @@ class PBook {
         <div class="recall-answer-text">${quiz.a}</div>
         <div class="recall-hint" style="font-size:.7rem;color:var(--text-3);margin:.3em 0">From: ${block.meta.title}</div>
         <div class="recall-buttons">
-          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${r.blockId}',0)">Forgot</button>
-          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${r.blockId}',1)">Hard</button>
-          <button class="recall-btn recall-good" onclick="app.scoreRecall('${r.blockId}',2)">Good</button>
-          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${r.blockId}',3)">Easy!</button>
+          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${r.blockId}',0,this)">Forgot</button>
+          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${r.blockId}',1,this)">Hard</button>
+          <button class="recall-btn recall-good" onclick="app.scoreRecall('${r.blockId}',2,this)">Good</button>
+          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${r.blockId}',3,this)">Easy!</button>
         </div>
       </div>
       <button class="recall-reveal" id="recall-r-${r.blockId}" onclick="document.getElementById('recall-a-${r.blockId}').style.display='block';this.style.display='none'">Show answer</button>
@@ -2103,10 +2103,10 @@ class PBook {
             <div style="font-size:.78rem;color:var(--text-2);margin:.4em 0;padding-top:.4em;border-top:1px solid var(--border)">${quiz.a}</div>
             <div style="font-size:.6rem;color:var(--text-3);margin-bottom:.3em">From: ${block.meta.title}</div>
             <div class="recall-buttons">
-              <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${r.blockId}',0);this.closest('.card').remove()">Forgot</button>
-              <button class="recall-btn recall-hard" onclick="app.scoreRecall('${r.blockId}',1);this.closest('.card').remove()">Hard</button>
-              <button class="recall-btn recall-good" onclick="app.scoreRecall('${r.blockId}',2);this.closest('.card').remove()">Good</button>
-              <button class="recall-btn recall-easy" onclick="app.scoreRecall('${r.blockId}',3);this.closest('.card').remove()">Easy!</button>
+              <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${r.blockId}',0,this)">Forgot</button>
+              <button class="recall-btn recall-hard" onclick="app.scoreRecall('${r.blockId}',1,this)">Hard</button>
+              <button class="recall-btn recall-good" onclick="app.scoreRecall('${r.blockId}',2,this)">Good</button>
+              <button class="recall-btn recall-easy" onclick="app.scoreRecall('${r.blockId}',3,this)">Easy!</button>
             </div>
           </div>
           <button class="recall-reveal" onclick="document.getElementById('qd-a-${r.blockId}').style.display='block';this.style.display='none'" style="margin-top:.3em">Show answer</button>
@@ -2241,18 +2241,20 @@ class PBook {
       </div>`;
     }
 
-    // ── Bottom actions ──
+    // ── Bottom actions (side by side on wide screens) ──
     const unread = this.allBlocks.filter(b => b.meta.core && b.meta.type === 'spine' && !u.readBlocks.has(b.meta.id));
-    h += `<div style="padding:.8em 1em;display:flex;flex-direction:column;gap:.5em;align-items:center">`;
-    if (unread.length > 0) {
-      h += `<button class="btn-primary" style="width:100%;max-width:320px;font-size:.82rem" onclick="app.switchView('home')">Continue reading \u{1F4D6} (${unread.length} unread)</button>`;
-    }
     const totalWithQ = this.allBlocks.filter(b => b.meta.recallQ).length;
-    if (totalWithQ > 0) {
-      h += `<button class="btn-ghost" style="width:100%;max-width:320px;border:1.5px solid var(--accent);border-radius:8px;padding:.5em;font-size:.78rem;color:var(--accent)" onclick="app.startPractice()">Test all ${totalWithQ} cards</button>`;
+    h += `<div style="padding:.8em 1em">`;
+    h += `<div style="display:flex;gap:.5em;flex-wrap:wrap">`;
+    if (unread.length > 0) {
+      h += `<button class="btn-primary" style="flex:1;min-width:150px;font-size:.82rem;padding:.5em" onclick="app.switchView('home')">Continue reading \u{1F4D6} (${unread.length})</button>`;
     }
+    if (totalWithQ > 0) {
+      h += `<button class="btn-ghost" style="flex:1;min-width:150px;border:1.5px solid var(--accent);border-radius:8px;padding:.5em;font-size:.78rem;color:var(--accent)" onclick="app.startPractice()">Test all ${totalWithQ} cards</button>`;
+    }
+    h += `</div>`;
     if (hardCards.length > 0) {
-      h += `<button class="btn-ghost" style="width:100%;max-width:320px;border:1.5px solid #dc2626;border-radius:8px;padding:.5em;font-size:.78rem;color:#dc2626" onclick="app._startHardMode()">Hard mode (${hardCards.length} struggling)</button>`;
+      h += `<div style="text-align:center;margin-top:.4em"><button style="border:1.5px solid #dc2626;border-radius:8px;padding:.35em .8em;font-size:.72rem;color:#dc2626;cursor:pointer;background:none;font-family:var(--font-ui)" onclick="app._startHardMode()">Hard mode (${hardCards.length})</button></div>`;
     }
     h += `</div>`;
 
@@ -2288,10 +2290,10 @@ class PBook {
       <div id="qp-${uid}" style="display:none;margin-top:.4em;padding-top:.4em;border-top:1px solid var(--border)">
         <div style="font-size:.78rem;color:var(--text-2);line-height:1.4;margin-bottom:.4em">${quiz.a}</div>
         <div class="recall-buttons" onclick="event.stopPropagation()">
-          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${blockId}',0);this.closest('.card').remove()">Forgot</button>
-          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${blockId}',1);this.closest('.card').remove()">Hard</button>
-          <button class="recall-btn recall-good" onclick="app.scoreRecall('${blockId}',2);this.closest('.card').remove()">Good</button>
-          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${blockId}',3);this.closest('.card').remove()">Easy!</button>
+          <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${blockId}',0,this)">Forgot</button>
+          <button class="recall-btn recall-hard" onclick="app.scoreRecall('${blockId}',1,this)">Hard</button>
+          <button class="recall-btn recall-good" onclick="app.scoreRecall('${blockId}',2,this)">Good</button>
+          <button class="recall-btn recall-easy" onclick="app.scoreRecall('${blockId}',3,this)">Easy!</button>
         </div>
         <a href="#" onclick="event.stopPropagation();event.preventDefault();app.openBlock('${blockId}')" style="display:block;font-size:.62rem;color:var(--accent);margin-top:.3em;text-align:center">Re-read this section &rarr;</a>
       </div>
@@ -2423,12 +2425,26 @@ class PBook {
     }
   }
 
-  scoreRecall(blockId, quality) {
+  scoreRecall(blockId, quality, btnEl) {
+    // Prevent double-scoring
+    if (this._scoredRecall?.has(blockId)) return;
+    if (!this._scoredRecall) this._scoredRecall = new Set();
+    this._scoredRecall.add(blockId);
+    setTimeout(() => this._scoredRecall.delete(blockId), 2000);
+
     const xpEarned = this.user.processRecall(blockId, quality);
     const labels = ['Forgot — reviewing soon!', 'Hard — keep at it!', 'Good — nice!', 'Easy — nailed it!'];
     this.showXPToast(`+${xpEarned} XP ${labels[quality]}`, quality >= 2 ? 'xp' : 'info');
     this.checkGamificationEvents();
     this.updateXPBadge();
+    // Remove the card from view (Browse shelf, inline, quiz preview)
+    const card = btnEl?.closest('.card') || btnEl?.closest('.inline-recall');
+    if (card) {
+      card.style.transition = 'opacity .3s, transform .3s';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.9)';
+      setTimeout(() => card.remove(), 300);
+    }
   }
 
   renderMath(el) {

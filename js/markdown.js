@@ -256,6 +256,6 @@ function cleanVal(v) {
   if (v === 'null' || v === '~') return null;
   if (/^\d+$/.test(v)) return parseInt(v, 10);
   if (/^\d+\.\d+$/.test(v)) return parseFloat(v);
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v.slice(1, -1);
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v.slice(1, -1).replace(/\\"/g, '"').replace(/\\'/g, "'");
   return v;
 }
