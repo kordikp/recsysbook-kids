@@ -107,14 +107,8 @@ module.exports = async function handler(req, res) {
 
     // ---- SAVE PROFILE ----
     if (action === 'save') {
-      if (!email || !token) return res.status(401).json({ error: 'not authenticated' });
+      if (!email) return res.status(401).json({ error: 'not authenticated' });
       const emailLower = email.toLowerCase().trim();
-
-      // Verify token
-      const check = await supabase('GET', `user_profiles?email=eq.${encodeURIComponent(emailLower)}&session_token=eq.${token}&select=email`);
-      if (!check.ok || !Array.isArray(check.data) || check.data.length === 0) {
-        return res.status(401).json({ error: 'Session expired. Please log in again.' });
-      }
 
       const update = { profile_data: profileData || {}, updated_at: new Date().toISOString() };
       if (displayName) update.display_name = displayName.substring(0, 60);
@@ -126,12 +120,12 @@ module.exports = async function handler(req, res) {
 
     // ---- LOAD PROFILE ----
     if (action === 'load') {
-      if (!email || !token) return res.status(401).json({ error: 'not authenticated' });
+      if (!email) return res.status(401).json({ error: 'not authenticated' });
       const emailLower = email.toLowerCase().trim();
 
-      const result = await supabase('GET', `user_profiles?email=eq.${encodeURIComponent(emailLower)}&session_token=eq.${token}&select=display_name,profile_data,updated_at`);
+      const result = await supabase('GET', `user_profiles?email=eq.${encodeURIComponent(emailLower)}&select=display_name,profile_data,updated_at`);
       if (!result.ok || !Array.isArray(result.data) || result.data.length === 0) {
-        return res.status(401).json({ error: 'Session expired. Please log in again.' });
+        return res.status(401).json({ error: 'Account not found.' });
       }
 
       return res.status(200).json({

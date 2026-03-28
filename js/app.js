@@ -2700,7 +2700,7 @@ class PBook {
     if (result.error) {
       this.showXPToast(result.error, 'info');
       if (btn) btn.textContent = 'Sync now';
-      if (result.error.includes('expired')) this._setAuth(null);
+      // Don't auto-logout on sync errors
       return;
     }
     this._lastSyncTime = Date.now();

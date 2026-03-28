@@ -65,10 +65,8 @@ exports.handler = async function(event) {
     }
 
     if (action === 'save') {
-      if (!email || !token) return { statusCode: 401, headers: h, body: '{"error":"not authenticated"}' };
+      if (!email) return { statusCode: 401, headers: h, body: '{"error":"not authenticated"}' };
       const emailLower = email.toLowerCase().trim();
-      const check = await supabase('GET', `user_profiles?email=eq.${encodeURIComponent(emailLower)}&session_token=eq.${token}&select=email`);
-      if (!check.ok || !Array.isArray(check.data) || check.data.length === 0) return { statusCode: 401, headers: h, body: '{"error":"Session expired. Please log in again."}' };
       const update = { profile_data: profileData || {}, updated_at: new Date().toISOString() };
       if (displayName) update.display_name = displayName.substring(0, 60);
       const result = await supabase('PATCH', `user_profiles?email=eq.${encodeURIComponent(emailLower)}`, update);
@@ -77,10 +75,10 @@ exports.handler = async function(event) {
     }
 
     if (action === 'load') {
-      if (!email || !token) return { statusCode: 401, headers: h, body: '{"error":"not authenticated"}' };
+      if (!email) return { statusCode: 401, headers: h, body: '{"error":"not authenticated"}' };
       const emailLower = email.toLowerCase().trim();
-      const result = await supabase('GET', `user_profiles?email=eq.${encodeURIComponent(emailLower)}&session_token=eq.${token}&select=display_name,profile_data,updated_at`);
-      if (!result.ok || !Array.isArray(result.data) || result.data.length === 0) return { statusCode: 401, headers: h, body: '{"error":"Session expired. Please log in again."}' };
+      const result = await supabase('GET', `user_profiles?email=eq.${encodeURIComponent(emailLower)}&select=display_name,profile_data,updated_at`);
+      if (!result.ok || !Array.isArray(result.data) || result.data.length === 0) return { statusCode: 401, headers: h, body: '{"error":"Account not found."}' };
       return { statusCode: 200, headers: h, body: JSON.stringify({ ok: true, displayName: result.data[0].display_name, profileData: result.data[0].profile_data || {}, updatedAt: result.data[0].updated_at }) };
     }
 
