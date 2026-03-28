@@ -2883,46 +2883,53 @@ class PBook {
     </div>`;
 
     // Recall section
-    if (this._f('spaceRepetition') && totalRecall > 0) {
-      h += '<div class="profile-section"><h3>\u{1F9E0} Recall & Review</h3>';
-      h += `<div class="gami-stats">
-        <div class="gami-stat"><span class="gs-num">${dueCount}</span><span class="gs-label">Due now</span></div>
-        <div class="gami-stat"><span class="gs-num">${totalRecall}</span><span class="gs-label">Tracked</span></div>
-        <div class="gami-stat"><span class="gs-num">${totalReps}</span><span class="gs-label">Reviews</span></div>
-      </div>`;
-      // Show up to 3 due recall cards directly in profile
-      const dueInProfile = u.getDueRecalls().slice(0, 3);
-      if (dueInProfile.length) {
-        h += '<div style="margin:.6em 0">';
-        dueInProfile.forEach(r => {
-          const block = this.findBlock(r.blockId);
-          if (!block) return;
-          const quiz = this._getRecallQuestion(block);
-          if (!quiz) return;
-          h += `<div class="inline-recall" style="margin-bottom:.5em">
-            <div class="ir-header"><span class="ir-icon">\u{1F9E0}</span> Do you remember?</div>
-            <div class="ir-question">${quiz.q}</div>
-            <div class="ir-answer" id="pr-a-${r.blockId}" style="display:none">
-              <div class="ir-answer-text">${quiz.a}</div>
-              <div class="ir-from">From: ${block.meta.title}</div>
-              <div class="recall-buttons">
-                <button class="recall-btn recall-forgot" onclick="app.scoreRecall('${r.blockId}',0);document.getElementById('pr-a-${r.blockId}').closest('.inline-recall').remove()">Forgot</button>
-                <button class="recall-btn recall-hard" onclick="app.scoreRecall('${r.blockId}',1);document.getElementById('pr-a-${r.blockId}').closest('.inline-recall').remove()">Hard</button>
-                <button class="recall-btn recall-good" onclick="app.scoreRecall('${r.blockId}',2);document.getElementById('pr-a-${r.blockId}').closest('.inline-recall').remove()">Good</button>
-                <button class="recall-btn recall-easy" onclick="app.scoreRecall('${r.blockId}',3);document.getElementById('pr-a-${r.blockId}').closest('.inline-recall').remove()">Easy!</button>
-              </div>
-            </div>
-            <button class="recall-reveal" onclick="document.getElementById('pr-a-${r.blockId}').style.display='block';this.style.display='none'">Show answer</button>
-          </div>`;
-        });
-        h += '</div>';
+    if (this._f('spaceRepetition')) {
+      const totalWithQ = this.allBlocks.filter(b => b.meta.recallQ).length;
+      const hardC = Object.values(u.recall).filter(c => c.ease < 1.8).length;
+      const medC = Object.values(u.recall).filter(c => c.ease >= 1.8 && c.ease < 2.5).length;
+      const easyC = Object.values(u.recall).filter(c => c.ease >= 2.5).length;
+
+      h += '<div class="profile-section"><h3>\u{1F9E0} Memory Cards</h3>';
+
+      if (totalRecall > 0) {
+        // Confidence bar
+        h += `<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--border);margin-bottom:.4em">
+          ${hardC ? `<div style="width:${Math.round(hardC/totalRecall*100)}%;background:#dc2626"></div>` : ''}
+          ${medC ? `<div style="width:${Math.round(medC/totalRecall*100)}%;background:var(--warn)"></div>` : ''}
+          ${easyC ? `<div style="width:${Math.round(easyC/totalRecall*100)}%;background:var(--product)"></div>` : ''}
+        </div>`;
+        h += `<div style="display:flex;gap:.6em;font-size:.68rem;color:var(--text-3);margin-bottom:.5em">`;
+        if (hardC) h += `<span style="color:#dc2626">${hardC} struggling</span>`;
+        if (medC) h += `<span style="color:var(--warn)">${medC} learning</span>`;
+        if (easyC) h += `<span style="color:var(--product)">${easyC} confident</span>`;
+        h += `</div>`;
+
+        // Next reviews
+        const upcoming = Object.entries(u.recall)
+          .filter(([_, c]) => c.nextReview > Date.now())
+          .sort((a, b) => a[1].nextReview - b[1].nextReview)
+          .slice(0, 3);
+        if (upcoming.length) {
+          h += `<div style="font-size:.68rem;color:var(--text-3);margin-bottom:.5em">Next reviews: ${upcoming.map(([id, c]) => {
+            const title = this.findBlock(id)?.meta?.title || id;
+            return `<span style="color:var(--warn)">${this._timeUntil(c.nextReview)}</span> ${this.escHtml(title)}`;
+          }).join(' · ')}</div>`;
+        }
       }
-      h += `<div style="display:flex;gap:.4em;justify-content:center;margin-top:.5em">`;
-      if (dueCount > 0) h += `<button class="recall-reveal" onclick="app.startPractice(true)">\u{1F9E0} Review ${dueCount} due card${dueCount > 1 ? 's' : ''}</button>`;
-      h += `<button class="btn-ghost" style="border:1px solid var(--accent);border-radius:6px;padding:.3em .7em;font-size:.75rem;color:var(--accent)" onclick="app.startPractice()">\u{1F9E0} Test knowledge (${totalRecall})</button>`;
-      h += `</div></div>`;
-    } else if (this._f('spaceRepetition')) {
-      h += '<div class="profile-section"><h3>\u{1F9E0} Recall & Review</h3><p style="font-size:.8rem;color:var(--text-3)">Read some sections first — recall quizzes will appear to help you remember.</p></div>';
+
+      // Stats
+      h += `<div style="display:flex;gap:.6em;font-size:.78rem;margin-bottom:.5em">`;
+      h += `<span>${totalRecall} tracked</span>`;
+      h += `<span style="color:var(--text-3)">${totalWithQ} total</span>`;
+      if (dueCount > 0) h += `<span style="color:var(--warn);font-weight:600">${dueCount} due now</span>`;
+      h += `</div>`;
+
+      // Actions
+      h += `<div style="display:flex;gap:.4em">`;
+      h += `<button class="btn-primary" style="flex:1;font-size:.78rem;padding:.4em" onclick="app.switchView('quiz')">\u{1F9E0} Quiz tab</button>`;
+      if (dueCount > 0) h += `<button class="recall-reveal" style="flex:1" onclick="app.startPractice(true)">Review ${dueCount} due</button>`;
+      h += `</div>`;
+      h += `</div>`;
     }
 
     // Achievements
