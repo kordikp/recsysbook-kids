@@ -3666,7 +3666,7 @@ class PBook {
       </div>`;
     } else if (coreComplete) {
       html += `<div class="mission-complete-action">
-        <button class="mission-complete-btn" onclick="app.completeMission('${m.id}')">Complete mission &rarr;</button>
+        <button class="mission-complete-btn" onclick="app._startBossQuiz('${m.id}')">Face the Final Boss &rarr;</button>
       </div>`;
     }
 
@@ -3680,6 +3680,15 @@ class PBook {
     else { this.user.missionBranches[missionId] = voice; }
     this.user.save();
     this.showMission(missionId);
+  }
+
+  _startBossQuiz(missionId) {
+    const missions = this.getMissions();
+    const m = missions.find(x => x.id === missionId);
+    if (!m) return;
+    if (!m.boss) { this.completeMission(missionId); return; } // no boss → complete directly
+    this._wizardMission = m;
+    this._renderBossQuiz();
   }
 
   completeMission(missionId) {
