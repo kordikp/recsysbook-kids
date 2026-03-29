@@ -38,38 +38,7 @@ $$\text{sim}(A, B) = \frac{A \cdot B}{\|A\| \times \|B\|}$$
 
 ## 2. Matrix Factorization & ALS — "Find the hidden reasons"
 
-$$R \approx U \times V^T$$
-
-**What it means:**
-
-- **R** = the big rating matrix (users × items, mostly empty)
-- **U** = a smaller matrix of user preferences (each user = a short list of hidden factors)
-- **V** = a smaller matrix of item qualities (each item = a short list of hidden factors)
-- **≈** means "approximately equals" — we can't get it exactly right, but close enough
-
-**The idea:** Every user and every item can be described by a few hidden numbers. Maybe factor 1 is "likes action movies," factor 2 is "prefers short content." The system discovers these factors automatically — nobody tells it what they mean!
-
-**Example with 2 factors:**
-
-- You = [0.9 action, 0.2 comedy]
-- Movie A = [0.8 action, 0.1 comedy]
-- Predicted rating = 0.9 × 0.8 + 0.2 × 0.1 = 0.72 + 0.02 = **0.74** → You'll probably like it!
-
-**But how does the system LEARN those numbers?** That's where **ALS** (Alternating Least Squares) comes in. The key update rule:
-
-$$u_i = (V^T V + \lambda I)^{-1} V^T r_i$$
-
-**In plain English:**
-
-1. **Fix all item vectors** (V) and solve for the best user vectors (U)
-2. **Fix all user vectors** (U) and solve for the best item vectors (V)
-3. **Repeat** — alternating back and forth until the numbers stop changing
-
-The formula says: "To find user i's hidden preferences ($u_i$), look at all the items they rated ($r_i$), consider what those items represent ($V$), and find the combination that best explains the ratings." The $\lambda I$ part prevents overfitting — it's like saying "don't go crazy trying to fit every single rating perfectly."
-
-**Why ALS is elegant:** Each step has a clean mathematical solution (no guessing!). And because you fix one side at a time, you can parallelize massively — Netflix ran this on thousands of computers simultaneously.
-
-**Why it matters:** This is how Netflix, Spotify, and YouTube compress millions of ratings into a small, useful model. It's like summarizing a 1000-page book into a 10-word description — you lose some detail but capture the essence.
+For the full story on matrix factorization — how it decomposes a giant ratings matrix into hidden taste dimensions, how the ALS algorithm learns those dimensions, and why it won the Netflix Prize — see the dedicated section in Chapter 3.
 
 ## 3. nDCG — "How good is this ranked list?"
 
@@ -97,7 +66,7 @@ $$\text{nDCG} = \frac{\text{DCG}}{\text{ideal DCG}}$$
 | Formula | What it does | Where it's used |
 |---------|-------------|----------------|
 | Cosine similarity | Finds similar users/items | Collaborative filtering |
-| Matrix factorization | Discovers hidden preferences | Training recommendation models |
+| Matrix factorization | Discovers hidden preferences | Training recommendation models (see Ch. 3) |
 | nDCG | Measures ranking quality | Evaluating if the system is good |
 
 These three formulas are the foundation. Real systems add many more — but if you understand these, you understand the core math of recommendation systems.
