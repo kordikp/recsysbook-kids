@@ -90,6 +90,14 @@ export function renderMarkdown(text) {
     // Close list on empty line
     if (inList && line.trim() === '') { result.push(closeList(listType)); inList = false; continue; }
 
+    // Standalone image (block-level, not wrapped in <p>)
+    const imgMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)\s*$/);
+    if (imgMatch) {
+      if (inList) { result.push(closeList(listType)); inList = false; }
+      result.push(`<figure class="md-figure"><img src="${imgMatch[2]}" alt="${imgMatch[1]}" style="max-width:100%;border-radius:8px;display:block;margin:1em auto;"></figure>`);
+      continue;
+    }
+
     // Empty line
     if (line.trim() === '') continue;
 
@@ -121,7 +129,8 @@ function closeList(type) { return type === 'ul' ? '</ul>' : '</ol>'; }
 
 function isBlockStart(line) {
   return /^#{1,6}\s/.test(line) || /^[-*]\s/.test(line) || /^\d+[.)]\s/.test(line) ||
-    /^---+\s*$/.test(line) || /^\*\*\*+\s*$/.test(line) || /^\|/.test(line) || /^%%/.test(line);
+    /^---+\s*$/.test(line) || /^\*\*\*+\s*$/.test(line) || /^\|/.test(line) || /^%%/.test(line) ||
+    /^!\[/.test(line); // standalone image
 }
 
 function escapeHtml(s) {
