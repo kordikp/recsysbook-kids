@@ -3060,6 +3060,11 @@ class PBook {
       'Data Collection': ['data collect', 'item catalog', 'user data'],
       'Exploration': ['exploration', 'exploit', 'bandit'],
       'Ethics': ['ethic', 'responsible', 'transparent'],
+      'Embeddings': ['embedding', 'vector space', 'vector represent'],
+      'Self-Attention': ['attention', 'transformer', 'self-attention'],
+      'Two-Tower': ['two-tower', 'two tower', 'user tower', 'item tower'],
+      'nDCG': ['ndcg', 'dcg', 'ranking quality'],
+      'ALS': ['alternating least', 'als '],
     };
     [...u.readBlocks].forEach(id => {
       const block = this.findBlock(id);
