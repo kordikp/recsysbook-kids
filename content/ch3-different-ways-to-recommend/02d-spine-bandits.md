@@ -14,6 +14,8 @@ recallA: "Should the system show safe picks you'll like (exploit) or try new thi
 status: accepted
 ---
 
+![The Explore-Exploit Restaurant](/images/comic-bandits.svg)
+
 Imagine you're at a food court with 20 restaurants. You've tried 3 and loved one of them. Do you go back to your favorite (safe bet) or try a new place (might be amazing, might be terrible)?
 
 This is called the **explore-exploit dilemma**, and every recommender system faces it constantly.
@@ -51,5 +53,7 @@ Real recommendations depend on **context**. You might want cooking videos on Sun
 - What's trending right now?
 
 They learn: "For THIS user, in THIS context, THESE items tend to work." It's like having a friend who knows that you want comfort food when you're tired and adventure food when you're excited.
+
+![Explore-Exploit Dilemma](/images/diagram-bandit-exploration.svg)
 
 **Why this matters**: Without exploration, recommendations get boring and predictable. Without exploitation, they feel random and unhelpful. The best systems find the sweet spot — and bandit algorithms are how they do it.

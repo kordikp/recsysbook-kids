@@ -8,7 +8,7 @@ core: true
 teaser: "A rock song and a jazz song might feel similar — warm, relaxing, acoustic. How does a computer learn to 'feel' that?"
 voice: universal
 parent: null
-diagram: null
+diagram: diagram-embedding-space
 recallQ: "What are \"embeddings\" in recommendation systems?"
 recallA: "Items turned into lists of numbers (vectors). Close vectors = similar items. Neural networks learn these patterns."
 status: accepted

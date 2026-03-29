@@ -18,6 +18,8 @@ Here's a question: how do you usually find new stuff to watch?
 
 If you're like most people, you ask your friends. "Hey, have you seen anything good lately?" And if that friend has great taste -- if they always recommend stuff you end up loving -- you trust them even more next time.
 
+![Collaborative Filtering Story](/images/comic-cf.svg)
+
 Now imagine you could do that with a MILLION people. Not just your five best friends, but a million strangers who happen to like the exact same things you do.
 
 That's **collaborative filtering**. It's one of the oldest and most powerful tricks in the recommendation playbook.

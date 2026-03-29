@@ -69,3 +69,5 @@ Content-based filtering doesn't need other users at all. It works for:
 It's like having a super-smart librarian who has read every book, watched every video, and listened to every song -- and remembers all the details.
 
 **Think about it!** Next time you see "More like this" on any platform, look at the recommendations. Are they similar in topic, style, or mood? That's probably content-based filtering at work!
+
+![Algorithm Families](/images/diagram-algorithm-taxonomy.svg)

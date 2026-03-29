@@ -43,4 +43,8 @@ Some people are "tough raters" who never give 5 stars. Others give 5 stars to ev
 
 Real systems try many different similarity measures and use A/B tests (from the last chapter!) to find which one works best for their data. Cosine similarity is the most common starting point, but it's not the only option.
 
+![Matrix Factorization](/images/comic-mf.svg)
+
+![Matrix Decomposition](/images/diagram-mf-decomposition.svg)
+
 **The key idea:** Similarity is about finding people whose opinions move in the same direction as yours -- not people who use the same star ratings.

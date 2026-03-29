@@ -8,7 +8,7 @@ core: true
 teaser: "Every recommender optimizes SOMETHING. The question is: whose goals does it serve?"
 voice: universal
 parent: null
-diagram: null
+diagram: diagram-objectives
 recallQ: "What is the algorithm actually trying to do?"
 recallA: "It depends! Subscription services optimize for YOUR happiness. Free/ad services optimize for ADVERTISER revenue."
 status: accepted

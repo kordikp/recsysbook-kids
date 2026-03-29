@@ -8,7 +8,7 @@ core: true
 teaser: "Item clues, person clues, and action clues -- the three ingredients in every recommendation."
 voice: universal
 parent: null
-diagram: kids-cold-start
+diagram: diagram-data-sources
 recallQ: "Name the 3 types of clues recommenders use."
 recallA: "Item clues (what it IS), person clues (who YOU are), action clues (what you DO)."
 status: accepted
