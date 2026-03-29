@@ -324,7 +324,7 @@ class PBook {
       { target: '.tab[data-view="read"]', text: "\u{1F4F1} The Feed! Just keep scrolling — the app figures out what to show you next. Like TikTok, but you actually learn stuff.", pos: 'top' },
       { target: '.tab[data-view="glossary"]', text: "\u{1F3AF} Missions! Each one is a quest with a story and a final boss quiz at the end. Beat the boss = earn a title!", pos: 'top' },
       { target: '.tab[data-view="map"]', text: "\u{1F5FA} The Map! See everything in the book, plus your saved stuff and notes. Tap any chapter to jump there.", pos: 'top' },
-      { target: '.tab[data-view="chat"]', text: "\u{1F916} The Tutor! Got a question? Ask it here — it knows the whole book. It's like having a super-smart friend.", pos: 'top' },
+      { target: '.tab[data-view="quiz"]', text: "\u{1F9E0} Quiz! Test what you remember. Cards get smarter over time — hard stuff comes back more often, easy stuff less. Like Anki for recommendations!", pos: 'top' },
       { target: '#xpBadge', text: "\u{1F31F} This is your level! You get XP for reading, playing mini-games, and finishing missions. Level up to unlock cool themes!", pos: 'bottom' },
       { target: null, text: "You're all set! Just tap anything that looks interesting. There's no wrong way to read this book. If you ever get lost, tap \"p-book\" up top to come back here. GO! \u{1F680}", pos: 'center' },
     ];
