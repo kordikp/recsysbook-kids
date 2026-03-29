@@ -3276,7 +3276,14 @@ class PBook {
     const auth = this._getAuth();
     if (!auth) return;
     const btn = document.getElementById('syncBtn');
-    if (btn) btn.textContent = 'Syncing...';
+    if (btn) btn.textContent = navigator.onLine ? 'Syncing...' : 'Queued';
+
+    if (!navigator.onLine) {
+      // Queue for when online
+      this.rc._queueOffline({ type: 'log', data: { type: 'profile_sync', userId: auth.email, data: this._collectProfileData() } });
+      if (btn) setTimeout(() => { if (btn) btn.textContent = 'Sync'; }, 1500);
+      return;
+    }
 
     const result = await this._authRequest({
       action: 'save',
@@ -3287,8 +3294,7 @@ class PBook {
 
     if (result.error) {
       this.showXPToast(result.error, 'info');
-      if (btn) btn.textContent = 'Sync now';
-      // Don't auto-logout on sync errors
+      if (btn) btn.textContent = 'Sync';
       return;
     }
     this._lastSyncTime = Date.now();

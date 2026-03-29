@@ -12,6 +12,10 @@ export class RecombeeClient {
     this.userId = this.getOrCreateUserId();
     this.interactions = []; // local log (always kept for offline reference)
     this.allBlocks = [];
+    // Flush offline queue when connectivity returns
+    window.addEventListener('online', () => this.flushOfflineQueue());
+    // Also try flushing every 60 seconds
+    setInterval(() => this.flushOfflineQueue(), 60000);
   }
 
   // --- User identity (persistent across sessions) ---
@@ -44,10 +48,58 @@ export class RecombeeClient {
       if (res.status === 401) this.enabled = false;
       return null;
     } catch (e) {
-      if (e.name === 'AbortError') return null; // timeout — don't disable, just skip
-      this.enabled = false;
+      // Offline or timeout — queue write operations for retry
+      if (method !== 'GET' && (e.name === 'AbortError' || e.name === 'TypeError' || !navigator.onLine)) {
+        this._queueOffline({ type: 'recombee', method, endpoint, body });
+      }
+      if (e.name !== 'AbortError') this.enabled = false;
       return null;
     }
+  }
+
+  // --- Offline queue: store failed calls, retry when online ---
+  _queueOffline(entry) {
+    try {
+      const queue = JSON.parse(localStorage.getItem('pbook-offline-queue') || '[]');
+      queue.push({ ...entry, ts: Date.now() });
+      // Cap at 200 entries
+      if (queue.length > 200) queue.splice(0, queue.length - 200);
+      localStorage.setItem('pbook-offline-queue', JSON.stringify(queue));
+    } catch (e) {}
+  }
+
+  async flushOfflineQueue() {
+    if (!navigator.onLine) return;
+    let queue;
+    try { queue = JSON.parse(localStorage.getItem('pbook-offline-queue') || '[]'); } catch { return; }
+    if (!queue.length) return;
+
+    const remaining = [];
+    for (const entry of queue) {
+      try {
+        if (entry.type === 'recombee' && this.enabled) {
+          const res = await fetch('/.netlify/functions/recombee', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: entry.endpoint, body: entry.body, method: entry.method }),
+          });
+          if (!res.ok) remaining.push(entry);
+        } else if (entry.type === 'log') {
+          const res = await fetch('/.netlify/functions/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry.data),
+          });
+          if (!res.ok) remaining.push(entry);
+        } else {
+          remaining.push(entry); // unknown type, keep
+        }
+      } catch {
+        remaining.push(entry); // still offline, keep
+        break; // stop trying if network failed
+      }
+    }
+    localStorage.setItem('pbook-offline-queue', JSON.stringify(remaining));
   }
 
   // --- Analytics context ---
@@ -130,15 +182,21 @@ export class RecombeeClient {
     localStorage.setItem('pbook-uid', newUserId);
   }
 
-  // --- Server-side log (fire & forget) ---
+  // --- Server-side log (fire & forget, queues when offline) ---
   _sendToLog(entry) {
+    if (!navigator.onLine) {
+      this._queueOffline({ type: 'log', data: entry });
+      return;
+    }
     try {
       fetch('/.netlify/functions/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry)
-      }).catch(() => {}); // fire & forget
-    } catch(e) {}
+      }).catch(() => this._queueOffline({ type: 'log', data: entry }));
+    } catch(e) {
+      this._queueOffline({ type: 'log', data: entry });
+    }
   }
 
   // --- Persist interactions locally ---
