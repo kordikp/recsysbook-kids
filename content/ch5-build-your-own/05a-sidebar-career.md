@@ -21,7 +21,7 @@ Recommendation engineers (also called machine learning engineers or data scienti
 - Designing algorithms that help people find things they'll love
 - Running experiments to test whether changes actually help
 - Analyzing huge amounts of data to find hidden patterns
-- Making sure the system is fair and doesn't create too many filter bubbles
+- Tuning the system to help users discover diverse, fresh content — not trap them in opinion bubbles
 - Building systems that handle millions of users at once
 
 **What you need to learn:**
